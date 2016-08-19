@@ -1,0 +1,34 @@
+#-------------------------------------------------
+#
+# Project created by QtCreator 2016-07-25T15:49:52
+#
+#-------------------------------------------------
+
+QT       += core gui
+
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+
+TARGET = qtBinCompGUI1
+TEMPLATE = app
+
+
+SOURCES += main.cpp\
+        mainwindow.cpp \
+    bincomp.cpp \
+    dataSet.cpp \
+    dataSetView.cpp \
+    debugwindow.cpp \
+    hexfield.cpp
+
+HEADERS  += mainwindow.h \
+    bincomp.h \
+    dataSet.h \
+    dataSetView.h \
+    debugwindow.h \
+    hexfield.h
+
+FORMS    += mainwindow.ui \
+    debugwindow.ui
+
+DISTFILES += \
+    todo

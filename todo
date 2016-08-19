@@ -1,0 +1,24 @@
+2016.8.11 v0.1 Feature list
+* display 2 binary files w/ indices
+load in read only file mode
+*    from menu
+*    drag&drop
+*    synchronized scrolling
+compare files
+    address to address matching
+    display differences in different color
+floating popup for debug info
+2 text display areas w/ scroll bar in middle, auto resizing
+
+v0.1 test
+    check for signal/slot connection clean up? redundant calls (multiple loads, etc)?
+
+v0.1 refactor
+    const correctness
+
+v0.2 Feature list
+    text log file w/ optional popup display (bottom of window) for error/info messages
+
+later:
+    QT Test?
+    bug tracking?
