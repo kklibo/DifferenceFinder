@@ -80,16 +80,12 @@ bool dataSetView::vectorSubsetToQTextEdit(QTextEdit* textEdit)
         ++byteCount;
 
         QString str;
-        //str.reserve(65536);
 
         QVector<unsigned char>* theData = theDataSet->getData();
         if (!((*theData)[i] & 0xF0)){
-       // if (!((*theDataSet.data())[i] & 0xF0)){
-        //if (!(theDataSet->getData()[i] & 0xF0)){
             str += "0";
         }
         str +=  QString::number((*theData)[i], 16 ).toUpper() + " ";
-        //str +=  QString::number(theDataSet->getData()[i], 16 ).toUpper() + " ";
 
         if (ndiff < diffs->size()) {
 

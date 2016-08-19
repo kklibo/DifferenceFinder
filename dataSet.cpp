@@ -12,12 +12,6 @@ QVector<unsigned char>* dataSet::getData()
 {
     return m_data.data();
 }
-/*
-unsigned char dataSet::operator [] (int i) const
-{
-    return (m_data->data())[i];
-}*/
-
 
 bool dataSet::loadFile(QString fileName)
 {

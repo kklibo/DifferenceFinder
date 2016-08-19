@@ -14,7 +14,6 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    bincomp.cpp \
     dataSet.cpp \
     dataSetView.cpp \
     debugwindow.cpp \

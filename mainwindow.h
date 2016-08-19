@@ -42,11 +42,6 @@ private:
 
     QScopedPointer<DebugWindow> m_DebugWindow;
 
-    //QVector<unsigned char> dataSet1;
-    //QVector<unsigned char> dataSet2;
-    //dataSet dataSet1;
-    //dataSet dataSet2;
-
     QSharedPointer<dataSet> m_dataSet1;
     QSharedPointer<dataSet> m_dataSet2;
 
@@ -54,7 +49,6 @@ private:
     QSharedPointer<dataSetView> m_dataSetView2;
 
     QSharedPointer<QVector<byterange>> m_diffs;
-    //byterange subset;
 
     void doCompare();
 

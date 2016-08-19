@@ -8,12 +8,6 @@ hexField::hexField(QWidget* parent) :
 
 void hexField::dropEvent(QDropEvent *e)
 {
-/*    QString tmp;
-    tmp = e->mimeData()->text();
-    tmp.append( QStringLiteral("%1").arg(e->dropAction()));
-
-    this->setText(tmp);*/
-
     QString filename = e->mimeData()->text().trimmed();
     if (filename.startsWith("file://"))
     {

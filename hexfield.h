@@ -7,7 +7,6 @@
 #include <QMimeData>
 #include <QString>
 
-//#include
 
 QT_BEGIN_NAMESPACE
 class QDropEvent;

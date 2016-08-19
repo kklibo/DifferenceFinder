@@ -27,10 +27,4 @@ public:
     }
 };
 
-bool fileToVector(QString fileName, QVector<unsigned char>& dataSet);
-bool compare(QVector<unsigned char> dataset1, QVector<unsigned char> dataset2, QVector<byterange>& diffs);
-void vectorToQTextEdit(QTextEdit* textEdit, QVector<unsigned char>& dataSet, QVector<byterange>& diffs);
-bool vectorSubsetToQTextEdit(QTextEdit* textEdit, QVector<unsigned char>& dataSet, byterange subset, QVector<byterange>& diffs);
-
-
 #endif // BINCOMP_H
