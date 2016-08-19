@@ -76,7 +76,13 @@
        </layout>
       </item>
       <item>
-       <widget class="QTextEdit" name="textEdit_dataSet2">
+       <widget class="hexField" name="textEdit_dataSet2">
+        <property name="font">
+         <font>
+          <family>DejaVu Sans Mono</family>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
         <property name="verticalScrollBarPolicy">
          <enum>Qt::ScrollBarAlwaysOff</enum>
         </property>

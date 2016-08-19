@@ -61,7 +61,7 @@ bool dataSetView::vectorSubsetToQTextEdit(QTextEdit* textEdit)
         ndiff++;    //advance through diffs to the first one that applies to this range
     }
 
-    int rowBytes = 10;
+    int rowBytes = 12;
     int byteCount = 0;
     for (int i = m_subset.start; i < m_subset.end(); i++) {
 

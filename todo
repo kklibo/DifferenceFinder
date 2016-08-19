@@ -1,9 +1,9 @@
 2016.8.11 v0.1 Feature list
-* display 2 binary files w/ indices
+display 2 binary files w/ indices
 load in read only file mode
-*    from menu
-*    drag&drop
-*    synchronized scrolling
+    from menu
+    drag&drop
+    synchronized scrolling
 compare files
     address to address matching
     display differences in different color

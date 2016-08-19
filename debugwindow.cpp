@@ -6,6 +6,10 @@ DebugWindow::DebugWindow(QWidget *parent) :
     ui(new Ui::DebugWindow)
 {
     ui->setupUi(this);
+    ui->L_DataSet1SizeOffset->setText("");
+    ui->L_DataSet2SizeOffset->setText("");
+    ui->L_DataSet1SizeBytes->setText("");
+    ui->L_DataSet2SizeBytes->setText("");
 }
 
 DebugWindow::~DebugWindow()
