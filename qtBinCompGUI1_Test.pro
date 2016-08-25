@@ -1,7 +1,7 @@
 #-------------------------------------------------
 #
 # Project created by QtCreator 2016-07-25T15:49:52
-#
+#  copied 2016.8.24; modified for google test
 #-------------------------------------------------
 
 QT       += core gui
@@ -12,12 +12,14 @@ TARGET = qtBinCompGUI1
 TEMPLATE = app
 
 
-SOURCES += main.cpp\
+#SOURCES += main.cpp\
+SOURCES += gtest.cpp\
         mainwindow.cpp \
     dataSet.cpp \
     dataSetView.cpp \
     debugwindow.cpp \
-    hexfield.cpp
+    hexfield.cpp \
+    dataSetTest.cpp
 
 HEADERS  += mainwindow.h \
     bincomp.h \
@@ -32,5 +34,11 @@ FORMS    += mainwindow.ui \
 DISTFILES += \
     todo
 
-SUBDIRS += \
-    qtBinCompGUI1_Test.pro
+INCLUDEPATH += \
+    /usr/include/gtest \
+    /usr/include/gmock
+
+LIBS += -lgtest -L/usr/lib
+LIBS += -lgmock -L/usr/lib
+LIBS += -lgtest_main -L/usr/lib
+LIBS += -lgmock_main -L/usr/lib
