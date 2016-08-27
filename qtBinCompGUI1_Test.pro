@@ -13,7 +13,7 @@ TEMPLATE = app
 
 
 #SOURCES += main.cpp\
-SOURCES += gtest.cpp\
+SOURCES +=\
         mainwindow.cpp \
     dataSet.cpp \
     dataSetView.cpp \
@@ -22,11 +22,12 @@ SOURCES += gtest.cpp\
     dataSetTest.cpp
 
 HEADERS  += mainwindow.h \
-    bincomp.h \
+    byteRange.h \
     dataSet.h \
     dataSetView.h \
     debugwindow.h \
-    hexfield.h
+    hexfield.h \
+    gtestDefs.h
 
 FORMS    += mainwindow.ui \
     debugwindow.ui

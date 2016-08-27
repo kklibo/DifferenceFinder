@@ -9,12 +9,14 @@
 #include <QMessageBox>
 #include <QTextStream>
 #include <QVector>
+#include <QString>
+#include <QStringBuilder>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "debugwindow.h"
 
-#include "bincomp.h"
+#include "byteRange.h"
 #include "dataSet.h"
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -24,6 +26,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    //create dataSets
     m_dataSet1 = QSharedPointer<dataSet>::create();
     m_dataSet2 = QSharedPointer<dataSet>::create();
 
@@ -35,8 +38,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->verticalScrollBar, &QScrollBar::valueChanged, this, &MainWindow::doScrollBar);
 
-    connect(ui->textEdit_dataSet1, &hexField::filenameDropped, m_dataSet1.data(), &dataSet::loadFile);
-    connect(ui->textEdit_dataSet2, &hexField::filenameDropped, m_dataSet2.data(), &dataSet::loadFile);
+    connect(ui->textEdit_dataSet1, &hexField::filenameDropped, this, &MainWindow::doLoadFile1);
+    connect(ui->textEdit_dataSet2, &hexField::filenameDropped, this, &MainWindow::doLoadFile2);
 }
 
 MainWindow::~MainWindow()
@@ -63,15 +66,11 @@ void MainWindow::refreshDataViews()
         return;
     }
 
-    if (m_dataSet1->getData()->size()) {
-        ui->textEdit_dataSet1->clear();
-        m_dataSetView1->vectorSubsetToQTextEdit(ui->textEdit_dataSet1);
-    }
+    ui->textEdit_dataSet1->clear();
+    m_dataSetView1->vectorSubsetToQTextEdit(ui->textEdit_dataSet1);
 
-    if (m_dataSet2->getData()->size()) {
-        ui->textEdit_dataSet2->clear();
-        m_dataSetView2->vectorSubsetToQTextEdit(ui->textEdit_dataSet2);
-    }
+    ui->textEdit_dataSet2->clear();
+    m_dataSetView2->vectorSubsetToQTextEdit(ui->textEdit_dataSet2);
 }
 
 void MainWindow::on_actionShow_Debug_triggered()
@@ -90,23 +89,45 @@ void MainWindow::on_actionTest_triggered()
     ui->textEdit_dataSet1->clear();
     ui->textEdit_dataSet2->clear();
 
-    m_dataSet1->loadFile("test1");
-    m_dataSet2->loadFile("test2");
+    doLoadFile1("test1");
+    doLoadFile2("test2");
 
     doCompare();
+}
+
+void MainWindow::doLoadFile1(const QString filename)
+{
+    dataSet::loadFileResult res = m_dataSet1->loadFile(filename);
+    if      (res == dataSet::loadFileResult::ERROR_FileDoesNotExist) {
+        QMessageBox::warning(this,"Error", "File \"" % filename % "\" does not exist.");
+    }
+    else if (res == dataSet::loadFileResult::ERROR_FileReadFailure) {
+        QMessageBox::warning(this,"Error", "\"" % filename % "\" failed to read.");
+    }
+}
+
+void MainWindow::doLoadFile2(const QString filename)
+{
+    dataSet::loadFileResult res = m_dataSet2->loadFile(filename);
+    if      (res == dataSet::loadFileResult::ERROR_FileDoesNotExist) {
+        QMessageBox::warning(this,"Error", "File \"" % filename % "\" does not exist.");
+    }
+    else if (res == dataSet::loadFileResult::ERROR_FileReadFailure) {
+        QMessageBox::warning(this,"Error", "\"" % filename % "\" failed to read.");
+    }
 }
 
 void MainWindow::doCompare()
 {
 
-    m_diffs = QSharedPointer<QVector<byterange>>::create();
+    m_diffs = QSharedPointer<QVector<byteRange>>::create();
     dataSet::compare(*m_dataSet1.data(), *m_dataSet2.data(), *m_diffs.data());
 
     m_dataSetView1 = QSharedPointer<dataSetView>::create(m_dataSet1, m_diffs);
-    m_dataSetView1->setSubset(byterange(4,128));
+    m_dataSetView1->setSubset(byteRange(0,128));
 
     m_dataSetView2 = QSharedPointer<dataSetView>::create(m_dataSet2, m_diffs);
-    m_dataSetView2->setSubset(byterange(4,128));
+    m_dataSetView2->setSubset(byteRange(0,128));
 
     m_dataSetView1->vectorSubsetToQTextEdit(ui->textEdit_dataSet1);
     m_dataSetView2->vectorSubsetToQTextEdit(ui->textEdit_dataSet2);
@@ -114,6 +135,7 @@ void MainWindow::doCompare()
     connect(m_dataSetView1.data(), &dataSetView::subsetChanged, m_DebugWindow.data(), &DebugWindow::dataSet1RangeChanged);
     connect(m_dataSetView2.data(), &dataSetView::subsetChanged, m_DebugWindow.data(), &DebugWindow::dataSet2RangeChanged);
 
+    //bug for data < subset count, max can go negative
     ui->verticalScrollBar->setMinimum(0);
     ui->verticalScrollBar->setMaximum(m_dataSet1->getData()->size() - m_dataSetView1->getSubset().count);
 
@@ -134,15 +156,11 @@ void MainWindow::on_actionQuit_triggered()
 void MainWindow::on_actionLoad_File1_Left_triggered()
 {
     QString filename = QFileDialog::getOpenFileName(nullptr, "Load File 1 (Left)");
-    if (!filename.isEmpty()) {
-        this->m_dataSet1->loadFile(filename);
-    }
+    doLoadFile1(filename);
 }
 
 void MainWindow::on_actionLoad_File2_Right_triggered()
 {
     QString filename = QFileDialog::getOpenFileName(nullptr, "Load File 2 (Left)");
-    if (!filename.isEmpty()) {
-        this->m_dataSet2->loadFile(filename);
-    }
+    doLoadFile2(filename);
 }

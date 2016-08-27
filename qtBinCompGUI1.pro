@@ -20,11 +20,11 @@ SOURCES += main.cpp\
     hexfield.cpp
 
 HEADERS  += mainwindow.h \
-    bincomp.h \
     dataSet.h \
     dataSetView.h \
     debugwindow.h \
-    hexfield.h
+    hexfield.h \
+    byteRange.h
 
 FORMS    += mainwindow.ui \
     debugwindow.ui

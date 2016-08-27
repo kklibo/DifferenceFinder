@@ -5,12 +5,13 @@
 #include <QWeakPointer>
 #include <QVector>
 #include <QString>
+#include <QTextEdit>
 
 #include "dataSet.h"
-#include "bincomp.h"
+#include "byteRange.h"
 
 /*
- *
+    displays a dataSet in the QT interface
 */
 
 class dataSetView : public QObject
@@ -20,22 +21,25 @@ class dataSetView : public QObject
 
 public:
     dataSetView(QSharedPointer<dataSet>& theDataSet);
-    dataSetView(QSharedPointer<dataSet>& theDataSet, QSharedPointer<QVector<byterange>>& diffs);
+    dataSetView(QSharedPointer<dataSet>& theDataSet, QSharedPointer<QVector<byteRange>>& diffs);
+
     bool vectorSubsetToQTextEdit(QTextEdit* textEdit);
 
-    byterange getSubset() const;
-    void setSubset(byterange subset);
+    //gets/sets the subset of the dataSet being displayed
+    byteRange getSubset() const;
+    void setSubset(byteRange subset);
 
-    int getSubsetStart() const;
-    void setSubsetStart(int start);
+    //gets/test the start index of the dataSet being displayed
+    unsigned int getSubsetStart() const;
+    void setSubsetStart(unsigned int start);
 
 signals:
-    void subsetChanged(byterange subset);
+    void subsetChanged(byteRange subset);
 
 private:
     QWeakPointer<dataSet> m_dataSet;
-    QWeakPointer<QVector<byterange>> m_diffs;
-    byterange m_subset;
+    QWeakPointer<QVector<byteRange>> m_diffs;
+    byteRange m_subset;
 
 };
 

@@ -3,14 +3,17 @@
 
 #include <QVector>
 #include <QString>
-
-#include <iostream>
-
 #include <QFile>
 #include <QDataStream>
 
-#include "bincomp.h"
+#include <iostream>
+#include <algorithm>
 
+#include "byteRange.h"
+
+/*
+    Represents the contents of a loaded file as a set of bytes
+*/
 
 class dataSet : public QObject
 {
@@ -18,15 +21,24 @@ class dataSet : public QObject
 
 public:
     dataSet();
-    bool loadFile(QString fileName);
-    static bool compare(dataSet& dataSet1, dataSet& dataSet2, QVector<byterange>& diffs);
 
-    QVector<unsigned char>* getData();
+    //load a file
+    enum class loadFileResult {
+        SUCCESS, ERROR_FileDoesNotExist, ERROR_FileReadFailure};
+    loadFileResult loadFile(const QString fileName);
+
+    //index-to-index comparison between two files, outputs differences in diffs
+    enum class compareResult {
+        SUCCESS, ERROR_SizeMismatch};
+    static compareResult compare(const dataSet& dataSet1, const dataSet& dataSet2, QVector<byteRange>& diffs);
+
+    QVector<unsigned char>* getData() const;
 
 signals:
     void sizeChanged(int newSize);
 
 private:
+    void reset();   //reset (like fresh instantiation)
     QScopedPointer<QVector<unsigned char>> m_data;
     QScopedPointer<QString> m_fileName;
     bool m_loaded;

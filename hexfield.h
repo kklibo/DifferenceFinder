@@ -7,6 +7,10 @@
 #include <QMimeData>
 #include <QString>
 
+/*
+ *  extends QTextEdit to support file drag and drop
+*/
+
 
 QT_BEGIN_NAMESPACE
 class QDropEvent;

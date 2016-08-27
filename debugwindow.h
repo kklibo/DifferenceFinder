@@ -2,8 +2,12 @@
 #define DEBUGWINDOW_H
 
 #include <QWidget>
+#include "byteRange.h"
 
-#include "bincomp.h"
+/*
+ *  a floating debug info window for the QT interface (might be temporary?)
+*/
+
 
 namespace Ui {
 class DebugWindow;
@@ -18,11 +22,11 @@ public:
     ~DebugWindow();
 
 public slots:
-    void dataSet1RangeChanged(byterange newRange);
-    void dataSet2RangeChanged(byterange newRange);
+    void dataSet1RangeChanged(byteRange newRange);
+    void dataSet2RangeChanged(byteRange newRange);
 
-    void dataSet1SizeChanged(int newSize);
-    void dataSet2SizeChanged(int newSize);
+    void dataSet1SizeChanged(unsigned int newSize);
+    void dataSet2SizeChanged(unsigned int newSize);
 
 private:
     Ui::DebugWindow *ui;

@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 
-#include "bincomp.h"
+#include "byteRange.h"
 #include "dataSet.h"
 #include "dataSetView.h"
 #include "debugwindow.h"
@@ -36,19 +36,24 @@ private slots:
 private:
     Ui::MainWindow *ui;
     void doScrollBar(int value);
+    void doLoadFile1(const QString filename);
+    void doLoadFile2(const QString filename);
     void refreshDataViews();
 
     void closeEvent(QCloseEvent* event);
 
     QScopedPointer<DebugWindow> m_DebugWindow;
 
+    //the 2 dataSets we will compare
     QSharedPointer<dataSet> m_dataSet1;
     QSharedPointer<dataSet> m_dataSet2;
 
+    //these will use the QT interface to display the dataSets
     QSharedPointer<dataSetView> m_dataSetView1;
     QSharedPointer<dataSetView> m_dataSetView2;
 
-    QSharedPointer<QVector<byterange>> m_diffs;
+    //differences between the dataSets
+    QSharedPointer<QVector<byteRange>> m_diffs;
 
     void doCompare();
 

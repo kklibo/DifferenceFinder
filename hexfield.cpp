@@ -9,9 +9,10 @@ hexField::hexField(QWidget* parent) :
 void hexField::dropEvent(QDropEvent *e)
 {
     QString filename = e->mimeData()->text().trimmed();
-    if (filename.startsWith("file://"))
+    QString prefix = "file://";
+    if (filename.startsWith(prefix))
     {
-        filename.remove(0,7);
+        filename.remove(0,prefix.size());
     }
 
     emit filenameDropped(filename);
