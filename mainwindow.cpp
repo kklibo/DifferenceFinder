@@ -1,23 +1,5 @@
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <vector>
-#include <iterator>
-
-#include <QFileDialog>
-#include <QFile>
-#include <QMessageBox>
-#include <QTextStream>
-#include <QVector>
-#include <QString>
-#include <QStringBuilder>
-
 #include "mainwindow.h"
-#include "ui_mainwindow.h"
-#include "debugwindow.h"
 
-#include "byteRange.h"
-#include "dataSet.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -40,6 +22,16 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->textEdit_dataSet1, &hexField::filenameDropped, this, &MainWindow::doLoadFile1);
     connect(ui->textEdit_dataSet2, &hexField::filenameDropped, this, &MainWindow::doLoadFile2);
+
+    connect(&LOG, &Log::message, this, &MainWindow::displayLogMessage);
+
+    //set initial log area size (first entry should just be nonzero, 2nd one is initial log area size)
+    ui->logAreaSplitter->setSizes(QList<int>() << 50 << 120 );
+
+    //make log area collapsible
+    ui->logAreaSplitter->setCollapsible(1,true);
+
+    LOG.Info("started");
 }
 
 MainWindow::~MainWindow()
@@ -99,10 +91,10 @@ void MainWindow::doLoadFile1(const QString filename)
 {
     dataSet::loadFileResult res = m_dataSet1->loadFile(filename);
     if      (res == dataSet::loadFileResult::ERROR_FileDoesNotExist) {
-        QMessageBox::warning(this,"Error", "File \"" % filename % "\" does not exist.");
+        LOG.Error("File \"" % filename % "\" does not exist.");
     }
     else if (res == dataSet::loadFileResult::ERROR_FileReadFailure) {
-        QMessageBox::warning(this,"Error", "\"" % filename % "\" failed to read.");
+        LOG.Error("\"" % filename % "\" failed to read.");
     }
 }
 
@@ -110,16 +102,15 @@ void MainWindow::doLoadFile2(const QString filename)
 {
     dataSet::loadFileResult res = m_dataSet2->loadFile(filename);
     if      (res == dataSet::loadFileResult::ERROR_FileDoesNotExist) {
-        QMessageBox::warning(this,"Error", "File \"" % filename % "\" does not exist.");
+        LOG.Error("File \"" % filename % "\" does not exist.");
     }
     else if (res == dataSet::loadFileResult::ERROR_FileReadFailure) {
-        QMessageBox::warning(this,"Error", "\"" % filename % "\" failed to read.");
+        LOG.Error("\"" % filename % "\" failed to read.");
     }
 }
 
 void MainWindow::doCompare()
 {
-
     m_diffs = QSharedPointer<QVector<byteRange>>::create();
     dataSet::compare(*m_dataSet1.data(), *m_dataSet2.data(), *m_diffs.data());
 
@@ -142,6 +133,16 @@ void MainWindow::doCompare()
     emit ui->verticalScrollBar->valueChanged(ui->verticalScrollBar->value());   //fire signal for current scroll bar position
 }
 
+void MainWindow::displayLogMessage(QString str, QColor color)
+{
+    QColor orig = ui->textEdit_log->textColor();
+    ui->textEdit_log->setTextColor(color);
+
+    ui->textEdit_log->append(str);
+
+    ui->textEdit_log->setTextColor(orig);
+}
+
 
 void MainWindow::on_B_Compare_clicked()
 {
@@ -156,11 +157,15 @@ void MainWindow::on_actionQuit_triggered()
 void MainWindow::on_actionLoad_File1_Left_triggered()
 {
     QString filename = QFileDialog::getOpenFileName(nullptr, "Load File 1 (Left)");
-    doLoadFile1(filename);
+    if (!filename.isEmpty()){
+        doLoadFile1(filename);
+    }
 }
 
 void MainWindow::on_actionLoad_File2_Right_triggered()
 {
     QString filename = QFileDialog::getOpenFileName(nullptr, "Load File 2 (Left)");
-    doLoadFile2(filename);
+    if (!filename.isEmpty()){
+        doLoadFile2(filename);
+    }
 }

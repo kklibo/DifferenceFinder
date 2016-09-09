@@ -1,24 +1,37 @@
-2016.8.11 v0.1 Feature list
-display 2 binary files w/ indices
-load in read only file mode
-    from menu
-    drag&drop
-    synchronized scrolling
-compare files
-    address to address matching
-    display differences in different color
-floating popup for debug info
-2 text display areas w/ scroll bar in middle, auto resizing
+algorithm ideas:
+1. prefix tree ("trie") based (hex or binary?):
+    1. iterate through dataset1
+        for each element, add [element,dataset.end] to tree
+            tree node contains byteRange of entry(s)
+        ...
+    2. find matching small patterns
+        expand out until differences are found
+        search difference areas more carefully
 
+act as front-end for multiple existing libraries? also implement own?
+    rsync, xdelta, open-vcdiff (VCDIFF/RFC 3284), bsdiff
+    xdelta diff: xdelta3.exe -e -s old_file new_file delta_file
+    read and display this?
+
+
+separate algorithms for replace vs insert?
 
 v0.2 Feature list
-    text log file w/ optional popup display (bottom of window) for error/info messages
+    text log w/ optional popup display (bottom of window) for error/info messages
+    fast full screen text rendering
+    display files with difference cues from VCDIFF data
+    invoke xdelta3 for comparison
+
+v0.3 Feature list
+    comparison algorithm improvements?
 
 later:
     QT Test?
     static analysis
     bug tracking?
+    defensive coding, exhaustive switch statements, __FILE__ + __LINE__ macro
 
 future features:
     comparison/analysis in separate threads
     QMessageLogger?
+    split into qt UI + qt-free library for calculations?

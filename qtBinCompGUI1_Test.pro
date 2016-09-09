@@ -19,21 +19,24 @@ SOURCES +=\
     dataSetView.cpp \
     debugwindow.cpp \
     hexfield.cpp \
+    log.cpp \
     dataSetTest.cpp
 
 HEADERS  += mainwindow.h \
-    byteRange.h \
     dataSet.h \
     dataSetView.h \
     debugwindow.h \
     hexfield.h \
+    byteRange.h \
+    log.h \
     gtestDefs.h
 
 FORMS    += mainwindow.ui \
     debugwindow.ui
 
 DISTFILES += \
-    todo
+    todo \
+    log
 
 INCLUDEPATH += \
     /usr/include/gtest \

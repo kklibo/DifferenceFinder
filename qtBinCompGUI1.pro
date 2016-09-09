@@ -17,20 +17,23 @@ SOURCES += main.cpp\
     dataSet.cpp \
     dataSetView.cpp \
     debugwindow.cpp \
-    hexfield.cpp
+    hexfield.cpp \
+    log.cpp
 
 HEADERS  += mainwindow.h \
     dataSet.h \
     dataSetView.h \
     debugwindow.h \
     hexfield.h \
-    byteRange.h
+    byteRange.h \
+    log.h
 
 FORMS    += mainwindow.ui \
     debugwindow.ui
 
 DISTFILES += \
-    todo
+    todo \
+    log
 
 SUBDIRS += \
     qtBinCompGUI1_Test.pro

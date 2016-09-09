@@ -2,6 +2,16 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QFileDialog>
+#include <QFile>
+#include <QMessageBox>
+#include <QTextStream>
+#include <QVector>
+#include <QString>
+#include <QStringBuilder>
+
+#include "log.h"
+#include "ui_mainwindow.h"
 
 #include "byteRange.h"
 #include "dataSet.h"
@@ -56,6 +66,8 @@ private:
     QSharedPointer<QVector<byteRange>> m_diffs;
 
     void doCompare();
+    void displayLogMessage(QString str, QColor color);
+
 
 };
 

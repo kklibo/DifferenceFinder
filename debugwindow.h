@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include "byteRange.h"
+#include "ui_debugwindow.h"
 
 /*
  *  a floating debug info window for the QT interface (might be temporary?)

@@ -5,10 +5,9 @@
 #include <QString>
 #include <QFile>
 #include <QDataStream>
+#include <QTextStream>
 
-#include <iostream>
-#include <algorithm>
-
+#include "log.h"
 #include "byteRange.h"
 
 /*

@@ -75,7 +75,12 @@ dataSet::compareResult dataSet::compare(const dataSet& dataSet1, const dataSet& 
                 inDiffSection = true;
             }
 
-            std::cout << byteindex << ": " << int(*it_dataset1) << ", " << int(*it_dataset2) << std::endl;
+            QString str;
+            QTextStream strStr(&str);
+            strStr << "\t" << byteindex << ": " << int(*it_dataset1) << ", " << int(*it_dataset2);
+            LOG.Debug(str);
+
+
         } else {
             inDiffSection = false;
         }

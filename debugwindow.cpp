@@ -1,5 +1,4 @@
 #include "debugwindow.h"
-#include "ui_debugwindow.h"
 
 DebugWindow::DebugWindow(QWidget *parent) :
     QWidget(parent),
