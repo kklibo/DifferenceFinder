@@ -73,6 +73,7 @@ bool dataSetView::vectorSubsetToQTextEdit(QTextEdit* textEdit)
             if (i != m_subset.start) {
                 str2 += "\n";
             }
+            //                      length 8, base 16, padded with '0's
             str2 += QString("0x%1  ").arg(i,8,16,QChar('0'));
 
             textEdit->insertPlainText(str2);
@@ -103,7 +104,7 @@ bool dataSetView::vectorSubsetToQTextEdit(QTextEdit* textEdit)
             }
         }
 
-        textEdit->insertPlainText(str);
+        textEdit->insertPlainText(str); //scrollbar lag comes from this
     }
 
     textEdit->setTextColor(orig);

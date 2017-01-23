@@ -19,11 +19,11 @@ separate algorithms for replace vs insert?
 v0.2 Feature list
     text log w/ optional popup display (bottom of window) for error/info messages
     fast full screen text rendering
-    display files with difference cues from VCDIFF data
-    invoke xdelta3 for comparison
+    text highlighting
+    content match indication
 
 v0.3 Feature list
-    comparison algorithm improvements?
+    basic comparison algorithm
 
 later:
     QT Test?
