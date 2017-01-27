@@ -6,6 +6,7 @@
 #include <QVector>
 #include <QString>
 #include <QTextEdit>
+#include <QtGlobal>
 
 #include "dataSet.h"
 #include "byteRange.h"
@@ -23,13 +24,13 @@ public:
     dataSetView(QSharedPointer<dataSet>& theDataSet);
     dataSetView(QSharedPointer<dataSet>& theDataSet, QSharedPointer<QVector<byteRange>>& diffs);
 
-    bool vectorSubsetToQTextEdit(QTextEdit* textEdit);
+    bool vectorSubsetToQTextEdit(QTextEdit* textEdit, QTextEdit* addressColumn);
 
     //gets/sets the subset of the dataSet being displayed
     byteRange getSubset() const;
     void setSubset(byteRange subset);
 
-    //gets/test the start index of the dataSet being displayed
+    //gets/sets the start index of the dataSet being displayed
     unsigned int getSubsetStart() const;
     void setSubsetStart(unsigned int start);
 

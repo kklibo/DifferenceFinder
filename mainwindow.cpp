@@ -31,6 +31,14 @@ MainWindow::MainWindow(QWidget *parent) :
     //make log area collapsible
     ui->logAreaSplitter->setCollapsible(1,true);
 
+    //set width & color for address column windows
+    QFontMetrics qfm(ui->textEdit_address1->font());
+    QRect qr = qfm.boundingRect("0x00000000 _");
+    ui->textEdit_address1->setFixedWidth(qr.width());
+    ui->textEdit_address1->setTextColor(QColor::fromRgb(64,64,128));
+    ui->textEdit_address2->setFixedWidth(qr.width());
+    ui->textEdit_address2->setTextColor(QColor::fromRgb(64,64,128));
+
     LOG.Info("started");
 }
 
@@ -59,10 +67,12 @@ void MainWindow::refreshDataViews()
     }
 
     ui->textEdit_dataSet1->clear();
-    m_dataSetView1->vectorSubsetToQTextEdit(ui->textEdit_dataSet1);
+    ui->textEdit_address1->clear();
+    m_dataSetView1->vectorSubsetToQTextEdit(ui->textEdit_dataSet1, ui->textEdit_address1);
 
     ui->textEdit_dataSet2->clear();
-    m_dataSetView2->vectorSubsetToQTextEdit(ui->textEdit_dataSet2);
+    ui->textEdit_address2->clear();
+    m_dataSetView2->vectorSubsetToQTextEdit(ui->textEdit_dataSet2, ui->textEdit_address2);
 }
 
 void MainWindow::on_actionShow_Debug_triggered()
@@ -115,13 +125,12 @@ void MainWindow::doCompare()
     dataSet::compare(*m_dataSet1.data(), *m_dataSet2.data(), *m_diffs.data());
 
     m_dataSetView1 = QSharedPointer<dataSetView>::create(m_dataSet1, m_diffs);
-    m_dataSetView1->setSubset(byteRange(0,128));
+    m_dataSetView1->setSubset(byteRange(0,1024));
 
     m_dataSetView2 = QSharedPointer<dataSetView>::create(m_dataSet2, m_diffs);
-    m_dataSetView2->setSubset(byteRange(0,128));
+    m_dataSetView2->setSubset(byteRange(0,1024));
 
-    m_dataSetView1->vectorSubsetToQTextEdit(ui->textEdit_dataSet1);
-    m_dataSetView2->vectorSubsetToQTextEdit(ui->textEdit_dataSet2);
+    refreshDataViews(); //update interface
 
     connect(m_dataSetView1.data(), &dataSetView::subsetChanged, m_DebugWindow.data(), &DebugWindow::dataSet1RangeChanged);
     connect(m_dataSetView2.data(), &dataSetView::subsetChanged, m_DebugWindow.data(), &DebugWindow::dataSet2RangeChanged);
