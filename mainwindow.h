@@ -9,6 +9,7 @@
 #include <QVector>
 #include <QString>
 #include <QStringBuilder>
+#include <QtGlobal>
 
 #include "log.h"
 #include "ui_mainwindow.h"

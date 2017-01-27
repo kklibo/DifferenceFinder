@@ -46,10 +46,6 @@ bool dataSetView::vectorSubsetToQTextEdit(QTextEdit* textEdit, QTextEdit* addres
         return false;
     }
 
-    if (m_subset.end() > (unsigned int)theDataSet->getData()->size()) {
-        return false;
-    }
-
     QString displayText = "";   //text for the main data display area
     QString addressText = "";   //text for the address column area
         //if performance drops from this function, reserve string memory for these?
@@ -61,6 +57,12 @@ bool dataSetView::vectorSubsetToQTextEdit(QTextEdit* textEdit, QTextEdit* addres
     const int rowBytes = 32;//assumed nonzero, add check if this changes
     int bytesPrinted = 0;
     for (unsigned int i = m_subset.start; i < m_subset.end(); i++) {
+
+        if (static_cast<int>(i) >= theData.size()) {
+            //break if we've exhausted the data
+            //(this can happen if the file is smaller than the display area's capacity)
+            break;
+        }
 
         if (0 == bytesPrinted%rowBytes) {
 

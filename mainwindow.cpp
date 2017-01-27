@@ -132,16 +132,25 @@ void MainWindow::doCompare()
     m_dataSetView1->setSubset(byteRange(0,1024));
 
     m_dataSetView2 = QSharedPointer<dataSetView>::create(m_dataSet2, m_diffs);
-    m_dataSetView2->setSubset(byteRange(0,1024));
+    m_dataSetView2->setSubset(byteRange(0,768));
 
     refreshDataViews(); //update interface
 
     connect(m_dataSetView1.data(), &dataSetView::subsetChanged, m_DebugWindow.data(), &DebugWindow::dataSet1RangeChanged);
     connect(m_dataSetView2.data(), &dataSetView::subsetChanged, m_DebugWindow.data(), &DebugWindow::dataSet2RangeChanged);
 
-    //bug for data < subset count, max can go negative
     ui->verticalScrollBar->setMinimum(0);
-    ui->verticalScrollBar->setMaximum(m_dataSet1->getData()->size() - m_dataSetView1->getSubset().count);
+
+    //set scrollbar maximum value (being careful here, in case the two datasets or viewable subsets are somehow different):
+    //calculate the scroll range needed to completely show each dataset in its viewable subset
+    int scrollRange1 = m_dataSet1->getData()->size() - m_dataSetView1->getSubset().count;
+    int scrollRange2 = m_dataSet2->getData()->size() - m_dataSetView2->getSubset().count;
+
+    int scrollBarMax = qMax(scrollRange1, scrollRange2); //choose the max scroll range needed
+
+    //ensure scrollbar maximum value is at least zero
+    // to prevent bug when data count < view subset count (max could go negative)
+    ui->verticalScrollBar->setMaximum(qMax(0, scrollBarMax));
 
     emit ui->verticalScrollBar->valueChanged(ui->verticalScrollBar->value());   //fire signal for current scroll bar position
 }
