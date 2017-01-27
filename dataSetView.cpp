@@ -50,116 +50,61 @@ bool dataSetView::vectorSubsetToQTextEdit(QTextEdit* textEdit, QTextEdit* addres
         return false;
     }
 
-    int ndiff = 0;  //the index of the current difference byteRange, for colored display
+    QString displayText = "";   //text for the main data display area
+    QString addressText = "";   //text for the address column area
+        //if performance drops from this function, reserve string memory for these?
 
-    //why is this needed?
-    QColor orig = textEdit->textColor();
-    textEdit->setTextColor(orig);
+    //get the data to be displayed
+    Q_CHECK_PTR(theDataSet->getData());
+    QVector<unsigned char>& theData = *theDataSet->getData();
 
-
-    while (diffs->data()[ndiff].end() <= m_subset.start && ndiff < diffs->size())
-    {
-        ndiff++;    //advance through diff ranges to the first one that either applies to this subset or starts after it
-    }
-
-    QString displayText = "";
-    QString addressText = "";
-    //reserve string memory here?
-    int rowBytes = 32;//assumed nonzero, add check if this changes
-    int rowsPrinted = 0;
-    int byteCount = 0;
+    const int rowBytes = 32;//assumed nonzero, add check if this changes
+    int bytesPrinted = 0;
     for (unsigned int i = m_subset.start; i < m_subset.end(); i++) {
 
-        QString str2;
-        //list byte address at the start of each row
-        if (0 == byteCount%rowBytes) {
-        //    textEdit->setTextColor(QColor::fromRgb(64,64,128));
+        if (0 == bytesPrinted%rowBytes) {
 
-            if (i != m_subset.start) {
-                str2 += "\n";
+            if (i != m_subset.start) {  //add newlines (unless starting the first row)
+                displayText += "\n";
+                addressText += "\n";
             }
-            //                      length 8, base 16, padded with '0's
-            str2 += QString("0x%1  ").arg(i,8,16,QChar('0'));
 
-            //textEdit->insertPlainText(str2);
-            displayText += str2;
-            addressText += str2;
-            ++rowsPrinted;
-        //    textEdit->setTextColor(orig);
+            //list byte address for the start of this row
+            //                              length 8, base 16, padded with '0's
+            addressText += QString("0x%1  ").arg(i,8,16,QChar('0'));
         }
-        ++byteCount;
 
-        QString str;
-        //show a row of bytes
-        Q_CHECK_PTR(theDataSet->getData());
-        QVector<unsigned char>& theData = *theDataSet->getData();
+        //add the next byte
         if (!(theData[i] & 0xF0)){
-            str += "0"; //add a leading 0
+            displayText += "0"; //add a leading 0 for a most-significant half-byte of zero
         }
-        str +=  QString::number(theData[i], 16 ).toUpper() + " ";   //display in hex w/capital letters
-/*
-        if (ndiff < diffs->size()) {    //if we haven't gone past the last difference range
+        displayText +=  QString::number(theData[i], 16 ).toUpper() + " ";   //display in hex w/capital letters
 
-            //if we are inside the current difference range, draw red text
-            if (i >= diffs->data()[ndiff].start) {
-        //        textEdit->setTextColor(QColor::fromRgb(255,0,0));
-            }
-
-            //if we have finished the current difference range, reset text color and go to next range
-            if (i >= diffs->data()[ndiff].end()) {
-        //        textEdit->setTextColor(orig);
-                ndiff++;
-            }
-        }*/
-
-        //textEdit->insertPlainText(str); //scrollbar lag comes from this
-        displayText += str;
+        ++bytesPrinted;
     }
 
-    //textEdit->setTextColor(orig);
+    //write strings to view areas
     textEdit->insertPlainText(displayText);
-/*
-    QFontMetrics qfm(addressColumn->font());
-    QRect qr = qfm.boundingRect("0x00000000 _");
-
-    addressColumn->setFixedWidth(qr.width());
-    addressColumn->setTextColor(QColor::fromRgb(64,64,128));*/
     addressColumn->insertPlainText(addressText);
-    //textEdit->setReadOnly(false);
 
-
-
+    //highlight displayed byte differences between files
     QList<QTextEdit::ExtraSelection> selectionList;
-    constexpr int addressTextLength = 2 + 8;
-    int rowWidth = addressTextLength + 2 + rowBytes*3 + 1;
+    int rowWidth = rowBytes*3 + 1;
 
-    auto getCursorIndex = [=](int row, int column)->int{
-        return row*rowWidth + column;
+    //text highlighting helper function:
+    //get the cursor index of the beginning of a byte's text
+    auto getByteCursorIndex = [=](int byteIndex, bool endOfSelection = false)->int{
+        int index = byteIndex - m_subset.start;     //index in currently displayed byte range
+        int ret = (index/rowBytes)*rowWidth + 3*(index%rowBytes);
+
+        //if this cursor index will be the end of a selection, don't select the newline at the end of a line
+        //  (prevents cursor out-of-bounds qt complaint at end of displayed byte range,
+        //  and looks nicer with colored backgrounds at the other line ends)
+        if ( endOfSelection && (0 == (index%rowBytes)) ) {
+            ret -= 1;
+        }
+        return ret;
     };
-
-    auto getByteCursorIndex = [=](int byteIndex)->int{
-        int index = byteIndex - m_subset.start;
-//        return (index/rowBytes + 1)*(addressTextLength + 2) + 3*(index%rowBytes) ;//+ (index/rowBytes)*1;
-        return (index/rowBytes)*rowWidth + addressTextLength + 2 + 3*(index%rowBytes);
-    };
-
-    //use QTextEdit::ExtraSelections to change address text color
-    for (int i = 0; i < rowsPrinted; i++) {
-        QTextEdit::ExtraSelection selection;
-
-        //reset text cursor
-        textEdit->moveCursor(QTextCursor::Start);
-        selection.cursor = textEdit->textCursor();
-
-        //select address text and set color
-        selection.cursor.setPosition(getCursorIndex(i, 0),                  QTextCursor::MoveAnchor);
-        selection.cursor.setPosition(getCursorIndex(i, addressTextLength),  QTextCursor::KeepAnchor);
-        //selection.cursor.setPosition(i*rowWidth,                        QTextCursor::MoveAnchor);
-        //selection.cursor.setPosition(i*rowWidth + addressTextLength,    QTextCursor::KeepAnchor);
-        selection.format.setForeground(QColor::fromRgb(0,255,0));//64,64,128));
-
-        selectionList.append(selection);
-    }
 
     //use QTextEdit::ExtraSelections to highlight differences
     for (byteRange& diff : *diffs) {
@@ -174,51 +119,14 @@ bool dataSetView::vectorSubsetToQTextEdit(QTextEdit* textEdit, QTextEdit* addres
         textEdit->moveCursor(QTextCursor::Start);
         selection.cursor = textEdit->textCursor();
 
-        selection.cursor.setPosition(getByteCursorIndex(qMax(diff.start, m_subset.start)),  QTextCursor::MoveAnchor);
-        selection.cursor.setPosition(getByteCursorIndex(qMin(diff.end(), m_subset.end())),  QTextCursor::KeepAnchor);
+        selection.cursor.setPosition(getByteCursorIndex(qMax(diff.start, m_subset.start)        ),  QTextCursor::MoveAnchor);
+        selection.cursor.setPosition(getByteCursorIndex(qMin(diff.end(), m_subset.end()), true  ),  QTextCursor::KeepAnchor);
         //selection.format.setForeground(QColor::fromRgb(255,0,0));
         selection.format.setBackground(QColor::fromRgb(255,128,128));
         selectionList.append(selection);
-    //    break;
-
     }
-
-
-
-/*
-    QTextEdit::ExtraSelection selection;
-    textEdit->moveCursor(QTextCursor::Start);
-    selection.cursor = textEdit->textCursor();
-
-    selection.cursor.setPosition(getByteCursorIndex(1319),                  QTextCursor::MoveAnchor);
-    selection.cursor.setPosition(getByteCursorIndex(1320),  QTextCursor::KeepAnchor);
-    selection.format.setForeground(QColor::fromRgb(0,255,0));
-    selectionList.append(selection);
-*/
-
 
     textEdit->setExtraSelections(selectionList);
 
-
-
-/*
-    QList<QTextEdit::ExtraSelection> testList;
-    QTextEdit::ExtraSelection test1;
-
-    textEdit->moveCursor(QTextCursor::Start);
-    test1.cursor = textEdit->textCursor();
-    test1.cursor.setPosition(12, QTextCursor::MoveAnchor);
-    test1.cursor.setPosition(30, QTextCursor::KeepAnchor);
-
-    //test1.cursor.clearSelection();
-    test1.format.setBackground(QColor(Qt::yellow));
-    test1.format.setForeground(QColor(Qt::red));
-    //test1.format.setProperty(QTextFormat::FullWidthSelection, true);
-    testList.append(test1);
-
-    textEdit->setExtraSelections(testList);
-
-    //textEdit->setReadOnly(true);
-*/
     return true;
 }

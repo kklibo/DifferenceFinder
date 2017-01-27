@@ -31,7 +31,11 @@ MainWindow::MainWindow(QWidget *parent) :
     //make log area collapsible
     ui->logAreaSplitter->setCollapsible(1,true);
 
-    //set width & color for address column windows
+    //set text color for data view areas
+    ui->textEdit_dataSet1->setTextColor(QColor::fromRgb(0,0,0));
+    ui->textEdit_dataSet2->setTextColor(QColor::fromRgb(0,0,0));
+
+    //set width & text color for address column areas
     QFontMetrics qfm(ui->textEdit_address1->font());
     QRect qr = qfm.boundingRect("0x00000000 _");
     ui->textEdit_address1->setFixedWidth(qr.width());
