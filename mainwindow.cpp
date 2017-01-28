@@ -12,6 +12,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_dataSet1 = QSharedPointer<dataSet>::create();
     m_dataSet2 = QSharedPointer<dataSet>::create();
 
+    //todo: signals may be double-firing in normal use cases
     connect(m_dataSet1.data(), &dataSet::sizeChanged, m_DebugWindow.data(), &DebugWindow::dataSet1SizeChanged);
     connect(m_dataSet2.data(), &dataSet::sizeChanged, m_DebugWindow.data(), &DebugWindow::dataSet2SizeChanged);
 
@@ -84,6 +85,12 @@ void MainWindow::on_actionShow_Debug_triggered()
     m_DebugWindow->show();
 }
 
+void MainWindow::resizeEvent(QResizeEvent* event)
+{
+    QMainWindow::resizeEvent(event);
+
+}
+
 void MainWindow::closeEvent(QCloseEvent* event)
 {
     m_DebugWindow->close();
@@ -129,10 +136,10 @@ void MainWindow::doCompare()
     dataSet::compare(*m_dataSet1.data(), *m_dataSet2.data(), *m_diffs.data());
 
     m_dataSetView1 = QSharedPointer<dataSetView>::create(m_dataSet1, m_diffs);
-    m_dataSetView1->setSubset(byteRange(0,1024));
+//    m_dataSetView1->setSubset(byteRange(0,1024));
 
     m_dataSetView2 = QSharedPointer<dataSetView>::create(m_dataSet2, m_diffs);
-    m_dataSetView2->setSubset(byteRange(0,768));
+//    m_dataSetView2->setSubset(byteRange(0,768));
 
     refreshDataViews(); //update interface
 

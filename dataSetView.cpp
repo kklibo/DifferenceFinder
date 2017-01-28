@@ -46,6 +46,41 @@ bool dataSetView::vectorSubsetToQTextEdit(QTextEdit* textEdit, QTextEdit* addres
         return false;
     }
 
+//move this to different function? call with scrollbar sizing?
+    QFontMetrics qfm(textEdit->font());
+    QRect qr = qfm.boundingRect("00_");
+
+    //calculate visible bytes per row
+    int bytePixelWidth = qr.width();
+    int areaPixelWidth = textEdit->width();
+
+    if (0 >= bytePixelWidth) {
+        return false;
+    }
+
+    int rowBytes = areaPixelWidth/bytePixelWidth;
+
+    if (0 >= rowBytes) {
+        return false;
+    }
+
+    //calculate total visible byte count
+    int bytePixelHeight = qr.height();
+    int areaPixelHeight = textEdit->height();
+
+    if (0 >= bytePixelHeight) {
+        return false;
+    }
+
+    m_subset.count = (areaPixelHeight/bytePixelHeight) * rowBytes;
+
+    if (0 == m_subset.count) {
+        return false;
+    }
+
+    //prevent misaligned/hidden address text: make sure address column area uses the same font
+    addressColumn->setFont(textEdit->font());
+
     QString displayText = "";   //text for the main data display area
     QString addressText = "";   //text for the address column area
         //if performance drops from this function, reserve string memory for these?
@@ -54,7 +89,7 @@ bool dataSetView::vectorSubsetToQTextEdit(QTextEdit* textEdit, QTextEdit* addres
     Q_CHECK_PTR(theDataSet->getData());
     QVector<unsigned char>& theData = *theDataSet->getData();
 
-    const int rowBytes = 32;//assumed nonzero, add check if this changes
+ //   const int rowBytes = 32;//assumed nonzero, add check if this changes
     int bytesPrinted = 0;
     for (unsigned int i = m_subset.start; i < m_subset.end(); i++) {
 

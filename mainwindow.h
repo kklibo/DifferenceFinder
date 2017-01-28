@@ -51,7 +51,8 @@ private:
     void doLoadFile2(const QString filename);
     void refreshDataViews();
 
-    void closeEvent(QCloseEvent* event);
+    void resizeEvent(QResizeEvent* event) Q_DECL_OVERRIDE;
+    void closeEvent(QCloseEvent* event) Q_DECL_OVERRIDE;
 
     QScopedPointer<DebugWindow> m_DebugWindow;
 
