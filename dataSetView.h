@@ -24,7 +24,8 @@ public:
     dataSetView(QSharedPointer<dataSet>& theDataSet);
     dataSetView(QSharedPointer<dataSet>& theDataSet, QSharedPointer<QVector<byteRange>>& diffs);
 
-    bool vectorSubsetToQTextEdit(QTextEdit* textEdit, QTextEdit* addressColumn);
+    void updateByteGridDimensions(QTextEdit* textEdit);
+    bool printByteGrid(QTextEdit* textEdit, QTextEdit* addressColumn);
 
     //gets/sets the subset of the dataSet being displayed
     byteRange getSubset() const;
@@ -41,6 +42,7 @@ private:
     QWeakPointer<dataSet> m_dataSet;
     QWeakPointer<QVector<byteRange>> m_diffs;
     byteRange m_subset;
+    unsigned int m_bytesPerRow; //bytes per row in byte display grid
 
 };
 

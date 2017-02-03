@@ -30,9 +30,11 @@ public:
     void dropEvent(QDropEvent *e) Q_DECL_OVERRIDE;
     void dragMoveEvent(QDragMoveEvent *e) Q_DECL_OVERRIDE;
     void dragLeaveEvent(QDragLeaveEvent *e) Q_DECL_OVERRIDE;
+    void changeEvent(QEvent *e) Q_DECL_OVERRIDE;
 
 signals:
     void filenameDropped(QString filename);
+    void fontChanged();
 
 };
 

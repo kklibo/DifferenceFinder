@@ -36,3 +36,8 @@ void hexField::dragLeaveEvent(QDragLeaveEvent *e)
     e->accept();
 }
 
+void hexField::changeEvent(QEvent *e)
+{
+    QTextEdit::changeEvent(e);
+    emit fontChanged();
+}

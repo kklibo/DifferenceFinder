@@ -44,12 +44,15 @@ private slots:
 
     void on_actionLoad_File2_Right_triggered();
 
+    void onHexFieldFontChange();
+
 private:
     Ui::MainWindow *ui;
     void doScrollBar(int value);
     void doLoadFile1(const QString filename);
     void doLoadFile2(const QString filename);
     void refreshDataViews();
+    void updateScrollBarRange();
 
     void resizeEvent(QResizeEvent* event) Q_DECL_OVERRIDE;
     void closeEvent(QCloseEvent* event) Q_DECL_OVERRIDE;

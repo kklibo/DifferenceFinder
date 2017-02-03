@@ -13,16 +13,19 @@ MainWindow::MainWindow(QWidget *parent) :
     m_dataSet2 = QSharedPointer<dataSet>::create();
 
     //todo: signals may be double-firing in normal use cases
-    connect(m_dataSet1.data(), &dataSet::sizeChanged, m_DebugWindow.data(), &DebugWindow::dataSet1SizeChanged);
+/*    connect(m_dataSet1.data(), &dataSet::sizeChanged, m_DebugWindow.data(), &DebugWindow::dataSet1SizeChanged);
     connect(m_dataSet2.data(), &dataSet::sizeChanged, m_DebugWindow.data(), &DebugWindow::dataSet2SizeChanged);
 
-    connect(m_dataSet1.data(), &dataSet::sizeChanged, this, &MainWindow::refreshDataViews);
-    connect(m_dataSet2.data(), &dataSet::sizeChanged, this, &MainWindow::refreshDataViews);
-
+    connect(m_dataSet1.data(), &dataSet::sizeChanged, this, &MainWindow::refreshScrollBar);
+    connect(m_dataSet2.data(), &dataSet::sizeChanged, this, &MainWindow::refreshScrollBar);
+*/
     connect(ui->verticalScrollBar, &QScrollBar::valueChanged, this, &MainWindow::doScrollBar);
 
     connect(ui->textEdit_dataSet1, &hexField::filenameDropped, this, &MainWindow::doLoadFile1);
     connect(ui->textEdit_dataSet2, &hexField::filenameDropped, this, &MainWindow::doLoadFile2);
+
+    connect(ui->textEdit_dataSet1, &hexField::fontChanged, this, &MainWindow::onHexFieldFontChange);
+    connect(ui->textEdit_dataSet2, &hexField::fontChanged, this, &MainWindow::onHexFieldFontChange);
 
     connect(&LOG, &Log::message, this, &MainWindow::displayLogMessage);
 
@@ -37,13 +40,16 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->textEdit_dataSet2->setTextColor(QColor::fromRgb(0,0,0));
 
     //set width & text color for address column areas
+    onHexFieldFontChange();
+/*
+    //set width & text color for address column areas
     QFontMetrics qfm(ui->textEdit_address1->font());
     QRect qr = qfm.boundingRect("0x00000000 _");
     ui->textEdit_address1->setFixedWidth(qr.width());
     ui->textEdit_address1->setTextColor(QColor::fromRgb(64,64,128));
     ui->textEdit_address2->setFixedWidth(qr.width());
     ui->textEdit_address2->setTextColor(QColor::fromRgb(64,64,128));
-
+*/
     LOG.Info("started");
 }
 
@@ -61,9 +67,18 @@ void MainWindow::doScrollBar(int value)
     m_dataSetView1->setSubsetStart(value);
     m_dataSetView2->setSubsetStart(value);
 
-    refreshDataViews();
-}
+    //refreshDataViews();
 
+    if (m_dataSet1.isNull() || m_dataSetView1.isNull() ||
+        m_dataSet2.isNull() || m_dataSetView2.isNull()) {
+        return;
+    }
+
+    m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
+    m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
+
+}
+/*
 void MainWindow::refreshDataViews()
 {
     if (m_dataSet1.isNull() || m_dataSetView1.isNull() ||
@@ -78,7 +93,7 @@ void MainWindow::refreshDataViews()
     ui->textEdit_dataSet2->clear();
     ui->textEdit_address2->clear();
     m_dataSetView2->vectorSubsetToQTextEdit(ui->textEdit_dataSet2, ui->textEdit_address2);
-}
+}*/
 
 void MainWindow::on_actionShow_Debug_triggered()
 {
@@ -88,7 +103,19 @@ void MainWindow::on_actionShow_Debug_triggered()
 void MainWindow::resizeEvent(QResizeEvent* event)
 {
     QMainWindow::resizeEvent(event);
+    //refreshDataViews();
+    //refreshScrollBar();
 
+    if (m_dataSet1.isNull() || m_dataSetView1.isNull() ||
+        m_dataSet2.isNull() || m_dataSetView2.isNull()) {
+        return;
+    }
+
+    m_dataSetView1->updateByteGridDimensions(ui->textEdit_dataSet1);
+    m_dataSetView2->updateByteGridDimensions(ui->textEdit_dataSet2);
+    m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
+    m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
+    updateScrollBarRange();
 }
 
 void MainWindow::closeEvent(QCloseEvent* event)
@@ -117,6 +144,15 @@ void MainWindow::doLoadFile1(const QString filename)
     else if (res == dataSet::loadFileResult::ERROR_FileReadFailure) {
         LOG.Error("\"" % filename % "\" failed to read.");
     }
+
+    if (m_dataSet1.isNull() || m_dataSetView1.isNull() ||
+        m_dataSet2.isNull() || m_dataSetView2.isNull()) {
+        return;
+    }
+
+    m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
+    m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
+    updateScrollBarRange();
 }
 
 void MainWindow::doLoadFile2(const QString filename)
@@ -128,6 +164,15 @@ void MainWindow::doLoadFile2(const QString filename)
     else if (res == dataSet::loadFileResult::ERROR_FileReadFailure) {
         LOG.Error("\"" % filename % "\" failed to read.");
     }
+
+    if (m_dataSet1.isNull() || m_dataSetView1.isNull() ||
+        m_dataSet2.isNull() || m_dataSetView2.isNull()) {
+        return;
+    }
+
+    m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
+    m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
+    updateScrollBarRange();
 }
 
 void MainWindow::doCompare()
@@ -141,10 +186,39 @@ void MainWindow::doCompare()
     m_dataSetView2 = QSharedPointer<dataSetView>::create(m_dataSet2, m_diffs);
 //    m_dataSetView2->setSubset(byteRange(0,768));
 
-    refreshDataViews(); //update interface
+    //refreshDataViews(); //update interface
+    if (m_dataSet1.isNull() || m_dataSetView1.isNull() ||
+        m_dataSet2.isNull() || m_dataSetView2.isNull()) {
+        return;
+    }
+
+    m_dataSetView1->updateByteGridDimensions(ui->textEdit_dataSet1);
+    m_dataSetView2->updateByteGridDimensions(ui->textEdit_dataSet2);
+
+    m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
+    m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
+
+    updateScrollBarRange();
+
 
     connect(m_dataSetView1.data(), &dataSetView::subsetChanged, m_DebugWindow.data(), &DebugWindow::dataSet1RangeChanged);
     connect(m_dataSetView2.data(), &dataSetView::subsetChanged, m_DebugWindow.data(), &DebugWindow::dataSet2RangeChanged);
+
+    //refreshScrollBar();
+   // emit ui->verticalScrollBar->valueChanged(ui->verticalScrollBar->value());   //fire signal for current scroll bar position
+
+}
+
+//right now, this is the de-facto 'refresh everything' function that will redraw after a window resize, file reload, or font change
+//this should be amended and renamed as necessary
+void MainWindow::updateScrollBarRange()
+{
+    if (m_dataSet1.isNull() || m_dataSetView1.isNull() ||
+        m_dataSet2.isNull() || m_dataSetView2.isNull()) {
+        return;
+    }
+
+    //refreshDataViews(); //this is needed before calculations so that the post-resize/font change getSubset().count values are up to date
 
     ui->verticalScrollBar->setMinimum(0);
 
@@ -159,7 +233,7 @@ void MainWindow::doCompare()
     // to prevent bug when data count < view subset count (max could go negative)
     ui->verticalScrollBar->setMaximum(qMax(0, scrollBarMax));
 
-    emit ui->verticalScrollBar->valueChanged(ui->verticalScrollBar->value());   //fire signal for current scroll bar position
+//    emit ui->verticalScrollBar->valueChanged(ui->verticalScrollBar->value());   //fire signal for current scroll bar position
 }
 
 void MainWindow::displayLogMessage(QString str, QColor color)
@@ -197,4 +271,40 @@ void MainWindow::on_actionLoad_File2_Right_triggered()
     if (!filename.isEmpty()){
         doLoadFile2(filename);
     }
+}
+
+void MainWindow::onHexFieldFontChange()
+{
+    //prevent misaligned/hidden address text:
+    //  make sure address column areas use the same font as their matching hexfield
+    ui->textEdit_address1->setFont(ui->textEdit_dataSet1->font());
+    ui->textEdit_address2->setFont(ui->textEdit_dataSet2->font());
+    //todo: handle font changes from address column?
+
+    //set width & text color for address column areas
+    {
+        QFontMetrics qfm(ui->textEdit_address1->font());
+        QRect qr = qfm.boundingRect("0x00000000 _");
+        ui->textEdit_address1->setFixedWidth(qr.width());
+        ui->textEdit_address1->setTextColor(QColor::fromRgb(64,64,128));
+    }
+
+    {
+        QFontMetrics qfm(ui->textEdit_address2->font());
+        QRect qr = qfm.boundingRect("0x00000000 _");
+        ui->textEdit_address2->setFixedWidth(qr.width());
+        ui->textEdit_address2->setTextColor(QColor::fromRgb(64,64,128));
+    }
+
+    if (m_dataSet1.isNull() || m_dataSetView1.isNull() ||
+        m_dataSet2.isNull() || m_dataSetView2.isNull()) {
+        return;
+    }
+
+    m_dataSetView1->updateByteGridDimensions(ui->textEdit_dataSet1);
+    m_dataSetView2->updateByteGridDimensions(ui->textEdit_dataSet2);
+    m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
+    m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
+    updateScrollBarRange();
+
 }
