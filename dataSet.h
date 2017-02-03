@@ -33,9 +33,6 @@ public:
 
     QVector<unsigned char>* getData() const;
 
-signals:
-    //void sizeChanged(int newSize);
-
 private:
     void reset();   //reset (like fresh instantiation)
     QScopedPointer<QVector<unsigned char>> m_data;

@@ -12,13 +12,6 @@ MainWindow::MainWindow(QWidget *parent) :
     m_dataSet1 = QSharedPointer<dataSet>::create();
     m_dataSet2 = QSharedPointer<dataSet>::create();
 
-    //todo: signals may be double-firing in normal use cases
-/*    connect(m_dataSet1.data(), &dataSet::sizeChanged, m_DebugWindow.data(), &DebugWindow::dataSet1SizeChanged);
-    connect(m_dataSet2.data(), &dataSet::sizeChanged, m_DebugWindow.data(), &DebugWindow::dataSet2SizeChanged);
-
-    connect(m_dataSet1.data(), &dataSet::sizeChanged, this, &MainWindow::refreshScrollBar);
-    connect(m_dataSet2.data(), &dataSet::sizeChanged, this, &MainWindow::refreshScrollBar);
-*/
     connect(ui->verticalScrollBar, &QScrollBar::valueChanged, this, &MainWindow::doScrollBar);
 
     connect(ui->textEdit_dataSet1, &hexField::filenameDropped, this, &MainWindow::doLoadFile1);
@@ -41,15 +34,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //set width & text color for address column areas
     onHexFieldFontChange();
-/*
-    //set width & text color for address column areas
-    QFontMetrics qfm(ui->textEdit_address1->font());
-    QRect qr = qfm.boundingRect("0x00000000 _");
-    ui->textEdit_address1->setFixedWidth(qr.width());
-    ui->textEdit_address1->setTextColor(QColor::fromRgb(64,64,128));
-    ui->textEdit_address2->setFixedWidth(qr.width());
-    ui->textEdit_address2->setTextColor(QColor::fromRgb(64,64,128));
-*/
+
     LOG.Info("started");
 }
 
@@ -67,8 +52,6 @@ void MainWindow::doScrollBar(int value)
     m_dataSetView1->setSubsetStart(value);
     m_dataSetView2->setSubsetStart(value);
 
-    //refreshDataViews();
-
     if (m_dataSet1.isNull() || m_dataSetView1.isNull() ||
         m_dataSet2.isNull() || m_dataSetView2.isNull()) {
         return;
@@ -78,22 +61,6 @@ void MainWindow::doScrollBar(int value)
     m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
 
 }
-/*
-void MainWindow::refreshDataViews()
-{
-    if (m_dataSet1.isNull() || m_dataSetView1.isNull() ||
-        m_dataSet2.isNull() || m_dataSetView2.isNull()) {
-        return;
-    }
-
-    ui->textEdit_dataSet1->clear();
-    ui->textEdit_address1->clear();
-    m_dataSetView1->vectorSubsetToQTextEdit(ui->textEdit_dataSet1, ui->textEdit_address1);
-
-    ui->textEdit_dataSet2->clear();
-    ui->textEdit_address2->clear();
-    m_dataSetView2->vectorSubsetToQTextEdit(ui->textEdit_dataSet2, ui->textEdit_address2);
-}*/
 
 void MainWindow::on_actionShow_Debug_triggered()
 {
@@ -103,8 +70,6 @@ void MainWindow::on_actionShow_Debug_triggered()
 void MainWindow::resizeEvent(QResizeEvent* event)
 {
     QMainWindow::resizeEvent(event);
-    //refreshDataViews();
-    //refreshScrollBar();
 
     if (m_dataSet1.isNull() || m_dataSetView1.isNull() ||
         m_dataSet2.isNull() || m_dataSetView2.isNull()) {
@@ -177,18 +142,17 @@ void MainWindow::doLoadFile2(const QString filename)
 
 void MainWindow::doCompare()
 {
+    if (m_dataSet1.isNull() || m_dataSet2.isNull()) {
+        return;
+    }
+
     m_diffs = QSharedPointer<QVector<byteRange>>::create();
     dataSet::compare(*m_dataSet1.data(), *m_dataSet2.data(), *m_diffs.data());
 
     m_dataSetView1 = QSharedPointer<dataSetView>::create(m_dataSet1, m_diffs);
-//    m_dataSetView1->setSubset(byteRange(0,1024));
-
     m_dataSetView2 = QSharedPointer<dataSetView>::create(m_dataSet2, m_diffs);
-//    m_dataSetView2->setSubset(byteRange(0,768));
 
-    //refreshDataViews(); //update interface
-    if (m_dataSet1.isNull() || m_dataSetView1.isNull() ||
-        m_dataSet2.isNull() || m_dataSetView2.isNull()) {
+    if (m_dataSetView1.isNull() || m_dataSetView2.isNull()) {
         return;
     }
 
@@ -203,22 +167,14 @@ void MainWindow::doCompare()
 
     connect(m_dataSetView1.data(), &dataSetView::subsetChanged, m_DebugWindow.data(), &DebugWindow::dataSet1RangeChanged);
     connect(m_dataSetView2.data(), &dataSetView::subsetChanged, m_DebugWindow.data(), &DebugWindow::dataSet2RangeChanged);
-
-    //refreshScrollBar();
-   // emit ui->verticalScrollBar->valueChanged(ui->verticalScrollBar->value());   //fire signal for current scroll bar position
-
 }
 
-//right now, this is the de-facto 'refresh everything' function that will redraw after a window resize, file reload, or font change
-//this should be amended and renamed as necessary
 void MainWindow::updateScrollBarRange()
 {
     if (m_dataSet1.isNull() || m_dataSetView1.isNull() ||
         m_dataSet2.isNull() || m_dataSetView2.isNull()) {
         return;
     }
-
-    //refreshDataViews(); //this is needed before calculations so that the post-resize/font change getSubset().count values are up to date
 
     ui->verticalScrollBar->setMinimum(0);
 
@@ -232,8 +188,6 @@ void MainWindow::updateScrollBarRange()
     //ensure scrollbar maximum value is at least zero
     // to prevent bug when data count < view subset count (max could go negative)
     ui->verticalScrollBar->setMaximum(qMax(0, scrollBarMax));
-
-//    emit ui->verticalScrollBar->valueChanged(ui->verticalScrollBar->value());   //fire signal for current scroll bar position
 }
 
 void MainWindow::displayLogMessage(QString str, QColor color)
@@ -281,20 +235,38 @@ void MainWindow::onHexFieldFontChange()
     ui->textEdit_address2->setFont(ui->textEdit_dataSet2->font());
     //todo: handle font changes from address column?
 
-    //set width & text color for address column areas
-    {
-        QFontMetrics qfm(ui->textEdit_address1->font());
-        QRect qr = qfm.boundingRect("0x00000000 _");
-        ui->textEdit_address1->setFixedWidth(qr.width());
-        ui->textEdit_address1->setTextColor(QColor::fromRgb(64,64,128));
-    }
 
+    auto setAddressColumnWidth = [](QTextEdit* const textEdit)->void
     {
-        QFontMetrics qfm(ui->textEdit_address2->font());
-        QRect qr = qfm.boundingRect("0x00000000 _");
-        ui->textEdit_address2->setFixedWidth(qr.width());
-        ui->textEdit_address2->setTextColor(QColor::fromRgb(64,64,128));
-    }
+        //calculate the QTextEdit width needed to draw the address text
+        //
+        //  The drawable area is textEdit->viewport().
+        //  Text starts a bit inside this area; we can see where by moving the cursor
+        //  to the start of the control and measuring the cursor location.
+        textEdit->moveCursor(QTextCursor::Start);
+        QPoint topLeftCornerOfFirstChar = textEdit->cursorRect().topLeft();
+
+        //margins inside the viewport not used for text drawing
+        int leftMargin  = textEdit->contentsMargins().left();
+        int rightMargin = textEdit->contentsMargins().right();
+
+        QFontMetrics qfm(textEdit->font());
+        int addressWidth_px = qfm.width("0x00000000")   //get the width of an address (assuming MONOSPACE FONTS)
+                    + topLeftCornerOfFirstChar.x()      //plus the distance from the left edge to text start
+                    + leftMargin + rightMargin;         //plus the margins
+
+        //set the min & max width values; qt should always draw it at this width
+        textEdit->setFixedWidth(addressWidth_px);
+
+    };
+
+    setAddressColumnWidth(ui->textEdit_address1);
+    setAddressColumnWidth(ui->textEdit_address2);
+
+    ui->textEdit_dataSet1->setTextColor(QColor::fromRgb(64,64,128));
+    ui->textEdit_dataSet2->setTextColor(QColor::fromRgb(64,64,128));
+
+
 
     if (m_dataSet1.isNull() || m_dataSetView1.isNull() ||
         m_dataSet2.isNull() || m_dataSetView2.isNull()) {

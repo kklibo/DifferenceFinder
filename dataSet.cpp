@@ -5,7 +5,6 @@ dataSet::dataSet() :
     m_fileName(new QString())
 {
     m_loaded = false;
-    //emit sizeChanged(0);
 }
 
 //returns a raw pointer to the data, is there a safer way?
@@ -40,7 +39,6 @@ dataSet::loadFileResult dataSet::loadFile(const QString fileName)
     Q_ASSERT(Q_NULLPTR != m_fileName.data());
     *(m_fileName.data()) = fileName;
 
-    //emit sizeChanged(m_data->size());
     return loadFileResult::SUCCESS;
 }
 

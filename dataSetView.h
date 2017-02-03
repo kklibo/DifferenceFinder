@@ -39,10 +39,10 @@ signals:
     void subsetChanged(byteRange subset);
 
 private:
-    QWeakPointer<dataSet> m_dataSet;
-    QWeakPointer<QVector<byteRange>> m_diffs;
-    byteRange m_subset;
-    unsigned int m_bytesPerRow; //bytes per row in byte display grid
+    QWeakPointer<dataSet> m_dataSet;            //the dataSet that this dataSetView will display
+    QWeakPointer<QVector<byteRange>> m_diffs;   //vector of byteRanges to mark as differences
+    byteRange m_subset;                         //the subset of the dataSet that is displayed by this dataSetView
+    unsigned int m_bytesPerRow;                 //bytes per row in byte display grid
 
 };
 
