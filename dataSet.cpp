@@ -13,6 +13,11 @@ QVector<unsigned char>* dataSet::getData() const
     return m_data.data();
 }
 
+bool dataSet::isLoaded() const
+{
+    return m_loaded;
+}
+
 dataSet::loadFileResult dataSet::loadFile(const QString fileName)
 {
     this->reset();

@@ -130,20 +130,15 @@ bool dataSetView::printByteGrid(QTextEdit* textEdit, QTextEdit* addressColumn)
     addressColumn->clear();
 
     QSharedPointer<dataSet> theDataSet = m_dataSet.lock();
-    if (!theDataSet){
+    //QSharedPointer<QVector<byteRange>> diffs = m_diffs.lock();
+
+    //ensure that weak pointer lock succeeded
+    if ( !theDataSet ){
         return false;
     }
 
-    QSharedPointer<QVector<byteRange>> diffs = m_diffs.lock();
-    if (!diffs){
-        return false;
-    }
-
-    if (0 == m_bytesPerRow) {
-        return false;
-    }
-
-    if (0 == m_subset.count) {
+    //skip no-print situations
+    if (0 == m_bytesPerRow || 0 == m_subset.count) {
         return false;
     }
 
@@ -188,6 +183,14 @@ bool dataSetView::printByteGrid(QTextEdit* textEdit, QTextEdit* addressColumn)
     //write strings to view areas
     textEdit->insertPlainText(displayText);
     addressColumn->insertPlainText(addressText);
+
+
+
+    QSharedPointer<QVector<byteRange>> diffs = m_diffs.lock();
+    //ensure that weak pointer lock succeeded
+    if ( !diffs ) {
+        return false;
+    }
 
     //highlight displayed byte differences between files
     QList<QTextEdit::ExtraSelection> selectionList;

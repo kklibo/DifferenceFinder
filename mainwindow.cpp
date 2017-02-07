@@ -45,21 +45,15 @@ MainWindow::~MainWindow()
 
 void MainWindow::doScrollBar(int value)
 {
-    if (m_dataSetView1.isNull() || m_dataSetView2.isNull()) {
-        return;
+    if (m_dataSetView1) {
+        m_dataSetView1->setSubsetStart(value);
+        m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
     }
 
-    m_dataSetView1->setSubsetStart(value);
-    m_dataSetView2->setSubsetStart(value);
-
-    if (m_dataSet1.isNull() || m_dataSetView1.isNull() ||
-        m_dataSet2.isNull() || m_dataSetView2.isNull()) {
-        return;
+    if (m_dataSetView2) {
+        m_dataSetView2->setSubsetStart(value);
+        m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
     }
-
-    m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
-    m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
-
 }
 
 void MainWindow::on_actionShow_Debug_triggered()
@@ -71,16 +65,19 @@ void MainWindow::resizeEvent(QResizeEvent* event)
 {
     QMainWindow::resizeEvent(event);
 
-    if (m_dataSet1.isNull() || m_dataSetView1.isNull() ||
-        m_dataSet2.isNull() || m_dataSetView2.isNull()) {
-        return;
+    if (m_dataSetView1) {
+        m_dataSetView1->updateByteGridDimensions(ui->textEdit_dataSet1);
+        m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
     }
 
-    m_dataSetView1->updateByteGridDimensions(ui->textEdit_dataSet1);
-    m_dataSetView2->updateByteGridDimensions(ui->textEdit_dataSet2);
-    m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
-    m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
-    updateScrollBarRange();
+    if (m_dataSetView2) {
+        m_dataSetView2->updateByteGridDimensions(ui->textEdit_dataSet2);
+        m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
+    }
+
+    if (m_dataSetView1 || m_dataSetView2) {
+        updateScrollBarRange();
+    }
 }
 
 void MainWindow::closeEvent(QCloseEvent* event)
@@ -91,9 +88,6 @@ void MainWindow::closeEvent(QCloseEvent* event)
 
 void MainWindow::on_actionTest_triggered()
 {
-    ui->textEdit_dataSet1->clear();
-    ui->textEdit_dataSet2->clear();
-
     doLoadFile1("test1");
     doLoadFile2("test2");
 
@@ -110,14 +104,19 @@ void MainWindow::doLoadFile1(const QString filename)
         LOG.Error("\"" % filename % "\" failed to read.");
     }
 
-    if (m_dataSet1.isNull() || m_dataSetView1.isNull() ||
-        m_dataSet2.isNull() || m_dataSetView2.isNull()) {
-        return;
-    }
+    m_dataSetView1 = QSharedPointer<dataSetView>::create(m_dataSet1);
 
-    m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
-    m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
-    updateScrollBarRange();
+    if (m_dataSet1->isLoaded() && m_dataSetView1) {
+
+        //synchronize displayed data range start indices
+        if (m_dataSetView2) {
+            m_dataSetView1->setSubsetStart(m_dataSetView2->getSubsetStart());
+        }
+
+        m_dataSetView1->updateByteGridDimensions(ui->textEdit_dataSet1);
+        m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
+        updateScrollBarRange();
+    }
 }
 
 void MainWindow::doLoadFile2(const QString filename)
@@ -130,14 +129,19 @@ void MainWindow::doLoadFile2(const QString filename)
         LOG.Error("\"" % filename % "\" failed to read.");
     }
 
-    if (m_dataSet1.isNull() || m_dataSetView1.isNull() ||
-        m_dataSet2.isNull() || m_dataSetView2.isNull()) {
-        return;
-    }
+    m_dataSetView2 = QSharedPointer<dataSetView>::create(m_dataSet2);
 
-    m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
-    m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
-    updateScrollBarRange();
+    if (m_dataSet2->isLoaded() && m_dataSetView2) {
+
+        //synchronize displayed data range start indices
+        if (m_dataSetView1) {
+            m_dataSetView2->setSubsetStart(m_dataSetView1->getSubsetStart());
+        }
+
+        m_dataSetView2->updateByteGridDimensions(ui->textEdit_dataSet2);
+        m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
+        updateScrollBarRange();
+    }
 }
 
 void MainWindow::doCompare()
@@ -171,22 +175,25 @@ void MainWindow::doCompare()
 
 void MainWindow::updateScrollBarRange()
 {
-    if (m_dataSet1.isNull() || m_dataSetView1.isNull() ||
-        m_dataSet2.isNull() || m_dataSetView2.isNull()) {
-        return;
-    }
-
     ui->verticalScrollBar->setMinimum(0);
 
-    //set scrollbar maximum value (being careful here, in case the two datasets or viewable subsets are somehow different):
+    //set scrollbar maximum value (being careful here, in case the two datasets or viewable subsets are different):
     //calculate the scroll range needed to completely show each dataset in its viewable subset
-    int scrollRange1 = m_dataSet1->getData()->size() - m_dataSetView1->getSubset().count;
-    int scrollRange2 = m_dataSet2->getData()->size() - m_dataSetView2->getSubset().count;
+
+    int scrollRange1, scrollRange2 = 0; //default to 0 if not loaded
+
+    if (m_dataSet1 && m_dataSetView1) {
+        scrollRange1 = m_dataSet1->getData()->size() - m_dataSetView1->getSubset().count;
+    }
+
+    if (m_dataSet2 && m_dataSetView2) {
+        scrollRange2 = m_dataSet2->getData()->size() - m_dataSetView2->getSubset().count;
+    }
 
     int scrollBarMax = qMax(scrollRange1, scrollRange2); //choose the max scroll range needed
 
     //ensure scrollbar maximum value is at least zero
-    // to prevent bug when data count < view subset count (max could go negative)
+    // to prevent bug when data size < view subset count (max could go negative)
     ui->verticalScrollBar->setMaximum(qMax(0, scrollBarMax));
 }
 
@@ -268,15 +275,18 @@ void MainWindow::onHexFieldFontChange()
 
 
 
-    if (m_dataSet1.isNull() || m_dataSetView1.isNull() ||
-        m_dataSet2.isNull() || m_dataSetView2.isNull()) {
-        return;
+    if (m_dataSetView1) {
+        m_dataSetView1->updateByteGridDimensions(ui->textEdit_dataSet1);
+        m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
     }
 
-    m_dataSetView1->updateByteGridDimensions(ui->textEdit_dataSet1);
-    m_dataSetView2->updateByteGridDimensions(ui->textEdit_dataSet2);
-    m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
-    m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
-    updateScrollBarRange();
+    if (m_dataSetView2) {
+        m_dataSetView2->updateByteGridDimensions(ui->textEdit_dataSet2);
+        m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
+    }
+
+    if (m_dataSetView1 || m_dataSetView2) {
+        updateScrollBarRange();
+    }
 
 }

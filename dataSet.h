@@ -33,6 +33,8 @@ public:
 
     QVector<unsigned char>* getData() const;
 
+    bool isLoaded() const;
+
 private:
     void reset();   //reset (like fresh instantiation)
     QScopedPointer<QVector<unsigned char>> m_data;

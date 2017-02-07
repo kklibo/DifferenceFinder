@@ -51,7 +51,6 @@ private:
     void doScrollBar(int value);
     void doLoadFile1(const QString filename);
     void doLoadFile2(const QString filename);
-    void refreshDataViews();
     void updateScrollBarRange();
 
     void resizeEvent(QResizeEvent* event) Q_DECL_OVERRIDE;
