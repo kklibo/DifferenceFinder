@@ -52,8 +52,9 @@ private:
     void doLoadFile1(const QString filename);
     void doLoadFile2(const QString filename);
     void updateScrollBarRange();
+    void resizeHexField1();
+    void resizeHexField2();
 
-    void resizeEvent(QResizeEvent* event) Q_DECL_OVERRIDE;
     void closeEvent(QCloseEvent* event) Q_DECL_OVERRIDE;
 
     QScopedPointer<DebugWindow> m_DebugWindow;

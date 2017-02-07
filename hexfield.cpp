@@ -41,3 +41,9 @@ void hexField::changeEvent(QEvent *e)
     QTextEdit::changeEvent(e);
     emit fontChanged();
 }
+
+void hexField::resizeEvent(QResizeEvent *e)
+{
+    QTextEdit::resizeEvent(e);
+    emit resized();
+}

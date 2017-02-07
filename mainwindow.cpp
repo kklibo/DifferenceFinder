@@ -20,6 +20,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->textEdit_dataSet1, &hexField::fontChanged, this, &MainWindow::onHexFieldFontChange);
     connect(ui->textEdit_dataSet2, &hexField::fontChanged, this, &MainWindow::onHexFieldFontChange);
 
+    connect(ui->textEdit_dataSet1, &hexField::resized, this, &MainWindow::resizeHexField1);
+    connect(ui->textEdit_dataSet2, &hexField::resized, this, &MainWindow::resizeHexField2);
+
     connect(&LOG, &Log::message, this, &MainWindow::displayLogMessage);
 
     //set initial log area size (first entry should just be nonzero, 2nd one is initial log area size)
@@ -61,21 +64,20 @@ void MainWindow::on_actionShow_Debug_triggered()
     m_DebugWindow->show();
 }
 
-void MainWindow::resizeEvent(QResizeEvent* event)
+void MainWindow::resizeHexField1()
 {
-    QMainWindow::resizeEvent(event);
-
     if (m_dataSetView1) {
         m_dataSetView1->updateByteGridDimensions(ui->textEdit_dataSet1);
         m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
+        updateScrollBarRange();
     }
+}
 
+void MainWindow::resizeHexField2()
+{
     if (m_dataSetView2) {
         m_dataSetView2->updateByteGridDimensions(ui->textEdit_dataSet2);
         m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
-    }
-
-    if (m_dataSetView1 || m_dataSetView2) {
         updateScrollBarRange();
     }
 }
