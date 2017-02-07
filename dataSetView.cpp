@@ -181,7 +181,10 @@ bool dataSetView::printByteGrid(QTextEdit* textEdit, QTextEdit* addressColumn)
     }
 
     //write strings to view areas
+    textEdit->setTextColor(QColor::fromRgb(0,0,0));
     textEdit->insertPlainText(displayText);
+
+    addressColumn->setTextColor(QColor::fromRgb(64,64,128));
     addressColumn->insertPlainText(addressText);
 
 

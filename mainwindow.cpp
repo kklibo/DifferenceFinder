@@ -31,11 +31,7 @@ MainWindow::MainWindow(QWidget *parent) :
     //make log area collapsible
     ui->logAreaSplitter->setCollapsible(1,true);
 
-    //set text color for data view areas
-    ui->textEdit_dataSet1->setTextColor(QColor::fromRgb(0,0,0));
-    ui->textEdit_dataSet2->setTextColor(QColor::fromRgb(0,0,0));
-
-    //set width & text color for address column areas
+    //set initial width for address column areas
     onHexFieldFontChange();
 
     LOG.Info("started");
@@ -271,11 +267,6 @@ void MainWindow::onHexFieldFontChange()
 
     setAddressColumnWidth(ui->textEdit_address1);
     setAddressColumnWidth(ui->textEdit_address2);
-
-    ui->textEdit_dataSet1->setTextColor(QColor::fromRgb(64,64,128));
-    ui->textEdit_dataSet2->setTextColor(QColor::fromRgb(64,64,128));
-
-
 
     if (m_dataSetView1) {
         m_dataSetView1->updateByteGridDimensions(ui->textEdit_dataSet1);
