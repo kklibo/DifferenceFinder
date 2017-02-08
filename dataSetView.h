@@ -20,6 +20,14 @@ class dataSetView : public QObject
 
     Q_OBJECT
 
+private:
+    // a set byte ranges and text highlighting colors
+    struct highlightSet {
+        QSharedPointer<QVector<byteRange>> ranges;
+        QColor *foreground = nullptr;
+        QColor *background = nullptr;
+    };
+
 public:
     dataSetView(QSharedPointer<dataSet>& theDataSet);
     dataSetView(QSharedPointer<dataSet>& theDataSet, QSharedPointer<QVector<byteRange>>& diffs);
@@ -34,6 +42,9 @@ public:
     //gets/sets the start index of the dataSet being displayed
     unsigned int getSubsetStart() const;
     void setSubsetStart(unsigned int start);
+
+private:
+    bool highlightByteGrid(QTextEdit* textEdit, QVector<byteRange>& ranges, QColor *foreground = nullptr, QColor *background = nullptr);
 
 signals:
     void subsetChanged(byteRange subset);

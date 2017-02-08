@@ -188,14 +188,21 @@ bool dataSetView::printByteGrid(QTextEdit* textEdit, QTextEdit* addressColumn)
     addressColumn->insertPlainText(addressText);
 
 
-
+    //highlight displayed byte differences between files
+    QColor foreground = QColor::fromRgb(0,128,255);
+    QColor background = QColor::fromRgb(255,128,128);
     QSharedPointer<QVector<byteRange>> diffs = m_diffs.lock();
-    //ensure that weak pointer lock succeeded
-    if ( !diffs ) {
-        return false;
+
+    if ( diffs ) {
+        highlightByteGrid(textEdit, *diffs.data(), &foreground, &background);
     }
 
-    //highlight displayed byte differences between files
+    return true;
+}
+
+bool dataSetView::highlightByteGrid(QTextEdit* textEdit, QVector<byteRange>& ranges, QColor* foreground /*= nullptr*/, QColor* background /*= nullptr*/)
+{
+    //highlight/color byte text on the supplied ranges
     QList<QTextEdit::ExtraSelection> selectionList;
     int rowWidth = m_bytesPerRow*3 + 1;
 
@@ -214,23 +221,30 @@ bool dataSetView::printByteGrid(QTextEdit* textEdit, QTextEdit* addressColumn)
         return ret;
     };
 
-    //use QTextEdit::ExtraSelections to highlight differences
-    for (byteRange& diff : *diffs) {
+    //use QTextEdit::ExtraSelections to highlight ranges
+    for (byteRange& range : ranges) {
 
-        if (diff.end() <= m_subset.start
-         || m_subset.end() <= diff.start)
+        if (range.end() <= m_subset.start
+         || m_subset.end() <= range.start)
         {
-            continue;   //skip diffs in addresses that aren't being displayed
+            continue;   //skip ranges in addresses that aren't being displayed
         }
 
         QTextEdit::ExtraSelection selection;
         textEdit->moveCursor(QTextCursor::Start);
         selection.cursor = textEdit->textCursor();
 
-        selection.cursor.setPosition(getByteCursorIndex(qMax(diff.start, m_subset.start)        ),  QTextCursor::MoveAnchor);
-        selection.cursor.setPosition(getByteCursorIndex(qMin(diff.end(), m_subset.end()), true  ),  QTextCursor::KeepAnchor);
-        //selection.format.setForeground(QColor::fromRgb(255,0,0));
-        selection.format.setBackground(QColor::fromRgb(255,128,128));
+        selection.cursor.setPosition(getByteCursorIndex(qMax(range.start, m_subset.start)        ),  QTextCursor::MoveAnchor);
+        selection.cursor.setPosition(getByteCursorIndex(qMin(range.end(), m_subset.end()), true  ),  QTextCursor::KeepAnchor);
+
+        if (foreground) {   //apply foreground color, if there is one
+            selection.format.setForeground(*foreground);
+        }
+
+        if (background) {   //apply background color, if there is one
+            selection.format.setBackground(*background);
+        }
+
         selectionList.append(selection);
     }
 
