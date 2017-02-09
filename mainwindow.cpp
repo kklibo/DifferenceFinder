@@ -92,6 +92,51 @@ void MainWindow::on_actionTest_triggered()
     doCompare();
 }
 
+void MainWindow::on_actionTest_highlighting_triggered()
+{
+    doLoadFile1("test1");
+    doLoadFile2("test2");
+
+    doCompare();
+
+    if (m_dataSetView1) {
+
+        {
+            auto ranges = QSharedPointer<QVector<byteRange>>::create();
+            ranges.data()->append(byteRange(40,10));
+            dataSetView::highlightSet hSet(ranges);
+            hSet.setForegroundColor(QColor::fromRgb(128,0,0));
+            hSet.setBackgroundColor(QColor::fromRgb(0,128,128));
+
+            m_dataSetView1->addHighlightSet(hSet);
+        }
+
+        {
+            auto ranges = QSharedPointer<QVector<byteRange>>::create();
+            ranges.data()->append(byteRange(55,10));
+            dataSetView::highlightSet hSet(ranges);
+            hSet.setForegroundColor(QColor::fromRgb(128,255,0));
+            hSet.setBackgroundColor(QColor::fromRgb(0,0,128));
+
+            m_dataSetView1->addHighlightSet(hSet);
+        }
+
+        {
+            auto ranges = QSharedPointer<QVector<byteRange>>::create();
+            ranges.data()->append(byteRange(30,10));
+            dataSetView::highlightSet hSet(ranges);
+            hSet.setForegroundColor(QColor::fromRgb(255,255,255));
+            hSet.setBackgroundColor(QColor::fromRgb(128,128,128));
+
+            m_dataSetView1->addHighlightSet(hSet);
+        }
+
+        m_dataSetView1->updateByteGridDimensions(ui->textEdit_dataSet1);
+        m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
+
+    }
+}
+
 void MainWindow::doLoadFile1(const QString filename)
 {
     dataSet::loadFileResult res = m_dataSet1->loadFile(filename);
@@ -148,11 +193,20 @@ void MainWindow::doCompare()
         return;
     }
 
-    m_diffs = QSharedPointer<QVector<byteRange>>::create();
+    auto m_diffs = QSharedPointer<QVector<byteRange>>::create();
     dataSet::compare(*m_dataSet1.data(), *m_dataSet2.data(), *m_diffs.data());
 
-    m_dataSetView1 = QSharedPointer<dataSetView>::create(m_dataSet1, m_diffs);
-    m_dataSetView2 = QSharedPointer<dataSetView>::create(m_dataSet2, m_diffs);
+    //create highlightSet to color byte differences between files
+    dataSetView::highlightSet hSet(m_diffs);
+    hSet.setForegroundColor(QColor::fromRgb(0,128,0));
+    hSet.setBackgroundColor(QColor::fromRgb(128,128,0));
+
+    m_dataSetView1 = QSharedPointer<dataSetView>::create(m_dataSet1);
+    m_dataSetView1->addHighlightSet(hSet);
+
+    m_dataSetView2 = QSharedPointer<dataSetView>::create(m_dataSet2);
+    m_dataSetView2->addHighlightSet(hSet);
+
 
     if (m_dataSetView1.isNull() || m_dataSetView2.isNull()) {
         return;

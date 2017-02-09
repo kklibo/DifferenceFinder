@@ -240,6 +240,7 @@
     </property>
     <addaction name="actionShow_Debug"/>
     <addaction name="actionTest"/>
+    <addaction name="actionTest_highlighting"/>
    </widget>
    <addaction name="menuLoad_File1_Left"/>
    <addaction name="menuDebug"/>
@@ -268,6 +269,11 @@
   <action name="actionQuit">
    <property name="text">
     <string>Quit</string>
+   </property>
+  </action>
+  <action name="actionTest_highlighting">
+   <property name="text">
+    <string>Test highlighting</string>
    </property>
   </action>
  </widget>

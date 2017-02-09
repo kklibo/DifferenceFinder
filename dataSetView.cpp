@@ -1,16 +1,42 @@
 #include "dataSetView.h"
 
-dataSetView::dataSetView(QSharedPointer<dataSet>& theDataSet)
+
+dataSetView::highlightSet::highlightSet(QSharedPointer<QVector<byteRange>> ranges)
+    :   m_ranges(ranges),
+        m_applyForeground(false),
+        m_applyBackground(false)
 {
-    m_dataSet = theDataSet;
-    m_bytesPerRow = 0;
+
 }
 
-dataSetView::dataSetView(QSharedPointer<dataSet>& theDataSet, QSharedPointer<QVector<byteRange>>& diffs)
+dataSetView::highlightSet::highlightSet()
+    :   m_ranges(),
+        m_applyForeground(false),
+        m_applyBackground(false)
 {
-    m_dataSet = theDataSet;
-    m_diffs = diffs;
-    m_bytesPerRow = 0;
+
+}
+
+void dataSetView::highlightSet::setForegroundColor(const QColor &foreground)
+{
+    m_applyForeground = true;
+    m_foreground = foreground;
+}
+
+void dataSetView::highlightSet::setBackgroundColor(const QColor &background)
+{
+    m_applyBackground = true;
+    m_background = background;
+}
+
+
+dataSetView::dataSetView(QSharedPointer<dataSet>& theDataSet)
+    : m_dataSet(theDataSet),
+      m_highlightSets(),
+      m_subset(),
+      m_bytesPerRow(0)
+{
+
 }
 
 byteRange dataSetView::getSubset() const
@@ -33,6 +59,11 @@ void dataSetView::setSubsetStart(unsigned int start)
 {
     m_subset.start = start;
     emit subsetChanged(m_subset);
+}
+
+void dataSetView::addHighlightSet(const highlightSet& hSet)
+{
+    m_highlightSets.append(hSet);
 }
 
 void dataSetView::updateByteGridDimensions(QTextEdit* textEdit)
@@ -187,23 +218,19 @@ bool dataSetView::printByteGrid(QTextEdit* textEdit, QTextEdit* addressColumn)
     addressColumn->setTextColor(QColor::fromRgb(64,64,128));
     addressColumn->insertPlainText(addressText);
 
-
-    //highlight displayed byte differences between files
-    QColor foreground = QColor::fromRgb(0,128,255);
-    QColor background = QColor::fromRgb(255,128,128);
-    QSharedPointer<QVector<byteRange>> diffs = m_diffs.lock();
-
-    if ( diffs ) {
-        highlightByteGrid(textEdit, *diffs.data(), &foreground, &background);
+    //apply highlights for colored byte text regions
+    for (highlightSet hSet : m_highlightSets)
+    {
+        highlightByteGrid(textEdit, hSet);
     }
 
     return true;
 }
 
-bool dataSetView::highlightByteGrid(QTextEdit* textEdit, QVector<byteRange>& ranges, QColor* foreground /*= nullptr*/, QColor* background /*= nullptr*/)
+bool dataSetView::highlightByteGrid(QTextEdit* textEdit, highlightSet& hSet)
 {
     //highlight/color byte text on the supplied ranges
-    QList<QTextEdit::ExtraSelection> selectionList;
+    QList<QTextEdit::ExtraSelection> selectionList = textEdit->extraSelections();   //get the list of existing selections
     int rowWidth = m_bytesPerRow*3 + 1;
 
     //text highlighting helper function:
@@ -222,7 +249,7 @@ bool dataSetView::highlightByteGrid(QTextEdit* textEdit, QVector<byteRange>& ran
     };
 
     //use QTextEdit::ExtraSelections to highlight ranges
-    for (byteRange& range : ranges) {
+    for (byteRange& range : *hSet.m_ranges.data()) {
 
         if (range.end() <= m_subset.start
          || m_subset.end() <= range.start)
@@ -237,12 +264,12 @@ bool dataSetView::highlightByteGrid(QTextEdit* textEdit, QVector<byteRange>& ran
         selection.cursor.setPosition(getByteCursorIndex(qMax(range.start, m_subset.start)        ),  QTextCursor::MoveAnchor);
         selection.cursor.setPosition(getByteCursorIndex(qMin(range.end(), m_subset.end()), true  ),  QTextCursor::KeepAnchor);
 
-        if (foreground) {   //apply foreground color, if there is one
-            selection.format.setForeground(*foreground);
+        if (hSet.m_applyForeground) {   //apply foreground color if specified
+            selection.format.setForeground(hSet.m_foreground);
         }
 
-        if (background) {   //apply background color, if there is one
-            selection.format.setBackground(*background);
+        if (hSet.m_applyBackground) {   //apply background color if specified
+            selection.format.setBackground(hSet.m_background);
         }
 
         selectionList.append(selection);

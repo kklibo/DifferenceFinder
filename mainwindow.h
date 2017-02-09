@@ -46,6 +46,8 @@ private slots:
 
     void onHexFieldFontChange();
 
+    void on_actionTest_highlighting_triggered();
+
 private:
     Ui::MainWindow *ui;
     void doScrollBar(int value);
@@ -66,9 +68,6 @@ private:
     //these will use the QT interface to display the dataSets
     QSharedPointer<dataSetView> m_dataSetView1;
     QSharedPointer<dataSetView> m_dataSetView2;
-
-    //differences between the dataSets
-    QSharedPointer<QVector<byteRange>> m_diffs;
 
     void doCompare();
     void displayLogMessage(QString str, QColor color);
