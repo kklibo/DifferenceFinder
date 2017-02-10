@@ -8,14 +8,20 @@ hexField::hexField(QWidget* parent) :
 
 void hexField::dropEvent(QDropEvent *e)
 {
-    QString filename = e->mimeData()->text().trimmed();
-    QString prefix = "file://";
-    if (filename.startsWith(prefix))
-    {
-        filename.remove(0,prefix.size());
+    QMimeData const* mimeData = e->mimeData();
+    QList<QUrl> urlList = mimeData->urls();
+
+    if (urlList.isEmpty()) {
+        return; //no filename generated
     }
 
-    emit filenameDropped(filename);
+    QString filename = urlList.first().toString();
+    QString prefix = "file://";
+    if (filename.startsWith(prefix))    //reject dropped items that aren't files
+    {
+        filename.remove(0,prefix.size());
+        emit filenameDropped(filename);
+    }
 
     e->acceptProposedAction();
 }
