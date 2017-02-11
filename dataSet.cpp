@@ -28,17 +28,23 @@ dataSet::loadFileResult dataSet::loadFile(const QString fileName)
     }
 
     QDataStream in(&file);
-    qint64 s = file.size();
 
-    QScopedArrayPointer<char> rawFile(new char[s]);
-    if (-1 == in.readRawData(rawFile.data(), s))
+    //get filesize, constrain to int for QDataStream::readRawData
+    qint64 s = file.size();
+    if (s > INT32_MAX) {
+        return loadFileResult::ERROR_FileReadFailure;
+    }
+    int fileSize = static_cast<int>(s);
+
+    QScopedArrayPointer<char> rawFile(new char[fileSize]);
+    if (-1 == in.readRawData(rawFile.data(), fileSize))
     {
         return loadFileResult::ERROR_FileReadFailure;
     }
 
-    m_data->resize(s);
+    m_data->resize(fileSize);
 
-    std::copy(rawFile.data(), rawFile.data()+s, m_data->begin());
+    std::copy(rawFile.data(), rawFile.data()+fileSize, m_data->begin());
 
     m_loaded = true;
     Q_ASSERT(Q_NULLPTR != m_fileName.data());
@@ -68,7 +74,7 @@ dataSet::compareResult dataSet::compare(const dataSet& dataSet1, const dataSet& 
     while (it_dataset1 != dataSet1.m_data->end() && it_dataset2 != dataSet2.m_data->end()) {
         if (*it_dataset1 != *it_dataset2){
 
-            byteindex = it_dataset1 - dataSet1.m_data->begin();
+            byteindex = static_cast<unsigned int>( it_dataset1 - dataSet1.m_data->begin() );
 
             if (inDiffSection){
                 Q_ASSERT(0 != diffs.size());

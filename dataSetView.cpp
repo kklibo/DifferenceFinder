@@ -148,8 +148,8 @@ void dataSetView::updateByteGridDimensions(QTextEdit* textEdit)
     if (0 >= byteCount) {return;}
 
 
-    m_bytesPerRow = rowBytes;
-    m_subset.count = byteCount;
+    m_bytesPerRow = static_cast<unsigned int>(rowBytes);
+    m_subset.count = static_cast<unsigned int>(byteCount);
 
 }
 
@@ -181,7 +181,7 @@ bool dataSetView::printByteGrid(QTextEdit* textEdit, QTextEdit* addressColumn)
     Q_CHECK_PTR(theDataSet->getData());
     QVector<unsigned char>& theData = *theDataSet->getData();
 
-    int bytesPrinted = 0;
+    unsigned int bytesPrinted = 0;
     for (unsigned int i = m_subset.start; i < m_subset.end(); i++) {
 
         if (static_cast<int>(i) >= theData.size()) {
@@ -203,10 +203,10 @@ bool dataSetView::printByteGrid(QTextEdit* textEdit, QTextEdit* addressColumn)
         }
 
         //add the next byte
-        if (!(theData[i] & 0xF0)){
+        if (!(theData[static_cast<int>(i)] & 0xF0)){
             displayText += "0"; //add a leading 0 for a most-significant half-byte of zero
         }
-        displayText +=  QString::number(theData[i], 16 ).toUpper() + " ";   //display in hex w/capital letters
+        displayText +=  QString::number(theData[static_cast<int>(i)], 16 ).toUpper() + " ";   //display in hex w/capital letters
 
         ++bytesPrinted;
     }
@@ -231,21 +231,21 @@ bool dataSetView::highlightByteGrid(QTextEdit* textEdit, highlightSet& hSet)
 {
     //highlight/color byte text on the supplied ranges
     QList<QTextEdit::ExtraSelection> selectionList = textEdit->extraSelections();   //get the list of existing selections
-    int rowWidth = m_bytesPerRow*3 + 1;
+    unsigned int rowWidth = m_bytesPerRow*3 + 1;
 
     //text highlighting helper function:
     //get the cursor index of the beginning of a byte's text
-    auto getByteCursorIndex = [=](int byteIndex, bool endOfSelection = false)->int{
-        int index = byteIndex - m_subset.start;     //index in currently displayed byte range
-        int ret = (index/m_bytesPerRow)*rowWidth + 3*(index%m_bytesPerRow);
+    auto getByteCursorIndex = [=](unsigned int byteIndex, bool endOfSelection = false)->int{
+        unsigned int index = byteIndex - m_subset.start;     //index in currently displayed byte range
+        unsigned int ret = (index/m_bytesPerRow)*rowWidth + 3*(index%m_bytesPerRow);
 
         //if this cursor index will be the end of a selection, don't select the newline at the end of a line
         //  (prevents cursor out-of-bounds qt complaint at end of displayed byte range,
         //  and looks nicer with colored backgrounds at the other line ends)
-        if ( endOfSelection && (0 == (index%m_bytesPerRow)) ) {
+        if ( endOfSelection && (0 == (index%m_bytesPerRow)) && ret > 0) {
             ret -= 1;
         }
-        return ret;
+        return static_cast<int>(ret); //return int for QTextCursor::setPosition
     };
 
     //use QTextEdit::ExtraSelections to highlight ranges

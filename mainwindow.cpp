@@ -45,12 +45,12 @@ MainWindow::~MainWindow()
 void MainWindow::doScrollBar(int value)
 {
     if (m_dataSetView1) {
-        m_dataSetView1->setSubsetStart(value);
+        m_dataSetView1->setSubsetStart(static_cast<unsigned int>(value));
         m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
     }
 
     if (m_dataSetView2) {
-        m_dataSetView2->setSubsetStart(value);
+        m_dataSetView2->setSubsetStart(static_cast<unsigned int>(value));
         m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
     }
 }
@@ -235,11 +235,11 @@ void MainWindow::updateScrollBarRange()
     int scrollRange1, scrollRange2 = 0; //default to 0 if not loaded
 
     if (m_dataSet1 && m_dataSetView1) {
-        scrollRange1 = m_dataSet1->getData()->size() - m_dataSetView1->getSubset().count;
+        scrollRange1 = m_dataSet1->getData()->size() - static_cast<int>(m_dataSetView1->getSubset().count);
     }
 
     if (m_dataSet2 && m_dataSetView2) {
-        scrollRange2 = m_dataSet2->getData()->size() - m_dataSetView2->getSubset().count;
+        scrollRange2 = m_dataSet2->getData()->size() - static_cast<int>(m_dataSetView2->getSubset().count);
     }
 
     int scrollBarMax = qMax(scrollRange1, scrollRange2); //choose the max scroll range needed
