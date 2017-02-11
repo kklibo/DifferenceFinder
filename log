@@ -11,3 +11,8 @@ floating popup for debug info
 2 text display areas w/ scroll bar in middle, auto resizing
 completed ~2016.8.19
 
+v0.2 Feature list
+    text log w/ optional popup display (bottom of window) for error/info messages
+    fast full screen text rendering
+    text highlighting
+completed 2017.2.10

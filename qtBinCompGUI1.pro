@@ -32,7 +32,6 @@ FORMS    += mainwindow.ui \
     debugwindow.ui
 
 DISTFILES += \
-    todo \
     log
 
 SUBDIRS += \
