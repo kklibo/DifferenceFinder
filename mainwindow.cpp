@@ -4,7 +4,8 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    m_DebugWindow(new DebugWindow())
+    m_DebugWindow(new DebugWindow()),
+    m_userSettings()
 {
     ui->setupUi(this);
 
@@ -31,6 +32,10 @@ MainWindow::MainWindow(QWidget *parent) :
     //make log area collapsible
     ui->logAreaSplitter->setCollapsible(1,true);
 
+
+    //apply user settings (from defaults in m_userSettings)
+    applyUserSettings();
+
     //set initial width for address column areas
     onHexFieldFontChange();
 
@@ -44,15 +49,26 @@ MainWindow::~MainWindow()
 
 void MainWindow::doScrollBar(int value)
 {
-    if (m_dataSetView1) {
-        m_dataSetView1->setSubsetStart(static_cast<unsigned int>(value));
-        m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
-    }
+    auto doScroll = [value](const QSharedPointer<dataSetView> dsv, QTextEdit* byteGrid, QTextEdit* addressColumn)
+    {
+        if (!dsv) {return;}
 
-    if (m_dataSetView2) {
-        m_dataSetView2->setSubsetStart(static_cast<unsigned int>(value));
-        m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
-    }
+        unsigned int val = value;
+        unsigned int bytesPerRow = dsv->getBytesPerRow();
+
+        if (bytesPerRow) {
+            if (dataSetView::ByteGridScrollingMode::FixedRows == dsv->byteGridScrollingMode) {
+                //apply modulo for fixed row effect
+                val -= val%bytesPerRow;
+            }
+
+            dsv->setSubsetStart(static_cast<unsigned int>(val));
+            dsv->printByteGrid(byteGrid, addressColumn);
+        }
+    };
+
+    doScroll(m_dataSetView1, ui->textEdit_dataSet1, ui->textEdit_address1);
+    doScroll(m_dataSetView2, ui->textEdit_dataSet2, ui->textEdit_address2);
 }
 
 void MainWindow::on_actionShow_Debug_triggered()
@@ -149,6 +165,8 @@ void MainWindow::doLoadFile1(const QString filename)
 
     m_dataSetView1 = QSharedPointer<dataSetView>::create(m_dataSet1);
 
+    applyUserSettings(); //reapply user settings to new dataSetView
+
     if (m_dataSet1->isLoaded() && m_dataSetView1) {
 
         //synchronize displayed data range start indices
@@ -173,6 +191,8 @@ void MainWindow::doLoadFile2(const QString filename)
     }
 
     m_dataSetView2 = QSharedPointer<dataSetView>::create(m_dataSet2);
+
+    applyUserSettings(); //reapply user settings to new dataSetView
 
     if (m_dataSet2->isLoaded() && m_dataSetView2) {
 
@@ -202,9 +222,11 @@ void MainWindow::doCompare()
     hSet.setBackgroundColor(QColor::fromRgb(128,128,0));
 
     m_dataSetView1 = QSharedPointer<dataSetView>::create(m_dataSet1);
+    applyUserSettings(); //reapply user settings to new dataSetView
     m_dataSetView1->addHighlightSet(hSet);
 
     m_dataSetView2 = QSharedPointer<dataSetView>::create(m_dataSet2);
+    applyUserSettings(); //reapply user settings to new dataSetView
     m_dataSetView2->addHighlightSet(hSet);
 
 
@@ -225,6 +247,22 @@ void MainWindow::doCompare()
     connect(m_dataSetView2.data(), &dataSetView::subsetChanged, m_DebugWindow.data(), &DebugWindow::dataSet2RangeChanged);
 }
 
+void MainWindow::applyUserSettings()
+{
+    //applies user settings to a dataSetView
+    auto apply = [this](QSharedPointer<dataSetView> ds){
+        if (ds) {
+            ds->byteGridColumnMode                  = m_userSettings.byteGridColumnMode;
+            ds->byteGridColumn_LargestMultipleOf_N  = m_userSettings.byteGridColumn_LargestMultipleOf_N;
+            ds->byteGridColumn_UpTo_N               = m_userSettings.byteGridColumn_UpTo_N;
+            ds->byteGridScrollingMode               = m_userSettings.byteGridScrollingMode;
+        }
+    };
+
+    apply(m_dataSetView1);
+    apply(m_dataSetView2);
+}
+
 void MainWindow::updateScrollBarRange()
 {
     ui->verticalScrollBar->setMinimum(0);
@@ -232,15 +270,27 @@ void MainWindow::updateScrollBarRange()
     //set scrollbar maximum value (being careful here, in case the two datasets or viewable subsets are different):
     //calculate the scroll range needed to completely show each dataset in its viewable subset
 
-    int scrollRange1, scrollRange2 = 0; //default to 0 if not loaded
+    auto getScrollRange = [](QSharedPointer<dataSet> ds, QSharedPointer<dataSetView> dsv)->int {
+        if (!ds || !dsv) {
+            return 0;   //default to 0 scroll range if not loaded
+        }
 
-    if (m_dataSet1 && m_dataSetView1) {
-        scrollRange1 = m_dataSet1->getData()->size() - static_cast<int>(m_dataSetView1->getSubset().count);
-    }
+        int scrollRange = ds->getData()->size() - static_cast<int>(dsv->getSubset().count);
 
-    if (m_dataSet2 && m_dataSetView2) {
-        scrollRange2 = m_dataSet2->getData()->size() - static_cast<int>(m_dataSetView2->getSubset().count);
-    }
+        if (dataSetView::ByteGridScrollingMode::FixedRows == dsv->byteGridScrollingMode) {
+            unsigned int bytesPerRow = dsv->getBytesPerRow();
+            if (0 == bytesPerRow) {
+                scrollRange = 0;
+            }
+            else if ( scrollRange%bytesPerRow ) {
+                scrollRange += bytesPerRow;
+            }
+        }
+        return scrollRange;
+    };
+
+    int scrollRange1 = getScrollRange(m_dataSet1, m_dataSetView1);
+    int scrollRange2 = getScrollRange(m_dataSet2, m_dataSetView2);
 
     int scrollBarMax = qMax(scrollRange1, scrollRange2); //choose the max scroll range needed
 
@@ -336,4 +386,37 @@ void MainWindow::onHexFieldFontChange()
         updateScrollBarRange();
     }
 
+}
+
+void MainWindow::on_actionSettings_triggered()
+{
+    SettingsDialog sd;
+    sd.setModal(true);
+
+    //initialize dialog with current settings
+    sd.initUserSettings(m_userSettings);
+
+    sd.exec();
+
+    if (QDialog::Accepted == sd.result()) {
+        //if OK was clicked, update current settings
+        m_userSettings = sd.getUserSettings();
+
+        applyUserSettings();
+
+        //refresh data view settings and redraw
+        if (m_dataSetView1) {
+            m_dataSetView1->updateByteGridDimensions(ui->textEdit_dataSet1);
+            m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
+        }
+
+        if (m_dataSetView2) {
+            m_dataSetView2->updateByteGridDimensions(ui->textEdit_dataSet2);
+            m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
+        }
+
+        if (m_dataSetView1 || m_dataSetView2) {
+            updateScrollBarRange();
+        }
+    }
 }

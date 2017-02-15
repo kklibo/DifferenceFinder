@@ -18,6 +18,8 @@
 #include "dataSet.h"
 #include "dataSetView.h"
 #include "debugwindow.h"
+#include "settingsdialog.h"
+#include "usersettings.h"
 
 namespace Ui {
 class MainWindow;
@@ -48,6 +50,8 @@ private slots:
 
     void on_actionTest_highlighting_triggered();
 
+    void on_actionSettings_triggered();
+
 private:
     Ui::MainWindow *ui;
     void doScrollBar(int value);
@@ -56,6 +60,7 @@ private:
     void updateScrollBarRange();
     void resizeHexField1();
     void resizeHexField2();
+    void applyUserSettings();
 
     void closeEvent(QCloseEvent* event) Q_DECL_OVERRIDE;
 
@@ -72,6 +77,7 @@ private:
     void doCompare();
     void displayLogMessage(QString str, QColor color);
 
+    UserSettings m_userSettings;
 
 };
 

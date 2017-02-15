@@ -18,7 +18,9 @@ SOURCES += main.cpp\
     dataSetView.cpp \
     debugwindow.cpp \
     hexfield.cpp \
-    log.cpp
+    log.cpp \
+    settingsdialog.cpp \
+    usersettings.cpp
 
 HEADERS  += mainwindow.h \
     dataSet.h \
@@ -26,10 +28,13 @@ HEADERS  += mainwindow.h \
     debugwindow.h \
     hexfield.h \
     byteRange.h \
-    log.h
+    log.h \
+    settingsdialog.h \
+    usersettings.h
 
 FORMS    += mainwindow.ui \
-    debugwindow.ui
+    debugwindow.ui \
+    settingsdialog.ui
 
 DISTFILES += \
     log

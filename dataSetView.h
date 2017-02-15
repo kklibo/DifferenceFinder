@@ -38,7 +38,29 @@ public:
         QColor m_background;
     };
 
-public:
+    //mode for setting the number of columns in the byte grid
+    enum class ByteGridColumnMode
+    {
+        Fill,                   //fills the window with as many columns as possible (default)
+        LargestMultipleOfN,     //
+        LargestPowerOf2,        //
+        UpToN,                  //as many columns as possible, up to a max of n
+        LargestPowerOf2Extra    //largest ((largest power of 2)*(1 or 1.5)) that will fit
+    };
+
+    ByteGridColumnMode byteGridColumnMode;
+    unsigned int byteGridColumn_LargestMultipleOf_N;
+    unsigned int byteGridColumn_UpTo_N;
+
+    //view range adjustment mode for scrolling
+    enum class ByteGridScrollingMode
+    {
+        FixedRows,      //row start addresses are preserved through scrolling (default)
+        Free            //continuous scrolling, row starts can have any address
+    };
+    ByteGridScrollingMode byteGridScrollingMode;
+
+
     dataSetView(QSharedPointer<dataSet>& theDataSet);
 
     void updateByteGridDimensions(QTextEdit* textEdit);
@@ -54,6 +76,8 @@ public:
 
     void addHighlightSet(const highlightSet& hSet);
 
+    unsigned int getBytesPerRow();
+
 signals:
     void subsetChanged(byteRange subset);
 
@@ -66,5 +90,10 @@ private:
     unsigned int m_bytesPerRow;                 //bytes per row in byte display grid
 
 };
+
+//declare these enums for Qt's meta-object system so they can be stored in QVariants
+//(for convenient labeling of combo box items in the settings dialog)
+Q_DECLARE_METATYPE(dataSetView::ByteGridColumnMode)
+Q_DECLARE_METATYPE(dataSetView::ByteGridScrollingMode)
 
 #endif // DATASETVIEW_H

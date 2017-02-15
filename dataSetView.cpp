@@ -31,12 +31,15 @@ void dataSetView::highlightSet::setBackgroundColor(const QColor &background)
 
 
 dataSetView::dataSetView(QSharedPointer<dataSet>& theDataSet)
-    : m_dataSet(theDataSet),
+    : byteGridColumnMode(ByteGridColumnMode::Fill),
+      byteGridColumn_LargestMultipleOf_N(8),
+      byteGridColumn_UpTo_N(8),
+      byteGridScrollingMode(ByteGridScrollingMode::FixedRows),
+      m_dataSet(theDataSet),
       m_highlightSets(),
       m_subset(),
       m_bytesPerRow(0)
 {
-
 }
 
 byteRange dataSetView::getSubset() const
@@ -64,6 +67,11 @@ void dataSetView::setSubsetStart(unsigned int start)
 void dataSetView::addHighlightSet(const highlightSet& hSet)
 {
     m_highlightSets.append(hSet);
+}
+
+unsigned int dataSetView::getBytesPerRow()
+{
+    return m_bytesPerRow;
 }
 
 void dataSetView::updateByteGridDimensions(QTextEdit* textEdit)
@@ -95,7 +103,7 @@ void dataSetView::updateByteGridDimensions(QTextEdit* textEdit)
 
 
     //calculate visible bytes per row
-    int rowBytes = areaWidth_px/byteWidth_px;
+    unsigned int rowBytes = areaWidth_px/byteWidth_px;
 
     //Decrease bytes per row if it won't fit in the draw area:
     //  this can happen because the single byte string width is slightly underreported
@@ -103,7 +111,7 @@ void dataSetView::updateByteGridDimensions(QTextEdit* textEdit)
     //
     //assemble a test string as long as a full row of bytes (again, assuming MONOSPACE FONTS)
     QString fullRow;
-    for (int i = 0; i < rowBytes; ++i) {
+    for (unsigned int i = 0; i < rowBytes; ++i) {
         fullRow += "00 ";
     }
     //
@@ -117,6 +125,64 @@ void dataSetView::updateByteGridDimensions(QTextEdit* textEdit)
         --rowBytes;
     }
     //
+
+    if (0 >= rowBytes) {return;}
+
+    //reduce bytes per row, if necessary, to implement ByteGridColumnMode
+    switch (byteGridColumnMode)
+    {
+        case ByteGridColumnMode::Fill:
+            //already filled to the limit, do nothing
+            break;
+
+        case ByteGridColumnMode::LargestMultipleOfN:
+            if(byteGridColumn_LargestMultipleOf_N){
+                rowBytes -= rowBytes%byteGridColumn_LargestMultipleOf_N;
+            } else {
+                LOG.Error("invalid byteGridColumn_LargestMultipleOf_N value");
+            }
+
+            if (0 == rowBytes) {
+                LOG.Error("byteGridColumn_LargestMultipleOf_N value is greater than window width");
+            }
+
+            break;
+
+        case ByteGridColumnMode::UpToN:
+            if(rowBytes > byteGridColumn_UpTo_N) {
+                rowBytes = byteGridColumn_UpTo_N;
+            }
+            break;
+
+        case ByteGridColumnMode::LargestPowerOf2:
+            {
+                unsigned int val = 1;
+                while (val*2 < rowBytes) {
+                    val *= 2;
+                }
+                rowBytes = val;
+            }
+            break;
+
+        case ByteGridColumnMode::LargestPowerOf2Extra:
+            {
+                unsigned int val = 1;
+                while (val*2 < rowBytes) {
+                    val *= 2;
+                }
+
+                //add an extra half width if it fits
+                unsigned int withExtra = val + val/2;
+                if (withExtra < rowBytes) {
+                    val = withExtra;
+                }
+                rowBytes = val;
+            }
+            break;
+
+        default:    //this should never happen
+            LOG.Error("unhandled ByteGridColumnMode value");
+    }
 
     if (0 >= rowBytes) {return;}
 
