@@ -297,6 +297,25 @@ void MainWindow::updateScrollBarRange()
     //ensure scrollbar maximum value is at least zero
     // to prevent bug when data size < view subset count (max could go negative)
     ui->verticalScrollBar->setMaximum(qMax(0, scrollBarMax));
+
+
+    //set the scrollbar singleStep value to an entire row if both views are in FixedRows mode.
+    //  this way, one click on the up or down button will scroll an entire row,
+    //  instead of possibly having no visible effect until subsequent clicks add up to an entire row
+    unsigned int scrollStep;
+    if( m_dataSetView1 && m_dataSetView2
+        && m_dataSetView1->byteGridScrollingMode == dataSetView::ByteGridScrollingMode::FixedRows
+        && m_dataSetView2->byteGridScrollingMode == dataSetView::ByteGridScrollingMode::FixedRows )
+    {
+        //if the byte grids have different row sizes, pick the smaller one so click-scrolling won't skip data
+        scrollStep = qMin(  m_dataSetView1->getBytesPerRow(),
+                            m_dataSetView2->getBytesPerRow());
+    } else {
+
+        scrollStep = 1; //at least one view isn't in FixedRows mode, set scroll singleStep to 1 (byte)
+    }
+    ui->verticalScrollBar->setSingleStep(scrollStep);
+
 }
 
 void MainWindow::displayLogMessage(QString str, QColor color)
