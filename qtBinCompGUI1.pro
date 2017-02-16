@@ -30,7 +30,8 @@ HEADERS  += mainwindow.h \
     byteRange.h \
     log.h \
     settingsdialog.h \
-    usersettings.h
+    usersettings.h \
+    defensivecoding.h
 
 FORMS    += mainwindow.ui \
     debugwindow.ui \

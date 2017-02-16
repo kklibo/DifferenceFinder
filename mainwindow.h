@@ -20,6 +20,7 @@
 #include "debugwindow.h"
 #include "settingsdialog.h"
 #include "usersettings.h"
+#include "defensivecoding.h"
 
 namespace Ui {
 class MainWindow;

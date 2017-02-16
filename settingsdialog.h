@@ -5,6 +5,7 @@
 #include <QComboBox>
 
 #include "usersettings.h"
+#include "defensivecoding.h"
 
 namespace Ui {
 class SettingsDialog;

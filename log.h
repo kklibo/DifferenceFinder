@@ -16,6 +16,7 @@ public:
     void Warning(QString str);
     void Error(QString str);
     void Debug(QString str);
+    void Defensive(QString str);
 
     void sendMessage(QString str = "", QColor color = QColor(0,0,0), bool timestamp = true);
 

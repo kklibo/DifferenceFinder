@@ -70,7 +70,7 @@ UserSettings SettingsDialog::getUserSettings()
     return m_userSettings;
 }
 
-void SettingsDialog::on_CB_ColumnCount_currentTextChanged(const QString &arg1)
+void SettingsDialog::on_CB_ColumnCount_currentTextChanged(const QString &/*arg1*/)
 {
     //get the enum data we stored in the combo box item
     dataSetView::ByteGridColumnMode byteGridColumnMode;
@@ -81,12 +81,14 @@ void SettingsDialog::on_CB_ColumnCount_currentTextChanged(const QString &arg1)
     //set the multi-mode text entry Spin Box for the current column setting
     if (byteGridColumnMode == dataSetView::ByteGridColumnMode::LargestMultipleOfN) {
         ui->SB_ColumnCountN->setEnabled(true);
-        ui->SB_ColumnCountN->setValue(m_userSettings.byteGridColumn_LargestMultipleOf_N);
+        ASSERT_LE_INT_MAX(m_userSettings.byteGridColumn_LargestMultipleOf_N);
+        ui->SB_ColumnCountN->setValue(static_cast<int>(m_userSettings.byteGridColumn_LargestMultipleOf_N));
         ui->SB_ColumnCountN->setMinimum(1);
     } else
     if (byteGridColumnMode == dataSetView::ByteGridColumnMode::UpToN) {
         ui->SB_ColumnCountN->setEnabled(true);
-        ui->SB_ColumnCountN->setValue(m_userSettings.byteGridColumn_UpTo_N);
+        ASSERT_LE_INT_MAX(m_userSettings.byteGridColumn_UpTo_N);
+        ui->SB_ColumnCountN->setValue(static_cast<int>(m_userSettings.byteGridColumn_UpTo_N));
         ui->SB_ColumnCountN->setMinimum(1);
     } else {
         ui->SB_ColumnCountN->setEnabled(false);
@@ -105,9 +107,13 @@ void SettingsDialog::on_SB_ColumnCountN_editingFinished()
     //apply the value of the multi-mode Spin Box to the current column setting, if applicable
     QString arg1 = ui->CB_ColumnCount->currentText();
     if (selected == dataSetView::ByteGridColumnMode::LargestMultipleOfN) {
-        m_userSettings.byteGridColumn_LargestMultipleOf_N = ui->SB_ColumnCountN->value();
+        int val = ui->SB_ColumnCountN->value();
+        ASSERT(1 <= val);
+        m_userSettings.byteGridColumn_LargestMultipleOf_N = static_cast<unsigned int>(val);
     } else
     if (selected == dataSetView::ByteGridColumnMode::UpToN) {
-        m_userSettings.byteGridColumn_UpTo_N = ui->SB_ColumnCountN->value();
+        int val = ui->SB_ColumnCountN->value();
+        ASSERT(1 <= val);
+        m_userSettings.byteGridColumn_UpTo_N = static_cast<unsigned int>(val);
     }
 }

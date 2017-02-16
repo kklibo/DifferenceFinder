@@ -10,6 +10,7 @@
 
 #include "dataSet.h"
 #include "byteRange.h"
+#include "defensivecoding.h"
 
 /*
     displays a dataSet in the QT interface

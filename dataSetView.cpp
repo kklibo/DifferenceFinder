@@ -103,7 +103,12 @@ void dataSetView::updateByteGridDimensions(QTextEdit* textEdit)
 
 
     //calculate visible bytes per row
-    unsigned int rowBytes = areaWidth_px/byteWidth_px;
+    unsigned int rowBytes;
+    {
+        int val = areaWidth_px/byteWidth_px;
+        ASSERT_NOT_NEGATIVE(val);
+        rowBytes = static_cast<unsigned int>(val);
+    }
 
     //Decrease bytes per row if it won't fit in the draw area:
     //  this can happen because the single byte string width is slightly underreported
@@ -209,13 +214,14 @@ void dataSetView::updateByteGridDimensions(QTextEdit* textEdit)
     if (0 >= areaHeight_px) {return;}
 
     int rowCount = areaHeight_px/rowHeight_px;
-    int byteCount = rowCount * rowBytes;
+    ASSERT_NOT_NEGATIVE(rowCount);
+    unsigned int byteCount = static_cast<unsigned int>(rowCount) * rowBytes;
 
     if (0 >= byteCount) {return;}
 
 
-    m_bytesPerRow = static_cast<unsigned int>(rowBytes);
-    m_subset.count = static_cast<unsigned int>(byteCount);
+    m_bytesPerRow = rowBytes;
+    m_subset.count = byteCount;
 
 }
 

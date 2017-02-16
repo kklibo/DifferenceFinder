@@ -22,6 +22,11 @@ void Log::Debug(QString str)
     sendMessage(str, QColor(128,32,128));
 }
 
+void Log::Defensive(QString str)
+{
+    sendMessage(str, QColor(64,192,64));
+}
+
 void Log::sendMessage(QString str, QColor color, bool timestamp)
 {
     QString outStr;
