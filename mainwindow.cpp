@@ -437,5 +437,8 @@ void MainWindow::on_actionSettings_triggered()
         if (m_dataSetView1 || m_dataSetView2) {
             updateScrollBarRange();
         }
+
+        //fire scrollbar handler (to update row alignment after a scroll settings change)
+        doScrollBar(ui->verticalScrollBar->value());
     }
 }
