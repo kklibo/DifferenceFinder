@@ -9,6 +9,7 @@
 
 #include "log.h"
 #include "byteRange.h"
+#include "defensivecoding.h"
 
 /*
     Represents the contents of a loaded file as a set of bytes

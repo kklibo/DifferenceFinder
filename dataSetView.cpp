@@ -254,6 +254,7 @@ bool dataSetView::printByteGrid(QTextEdit* textEdit, QTextEdit* addressColumn)
     QVector<unsigned char>& theData = *theDataSet->getData();
 
     unsigned int bytesPrinted = 0;
+    ASSERT_LE_INT_MAX(m_subset.end());  //ensure static_cast<int>(i) in loop is safe
     for (unsigned int i = m_subset.start; i < m_subset.end(); i++) {
 
         if (static_cast<int>(i) >= theData.size()) {
@@ -317,6 +318,7 @@ bool dataSetView::highlightByteGrid(QTextEdit* textEdit, highlightSet& hSet)
         if ( endOfSelection && (0 == (index%m_bytesPerRow)) && ret > 0) {
             ret -= 1;
         }
+        ASSERT_LE_INT_MAX(ret);
         return static_cast<int>(ret); //return int for QTextCursor::setPosition
     };
 

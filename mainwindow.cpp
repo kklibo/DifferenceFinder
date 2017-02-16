@@ -63,7 +63,7 @@ void MainWindow::doScrollBar(int value)
                 val -= val%bytesPerRow;
             }
 
-            dsv->setSubsetStart(static_cast<unsigned int>(val));
+            dsv->setSubsetStart(val);
             dsv->printByteGrid(byteGrid, addressColumn);
         }
     };
@@ -276,9 +276,11 @@ void MainWindow::updateScrollBarRange()
             return 0;   //default to 0 scroll range if not loaded
         }
 
+        ASSERT_LE_INT_MAX(dsv->getSubset().count);
         int scrollRange = ds->getData()->size() - static_cast<int>(dsv->getSubset().count);
 
         if (dataSetView::ByteGridScrollingMode::FixedRows == dsv->byteGridScrollingMode) {
+            ASSERT_LE_INT_MAX(dsv->getBytesPerRow());
             int bytesPerRow = static_cast<int>(dsv->getBytesPerRow());
             if (0 == bytesPerRow) {
                 scrollRange = 0;
@@ -315,6 +317,7 @@ void MainWindow::updateScrollBarRange()
 
         scrollStep = 1; //at least one view isn't in FixedRows mode, set scroll singleStep to 1 (byte)
     }
+    ASSERT_LE_INT_MAX(scrollStep);
     ui->verticalScrollBar->setSingleStep(static_cast<int>(scrollStep));
 
 }

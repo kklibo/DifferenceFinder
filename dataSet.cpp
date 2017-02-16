@@ -74,7 +74,13 @@ dataSet::compareResult dataSet::compare(const dataSet& dataSet1, const dataSet& 
     while (it_dataset1 != dataSet1.m_data->end() && it_dataset2 != dataSet2.m_data->end()) {
         if (*it_dataset1 != *it_dataset2){
 
-            byteindex = static_cast<unsigned int>( it_dataset1 - dataSet1.m_data->begin() );
+            {
+                //get the byte index (from iterator difference)
+                long val = it_dataset1 - dataSet1.m_data->begin();
+                ASSERT_NOT_NEGATIVE(val);
+                ASSERT(val <= UINT_MAX);
+                byteindex = static_cast<unsigned int>(val);
+            }
 
             if (inDiffSection){
                 Q_ASSERT(0 != diffs.size());
