@@ -21,6 +21,7 @@
 #include "settingsdialog.h"
 #include "usersettings.h"
 #include "defensivecoding.h"
+#include "comparison.h"
 
 namespace Ui {
 class MainWindow;
@@ -52,6 +53,8 @@ private slots:
     void on_actionTest_highlighting_triggered();
 
     void on_actionSettings_triggered();
+
+    void on_actionTest_Compare1_triggered();
 
 private:
     Ui::MainWindow *ui;

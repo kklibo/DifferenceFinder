@@ -20,7 +20,9 @@ SOURCES += main.cpp\
     hexfield.cpp \
     log.cpp \
     settingsdialog.cpp \
-    usersettings.cpp
+    usersettings.cpp \
+    comparison.cpp \
+    rollinghashcpp/mersennetwister.cpp
 
 HEADERS  += mainwindow.h \
     dataSet.h \
@@ -31,7 +33,15 @@ HEADERS  += mainwindow.h \
     log.h \
     settingsdialog.h \
     usersettings.h \
-    defensivecoding.h
+    defensivecoding.h \
+    comparison.h \
+    rollinghashcpp/characterhash.h \
+    rollinghashcpp/cyclichash.h \
+    rollinghashcpp/generalhash.h \
+    rollinghashcpp/mersennetwister.h \
+    rollinghashcpp/rabinkarphash.h \
+    rollinghashcpp/threewisehash.h \
+    rollinghashcpp/ztimer.h
 
 FORMS    += mainwindow.ui \
     debugwindow.ui \
@@ -41,4 +51,5 @@ DISTFILES += \
     log
 
 SUBDIRS += \
+    qtBinCompGUI1_Test.pro \
     qtBinCompGUI1_Test.pro

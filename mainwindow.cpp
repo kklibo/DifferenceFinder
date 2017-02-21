@@ -446,3 +446,8 @@ void MainWindow::on_actionSettings_triggered()
         doScrollBar(ui->verticalScrollBar->value());
     }
 }
+
+void MainWindow::on_actionTest_Compare1_triggered()
+{
+    comparison::rollingHashTest();
+}
