@@ -450,4 +450,102 @@ void MainWindow::on_actionSettings_triggered()
 void MainWindow::on_actionTest_Compare1_triggered()
 {
     comparison::rollingHashTest();
+    comparison C;
+    C.rollingHashTest2();
+/*
+    if (!m_dataSet1->getData() || !m_dataSet2->getData()) {
+        return;
+    }
+
+    std::vector<unsigned char> dS1 = m_dataSet1->getData()->toStdVector();
+    std::vector<unsigned char> dS2 = m_dataSet2->getData()->toStdVector();
+
+    for (unsigned int i = 0; i <= qMin(dS1.size(), dS2.size()); ++i) {
+
+        QString res;
+        if (C.blockHashMatchExists(i, dS1, dS2)) {
+            res = "yes";
+        }
+        else {
+            res = "no";
+        }
+        LOG.Debug(QString("%1: %2").arg(i).arg(res));
+    }
+
+    return;*/
+
+    //std::vector<unsigned char> test1 = {0,1,2,3,4,5,6,7,8,9};
+    auto ranges = QSharedPointer<QVector<byteRange>>::create();
+
+    auto test1 = [&C, &ranges](QSharedPointer<dataSet> dS){
+        if(!dS){return;}
+
+        std::vector<unsigned char> test1 = dS->getData()->toStdVector();
+
+        for (int i = 0; i < 1; i++) {
+
+            auto res = C.getRollingHashValues(test1);
+            LOG.Debug(QString("rollingHashTest- data size: %1").arg(test1.size()));
+            for (auto& v : *res.get()) {
+                QString s = QString("0x%1").arg(v,8,16,QChar('0'));
+                LOG.Debug(s);
+
+               // ranges.data()->append(byteRange(v-4,1));
+
+            }
+
+        }
+    };
+
+    test1(m_dataSet1);
+    test1(m_dataSet2);
+/*
+    if (m_dataSetView1) {
+
+        {
+            //auto ranges = QSharedPointer<QVector<byteRange>>::create();
+            //ranges.data()->append(byteRange(40,10));
+            dataSetView::highlightSet hSet(ranges);
+            hSet.setForegroundColor(QColor::fromRgb(128,0,0));
+            hSet.setBackgroundColor(QColor::fromRgb(0,128,128));
+
+            m_dataSetView1->addHighlightSet(hSet);
+        }
+
+
+
+        m_dataSetView1->updateByteGridDimensions(ui->textEdit_dataSet1);
+        m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
+
+    }
+*/
+}
+
+void MainWindow::on_actionTest_Compare2_triggered()
+{
+    doLoadFile1("tinytest1");
+    doLoadFile2("tinytest2");
+
+    //comparison::rollingHashTest();
+    comparison C;
+    //C.rollingHashTest2();
+
+    if (!m_dataSet1->getData() || !m_dataSet2->getData()) {
+        return;
+    }
+
+    std::vector<unsigned char> dS1 = m_dataSet1->getData()->toStdVector();
+    std::vector<unsigned char> dS2 = m_dataSet2->getData()->toStdVector();
+
+    for (unsigned int i = 0; i <= qMin(dS1.size(), dS2.size()); ++i) {
+
+        QString res;
+        if (C.blockMatchExists(i, dS1, dS2)) {
+            res = "yes";
+        }
+        else {
+            res = "no";
+        }
+        LOG.Debug(QString("%1: %2").arg(i).arg(res));
+    }
 }

@@ -56,6 +56,8 @@ private slots:
 
     void on_actionTest_Compare1_triggered();
 
+    void on_actionTest_Compare2_triggered();
+
 private:
     Ui::MainWindow *ui;
     void doScrollBar(int value);
