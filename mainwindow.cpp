@@ -523,8 +523,8 @@ void MainWindow::on_actionTest_Compare1_triggered()
 
 void MainWindow::on_actionTest_Compare2_triggered()
 {
-    doLoadFile1("tinytest1");
-    doLoadFile2("tinytest2");
+    doLoadFile1("smalltest1");
+    doLoadFile2("smalltest2");
 
     //comparison::rollingHashTest();
     comparison C;
@@ -536,11 +536,11 @@ void MainWindow::on_actionTest_Compare2_triggered()
 
     std::vector<unsigned char> dS1 = m_dataSet1->getData()->toStdVector();
     std::vector<unsigned char> dS2 = m_dataSet2->getData()->toStdVector();
-
+/*
     for (unsigned int i = 0; i <= qMin(dS1.size(), dS2.size()); ++i) {
 
         QString res;
-        if (C.blockMatchExists(i, dS1, dS2)) {
+        if (C.blockMatchSearch(i, dS1, dS2)) {
             res = "yes";
         }
         else {
@@ -548,4 +548,30 @@ void MainWindow::on_actionTest_Compare2_triggered()
         }
         LOG.Debug(QString("%1: %2").arg(i).arg(res));
     }
+  */
+    {
+        std::multiset<blockMatchSet> allMatches;
+        C.blockMatchSearch(1, dS1, dS2, &allMatches);
+        LOG.Debug("!");
+    }
+}
+
+void MainWindow::on_actionTest_Compare3_triggered()
+{
+    doLoadFile1("tinytest1");
+    doLoadFile2("tinytest3");
+
+    comparison C;
+
+    if (!m_dataSet1->getData() || !m_dataSet2->getData()) {
+        return;
+    }
+
+    std::vector<unsigned char> dS1 = m_dataSet1->getData()->toStdVector();
+    std::vector<unsigned char> dS2 = m_dataSet2->getData()->toStdVector();
+
+
+    unsigned int largest = C.findLargestMatchingBlock(dS1, dS2);
+    LOG.Debug(QString("Largest Matching Block Size: %1").arg(largest));
+
 }

@@ -22,7 +22,8 @@ SOURCES += main.cpp\
     settingsdialog.cpp \
     usersettings.cpp \
     comparison.cpp \
-    rollinghashcpp/mersennetwister.cpp
+    rollinghashcpp/mersennetwister.cpp \
+    blockmatchset.cpp
 
 HEADERS  += mainwindow.h \
     dataSet.h \
@@ -41,7 +42,8 @@ HEADERS  += mainwindow.h \
     rollinghashcpp/mersennetwister.h \
     rollinghashcpp/rabinkarphash.h \
     rollinghashcpp/threewisehash.h \
-    rollinghashcpp/ztimer.h
+    rollinghashcpp/ztimer.h \
+    blockmatchset.h
 
 FORMS    += mainwindow.ui \
     debugwindow.ui \

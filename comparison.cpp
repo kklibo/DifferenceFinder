@@ -60,24 +60,20 @@ unique_ptr<std::vector<unsigned int>> comparison::getRollingHashValues(std::vect
 unsigned int comparison::findLargestMatchingBlock(std::vector<unsigned char>& data1, std::vector<unsigned char>& data2)
 {
 /*
-    This returns the size (in bytes) of the largest contiguous block of bytes in data1 and data2
+    This returns the size (in bytes) of the largest contiguous block(s) of bytes in data1 and data2
 
     for current n: calculate rolling hash values across data1 and data2
         if there are no matches, decrease n
         if there are matches, increase n
-        increase/decrease for binary search
+        increase/decrease amounts are set for binary search
 
-        when largest hash match is reached, confirm match with byte comparison
-            if it isn't actually a match, reset lower bound to 0 and start new binary search
 */
 
     //the upper bound in the search (inclusive)
-    //  this never increases, because different hashes always imply different data
     //  initial value is the minimum of the 2 data sets' sizes (the largest possible matching block size)
     unsigned int upperBound = std::min(data1.size(), data2.size());
 
     //the lower bound in the search (inclusive)
-    //  this could decrease, because a hash match could be caused by a collision
     //  initial value is zero (the data sets might have no bytes in common)
     unsigned int lowerBound = 0;
 
@@ -88,43 +84,51 @@ unsigned int comparison::findLargestMatchingBlock(std::vector<unsigned char>& da
             return 0;
         }
 
-        if (upperBound != lowerBound)   //still searching
-        {
-            //current n-gram length
-            unsigned int n = (upperBound+lowerBound+1)/2;  //average the current search bounds, rounding up
-            //(rounding up prevents infinite loop from unchanging n when upper and lower bounds are 1 apart)
+        //current block size
+        unsigned int blockSize = (upperBound+lowerBound+1)/2;  //average the current search bounds, rounding up
+        //(rounding up prevents infinite loop from unchanging blockSize when upper and lower bounds are 1 apart)
 
-            if (blockHashMatchExists(n, data1, data2)) {
-                //there's a match at this length, move the lower bound up to it
-                lowerBound = n;
-            }
-            else {
-                //there's no match at this length, move the upper bound down below it
-                upperBound = n - 1;
+        bool result;
+        if (blockSize == upperBound){
+            //we are about to check the largest remaining possible block size:
+            //if any are found, they are the largest matching blocks between data1 and data2
+
+            result = blockMatchSearch(blockSize, data1, data2);
+
+            if (result) {
+                return blockSize;
             }
 
         }
-        else    //hash-based search has resolved a possible match
+        else
         {
-            //test actual block content, not just hashes
-            if (blockMatchExists(upperBound, data1, data2)) {
-                //the content matches, and all longer hashes had no matches, we're done
-                return upperBound;
-            }
-            else {
-                //hash match was due to a hash collision, not a content match:
-                //  restart the search below this
-                upperBound -= 1;
-                lowerBound = 0;
-            }
+            result = blockMatchSearch(blockSize, data1, data2);
+        }
 
+        if (result) {
+            //there's a match at this length, move the lower bound up to it
+            lowerBound = blockSize;
+        }
+        else {
+            //there's no match at this length, move the upper bound down below it
+            upperBound = blockSize - 1;
         }
 
     }
 
 }
 
-bool comparison::blockMatchSearch(unsigned int blockLength, std::vector<unsigned char>& data1, std::vector<unsigned char>& data2, bool justCompareHashes)
+/*
+search for matching blocks between these data sets
+
+if allMatches is nullptr, results won't being returned, so
+ the function will return true as soon as any block match between the 2 sets is found
+
+*/
+bool comparison::blockMatchSearch(  unsigned int blockLength,
+                        std::vector<unsigned char>& data1,
+                        std::vector<unsigned char>& data2,
+                        std::multiset<blockMatchSet>* allMatches /*= nullptr*/ )
 {
     if (0 == blockLength) {
         return false;
@@ -154,15 +158,17 @@ bool comparison::blockMatchSearch(unsigned int blockLength, std::vector<unsigned
 
 
     //quickly searchable storage
-    std::set<HashIndexPair> hashes2;
+    std::multiset<HashIndexPair> hashes2;
 
 
     auto addToHashes1 = [&hashes1](unsigned int hashValue, unsigned int){
          hashes1.push_back(hashValue);
+        std::cout << "h1 " << std::hex << hashValue << std::endl;
     };
 
     auto addToHashes2 = [&hashes2](unsigned int hashValue, unsigned int index){
          hashes2.insert(HashIndexPair(hashValue, index));
+        std::cout << "h2 " << std::hex << hashValue << std::endl;
     };
 
     auto getAllHashes = [this, blockLength](std::vector<unsigned char>& data, std::function<void(unsigned int, unsigned int)>storeHashValue)
@@ -187,7 +193,8 @@ bool comparison::blockMatchSearch(unsigned int blockLength, std::vector<unsigned
         }
     };
 
-    auto blocksAreBytewiseEqual = [&blockLength, &data1, &data2](unsigned int block1StartIndex, unsigned int block2StartIndex) -> bool
+    auto blocksAreBytewiseEqual = [&blockLength](unsigned int block1StartIndex, std::vector<unsigned char>& data1,
+                                                 unsigned int block2StartIndex, std::vector<unsigned char>& data2) -> bool
     {
         for (unsigned int i = 0; i < blockLength; ++i) {
             if (    data1[block1StartIndex + i]
@@ -204,40 +211,106 @@ bool comparison::blockMatchSearch(unsigned int blockLength, std::vector<unsigned
   //  std::cout << std::endl << "=== blockLength " << blockLength << " === data2 ===" << std::endl;
     getAllHashes(data2, addToHashes2);
 
+    //loop through all the hashes of blocks from data set 1
     for (unsigned int hashIndex = 0; hashIndex < hashes1.size(); ++hashIndex) {
-        auto& hashValue = hashes1[hashIndex];
+        auto& data1BlockHash = hashes1[hashIndex];
 
-        auto matchRange = hashes2.equal_range(HashIndexPair(hashValue,0));
+        //if allMatches exists, we're returning results instead of a quick bool return
+        if (allMatches) {
+            //check if the byte content from this data set 1 block is already in a blockMatchSet
+            // if so, add it to that blockMatchSet (its matches in data set 2, if any, are already there)
+            //this prevents blockMatchSets from being created for byte content that is already represented by a blockMatchSet
+//std::multiset<blockMatchSet> test;
+//auto matchRange2 = test.equal_range(blockMatchSet(data1BlockHash,blockLength));
 
-        for (auto iter = matchRange.first; iter != hashes2.end() && iter != matchRange.second; ++iter ) {
+            auto matchRange = allMatches->equal_range(blockMatchSet(data1BlockHash,0,0,0));
+//std::pair<std::multiset<blockMatchSet>::iterator, std::multiset<blockMatchSet>::iterator> matchRange = allMatches->equal_range(blockMatchSet(data1BlockHash,blockLength));
 
-            if (justCompareHashes) {
-                return true;
-            }
-            else {
+            //iterate through them and make sure they actually match (i.e., not a hash collision)
+            bool data1BlockAlreadyMatched = false;
+            auto iter = matchRange.first;
+            for ( ; iter != matchRange.second; ++iter ) {
+//for (std::multiset<blockMatchSet>::iterator iter = matchRange.first; iter != matchRange.second; ++iter ) {
+
                 unsigned int block1StartIndex = hashIndex;
-                unsigned int block2StartIndex = iter->index;
-                if (blocksAreBytewiseEqual(block1StartIndex, block2StartIndex)){
-                    return true;
+/*check this*/  unsigned int block2StartIndex = iter->data1_BlockStartIndices[0];
+
+                //   (data1 is correct, we are comparing 2 blocks in the first set)   *****
+                if (blocksAreBytewiseEqual(block1StartIndex, data1, block2StartIndex, data1)){
+                //                                                                    *****
+                    //match found, add this block to the matching blockMatchSet
+
+                    //why is breaking const ok here?:
+                    //const-ness of std::multiset elements preserves the sorted-ness of the container
+                    //  changes are to be done by removing the element and reinserting a new one,
+                    //  so it is sorted into the right place for its new contents
+                    //(if there's another reason, this may not be ok)
+                    //blockMatchSet's < operator only uses its hash value, so changing other members shouldn't break sorted-ness
+/*switch to auto?*/ std::vector<unsigned int>* tmp = const_cast<std::vector<unsigned int>*>(&iter->data1_BlockStartIndices);
+                    tmp->emplace_back(block1StartIndex);
+
+                    //we found a match and stored this block in it, stop searching
+                    data1BlockAlreadyMatched = true;
+                    break;
                 }
+            }
+
+            //if the iterator isn't at the end of matchRange, the current block has been assigned to a pre-existing blockMatchSet
+            //skip to the next block from data set 1
+            if (iter != matchRange.second) {
+                std::cout << "continue" << std::endl;
+                continue;
+            }
+        }
+
+        //get all the blocks in data set 2 with hashes equal to the current data set 1 block
+        auto matchRange = hashes2.equal_range(HashIndexPair(data1BlockHash,0));
+
+        //iterate through them and make sure they actually match (i.e., not a hash collision)
+        for (auto iter = matchRange.first; iter != matchRange.second; ++iter ) {
+
+            unsigned int block1StartIndex = hashIndex;
+            unsigned int block2StartIndex = iter->index;
+            if (blocksAreBytewiseEqual(block1StartIndex, data1, block2StartIndex, data2)){
+                //match found
+                if(!allMatches) {
+                    return true;    //no output storage provided by caller, just return the result
+                }
+
+                //add this block to a blockMatchSet
+/*possibly deduplicate code?, replace blank blockMatchSet construction method?*/
+                auto matchRange2 = allMatches->equal_range(blockMatchSet(data1BlockHash,0,0,0));
+
+                //iterate through them and make sure they actually match (i.e., not a hash collision)
+                unsigned int index1 = hashIndex;
+                unsigned int index2 = block2StartIndex;
+                auto iter2 = matchRange2.first;
+                for ( ; iter2 != matchRange2.second; ++iter2 ) {
+
+                    if (blocksAreBytewiseEqual(index1, data1, index2, data2)){
+
+                        // ***
+    /*switch to auto?*/ std::vector<unsigned int>* tmp = const_cast<std::vector<unsigned int>*>(&iter2->data2_BlockStartIndices);
+                        tmp->emplace_back(block2StartIndex);
+
+                        //we found a match and stored this block in it, stop searching
+                        break;
+                    }
+
+                }
+
+                //if the iterator is at the end of matchRange2, the byte contents of this block aren't already in a blockMatchSet
+                if (iter2 == matchRange2.second) {
+                    //make a new blockMatchSet
+                    allMatches->emplace(data1BlockHash, blockLength, index1, index2);
+                }
+
             }
         }
     }
 
     return false;
 }
-
-bool comparison::blockHashMatchExists(unsigned int blockLength, std::vector<unsigned char>& data1, std::vector<unsigned char>& data2)
-{
-    return blockMatchSearch(blockLength, data1, data2, true);
-}
-
-bool comparison::blockMatchExists(unsigned int blockLength, std::vector<unsigned char>& data1, std::vector<unsigned char>& data2)
-{
-    return blockMatchSearch(blockLength, data1, data2, false);
-}
-
-
 
 void comparison::rollingHashTest2()
 {

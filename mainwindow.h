@@ -23,6 +23,8 @@
 #include "defensivecoding.h"
 #include "comparison.h"
 
+#include <set>
+
 namespace Ui {
 class MainWindow;
 }
@@ -57,6 +59,8 @@ private slots:
     void on_actionTest_Compare1_triggered();
 
     void on_actionTest_Compare2_triggered();
+
+    void on_actionTest_Compare3_triggered();
 
 private:
     Ui::MainWindow *ui;

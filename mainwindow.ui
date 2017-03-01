@@ -243,6 +243,7 @@
     <addaction name="actionTest_highlighting"/>
     <addaction name="actionTest_Compare1"/>
     <addaction name="actionTest_Compare2"/>
+    <addaction name="actionTest_Compare3"/>
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
@@ -298,6 +299,11 @@
   <action name="actionTest_Compare2">
    <property name="text">
     <string>Test Compare2</string>
+   </property>
+  </action>
+  <action name="actionTest_Compare3">
+   <property name="text">
+    <string>Test Compare3</string>
    </property>
   </action>
  </widget>
