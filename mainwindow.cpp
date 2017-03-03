@@ -536,7 +536,7 @@ void MainWindow::on_actionTest_Compare2_triggered()
 
     std::vector<unsigned char> dS1 = m_dataSet1->getData()->toStdVector();
     std::vector<unsigned char> dS2 = m_dataSet2->getData()->toStdVector();
-/*
+
     for (unsigned int i = 0; i <= qMin(dS1.size(), dS2.size()); ++i) {
 
         QString res;
@@ -548,10 +548,10 @@ void MainWindow::on_actionTest_Compare2_triggered()
         }
         LOG.Debug(QString("%1: %2").arg(i).arg(res));
     }
-  */
+
     {
         std::multiset<blockMatchSet> allMatches;
-        C.blockMatchSearch(1, dS1, dS2, &allMatches);
+        C.blockMatchSearch(3, dS1, dS2, &allMatches);
         LOG.Debug("!");
     }
 }

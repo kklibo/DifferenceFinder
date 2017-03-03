@@ -155,9 +155,8 @@ bool comparison::blockMatchSearch(  unsigned int blockLength,
         }
     };
 
-
-
     //quickly searchable storage
+    //(not a vector, so we need to record the index in a HashIndexPair)
     std::multiset<HashIndexPair> hashes2;
 
 
@@ -193,8 +192,8 @@ bool comparison::blockMatchSearch(  unsigned int blockLength,
         }
     };
 
-    auto blocksAreBytewiseEqual = [&blockLength](unsigned int block1StartIndex, std::vector<unsigned char>& data1,
-                                                 unsigned int block2StartIndex, std::vector<unsigned char>& data2) -> bool
+    auto blocksAreBytewiseEqual = [&blockLength](   unsigned int block1StartIndex, std::vector<unsigned char>& data1,
+                                                    unsigned int block2StartIndex, std::vector<unsigned char>& data2) -> bool
     {
         for (unsigned int i = 0; i < blockLength; ++i) {
             if (    data1[block1StartIndex + i]
@@ -206,59 +205,104 @@ bool comparison::blockMatchSearch(  unsigned int blockLength,
         return true;
     };
 
+    enum class whichDataSet{
+        first,
+        second
+    };
+
+    //adds a block to an existing blockMatchSet, if there is one
+    //returns false if this index/dataset's byte contents are not already in a blockMatchSet
+    auto addToExistingBlockMatchSet = [&allMatches, &blockLength, &data1, &data2, &blocksAreBytewiseEqual]
+                                      (const unsigned int hash, const unsigned int startIndex, const whichDataSet&& source) -> bool
+    {
+        //select source data set to refer to
+        std::vector<unsigned char> *sourceDataSet = nullptr;
+        if (whichDataSet::first == source) {
+            sourceDataSet = &data1;
+        }
+        else if (whichDataSet::second == source) {
+            sourceDataSet = &data2;
+        }
+        else {
+            FAIL();
+        }
+
+        //find all blockMatchSets with the hash we're looking for
+        auto matchRange = allMatches->equal_range(blockMatchSet(hash,0,0,0));
+
+        //iterate through them
+        auto iter = matchRange.first;
+        for ( ; iter != matchRange.second; ++iter ) {
+
+            //get a reference index in data set 1 as a source of the byte contents represented by this blockMatchSet
+            ASSERT(1 <= iter->data1_BlockStartIndices.size());
+            unsigned int referenceIndex = iter->data1_BlockStartIndices[0];
+
+            //see if the byte contents of this blockMatchSet actually match the block we're trying to add (i.e., not a hash collision)
+            if (blocksAreBytewiseEqual(referenceIndex, data1, startIndex, *sourceDataSet)) {
+
+                //match found, add this block to the matching blockMatchSet
+
+                const std::vector<unsigned int>* addToThisIndexList = nullptr;
+
+                if (whichDataSet::first == source) {
+                    addToThisIndexList = &iter->data1_BlockStartIndices;
+                }
+                else if (whichDataSet::second == source) {
+                    addToThisIndexList = &iter->data2_BlockStartIndices;
+                }
+                else {
+                    FAIL();
+                }
+
+                //why is breaking const ok here?:
+                //const-ness of std::multiset elements preserves the sorted-ness of the container
+                //  changes are intended to be done by removing the element and reinserting a new one,
+                //  so it is sorted into the right place for its new contents
+                //(if there's another reason, this may not be ok)
+                //blockMatchSet's < operator only uses its hash value, so changing other members shouldn't break sorted-ness
+
+                auto tmp = const_cast<std::vector<unsigned int>*>(addToThisIndexList);
+                tmp->emplace_back(startIndex);
+
+                //we found a match and stored this block in it, stop searching
+                break;
+            }
+        }
+
+        //if the iterator isn't at the end of matchRange, the current block has been assigned to a pre-existing blockMatchSet
+        if (iter != matchRange.second) {
+            return true;
+        }
+
+        return false;
+    };
+
+
+
+    bool matchFound = false;    //this will be set to true if we find a match (for return value)
+
   //  std::cout << std::endl << "=== blockLength " << blockLength << " === data1 ===" << std::endl;
     getAllHashes(data1, addToHashes1);
   //  std::cout << std::endl << "=== blockLength " << blockLength << " === data2 ===" << std::endl;
     getAllHashes(data2, addToHashes2);
 
     //loop through all the hashes of blocks from data set 1
-    for (unsigned int hashIndex = 0; hashIndex < hashes1.size(); ++hashIndex) {
-        auto& data1BlockHash = hashes1[hashIndex];
+    //(they're stored in order, so the index in hashes1[] is also the start index of the block in data1)
+    for (unsigned int data1BlockStartIndex = 0; data1BlockStartIndex < hashes1.size(); ++data1BlockStartIndex) {
+        unsigned int data1BlockHash = hashes1[data1BlockStartIndex];
 
-        //if allMatches exists, we're returning results instead of a quick bool return
+        //if allMatches exists, we're returning full match results instead of a quick bool return
+        //if not, we return true on the first match, so we can skip this
         if (allMatches) {
             //check if the byte content from this data set 1 block is already in a blockMatchSet
-            // if so, add it to that blockMatchSet (its matches in data set 2, if any, are already there)
-            //this prevents blockMatchSets from being created for byte content that is already represented by a blockMatchSet
-//std::multiset<blockMatchSet> test;
-//auto matchRange2 = test.equal_range(blockMatchSet(data1BlockHash,blockLength));
 
-            auto matchRange = allMatches->equal_range(blockMatchSet(data1BlockHash,0,0,0));
-//std::pair<std::multiset<blockMatchSet>::iterator, std::multiset<blockMatchSet>::iterator> matchRange = allMatches->equal_range(blockMatchSet(data1BlockHash,blockLength));
-
-            //iterate through them and make sure they actually match (i.e., not a hash collision)
-            bool data1BlockAlreadyMatched = false;
-            auto iter = matchRange.first;
-            for ( ; iter != matchRange.second; ++iter ) {
-//for (std::multiset<blockMatchSet>::iterator iter = matchRange.first; iter != matchRange.second; ++iter ) {
-
-                unsigned int block1StartIndex = hashIndex;
-/*check this*/  unsigned int block2StartIndex = iter->data1_BlockStartIndices[0];
-
-                //   (data1 is correct, we are comparing 2 blocks in the first set)   *****
-                if (blocksAreBytewiseEqual(block1StartIndex, data1, block2StartIndex, data1)){
-                //                                                                    *****
-                    //match found, add this block to the matching blockMatchSet
-
-                    //why is breaking const ok here?:
-                    //const-ness of std::multiset elements preserves the sorted-ness of the container
-                    //  changes are to be done by removing the element and reinserting a new one,
-                    //  so it is sorted into the right place for its new contents
-                    //(if there's another reason, this may not be ok)
-                    //blockMatchSet's < operator only uses its hash value, so changing other members shouldn't break sorted-ness
-/*switch to auto?*/ std::vector<unsigned int>* tmp = const_cast<std::vector<unsigned int>*>(&iter->data1_BlockStartIndices);
-                    tmp->emplace_back(block1StartIndex);
-
-                    //we found a match and stored this block in it, stop searching
-                    data1BlockAlreadyMatched = true;
-                    break;
-                }
-            }
-
-            //if the iterator isn't at the end of matchRange, the current block has been assigned to a pre-existing blockMatchSet
-            //skip to the next block from data set 1
-            if (iter != matchRange.second) {
-                std::cout << "continue" << std::endl;
+            //add this data set 1 block to an existing blockMatchSet that matches its byte contents (if there is one)
+            // (if so, its matches in data set 2, if any, are already there)
+            if (addToExistingBlockMatchSet(data1BlockHash, data1BlockStartIndex, whichDataSet::first))
+            {
+                //if this block was added to an existing group, skip to next block
+                //this prevents blockMatchSets from being created for byte content that is already represented by a blockMatchSet
                 continue;
             }
         }
@@ -269,46 +313,30 @@ bool comparison::blockMatchSearch(  unsigned int blockLength,
         //iterate through them and make sure they actually match (i.e., not a hash collision)
         for (auto iter = matchRange.first; iter != matchRange.second; ++iter ) {
 
-            unsigned int block1StartIndex = hashIndex;
-            unsigned int block2StartIndex = iter->index;
-            if (blocksAreBytewiseEqual(block1StartIndex, data1, block2StartIndex, data2)){
+            unsigned int data2BlockStartIndex = iter->index;
+            if (blocksAreBytewiseEqual(data1BlockStartIndex, data1, data2BlockStartIndex, data2)){
                 //match found
                 if(!allMatches) {
-                    return true;    //no output storage provided by caller, just return the result
+                    return true;    //if no output storage is provided by the caller, just return the result
                 }
 
-                //add this block to a blockMatchSet
-/*possibly deduplicate code?, replace blank blockMatchSet construction method?*/
-                auto matchRange2 = allMatches->equal_range(blockMatchSet(data1BlockHash,0,0,0));
-
-                //iterate through them and make sure they actually match (i.e., not a hash collision)
-                unsigned int index1 = hashIndex;
-                unsigned int index2 = block2StartIndex;
-                auto iter2 = matchRange2.first;
-                for ( ; iter2 != matchRange2.second; ++iter2 ) {
-
-                    if (blocksAreBytewiseEqual(index1, data1, index2, data2)){
-
-                        // ***
-    /*switch to auto?*/ std::vector<unsigned int>* tmp = const_cast<std::vector<unsigned int>*>(&iter2->data2_BlockStartIndices);
-                        tmp->emplace_back(block2StartIndex);
-
-                        //we found a match and stored this block in it, stop searching
-                        break;
-                    }
-
+                //add this block to a blockMatchSet:
+                //add this block to an existing blockMatchSet that matches its byte contents (if there is one)
+                if (!addToExistingBlockMatchSet(data1BlockHash, data2BlockStartIndex, whichDataSet::second)) {
+                    //if not, make a new blockMatchSet and add this block pair
+                    allMatches->emplace(data1BlockHash, blockLength, data1BlockStartIndex, data2BlockStartIndex);
                 }
-
-                //if the iterator is at the end of matchRange2, the byte contents of this block aren't already in a blockMatchSet
-                if (iter2 == matchRange2.second) {
-                    //make a new blockMatchSet
-                    allMatches->emplace(data1BlockHash, blockLength, index1, index2);
-                }
-
+                matchFound = true;  //update return value to reflect successful match
             }
         }
     }
 
+    if (allMatches) {
+        //return true if a blockMatchSet was added
+        return matchFound;
+    }
+
+    //if this is reached, no matches were found
     return false;
 }
 
