@@ -8,9 +8,12 @@
 #include <QTextEdit>
 #include <QtGlobal>
 
+#include <set>
+
 #include "dataSet.h"
 #include "byteRange.h"
 #include "defensivecoding.h"
+#include "blockmatchset.h"
 
 /*
     displays a dataSet in the QT interface
@@ -76,6 +79,10 @@ public:
     void setSubsetStart(unsigned int start);
 
     void addHighlightSet(const highlightSet& hSet);
+
+    void addHighlighting(const std::multiset<blockMatchSet>& matches, bool useFirstDataSet);
+    void addHighlighting(const std::multiset<byteRange>& matches);
+    void clearHighlighting();
 
     unsigned int getBytesPerRow();
 

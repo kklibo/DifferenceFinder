@@ -57,7 +57,11 @@ unique_ptr<std::vector<unsigned int>> comparison::getRollingHashValues(std::vect
     return ret;
 }
 
-unsigned int comparison::findLargestMatchingBlock(std::vector<unsigned char>& data1, std::vector<unsigned char>& data2)
+unsigned int comparison::findLargestMatchingBlocks( const std::vector<unsigned char>&   data1,
+                                                    const std::vector<unsigned char>&   data2,
+                                                    const std::multiset<byteRange>&     data1SkipRanges,
+                                                    const std::multiset<byteRange>&     data2SkipRanges,
+                                                          std::multiset<blockMatchSet>& matches )
 {
 /*
     This returns the size (in bytes) of the largest contiguous block(s) of bytes in data1 and data2
@@ -92,8 +96,7 @@ unsigned int comparison::findLargestMatchingBlock(std::vector<unsigned char>& da
         if (blockSize == upperBound){
             //we are about to check the largest remaining possible block size:
             //if any are found, they are the largest matching blocks between data1 and data2
-
-            result = blockMatchSearch(blockSize, data1, data2);
+            result = blockMatchSearch(blockSize, data1, data2, data1SkipRanges, data2SkipRanges, &matches);
 
             if (result) {
                 return blockSize;
@@ -102,7 +105,7 @@ unsigned int comparison::findLargestMatchingBlock(std::vector<unsigned char>& da
         }
         else
         {
-            result = blockMatchSearch(blockSize, data1, data2);
+            result = blockMatchSearch(blockSize, data1, data2, data1SkipRanges, data2SkipRanges);
         }
 
         if (result) {
@@ -121,14 +124,16 @@ unsigned int comparison::findLargestMatchingBlock(std::vector<unsigned char>& da
 /*
 search for matching blocks between these data sets
 
-if allMatches is nullptr, results won't being returned, so
+if resultMatches is nullptr, results won't being returned, so
  the function will return true as soon as any block match between the 2 sets is found
 
 */
-bool comparison::blockMatchSearch(  unsigned int blockLength,
-                        std::vector<unsigned char>& data1,
-                        std::vector<unsigned char>& data2,
-                        std::multiset<blockMatchSet>* allMatches /*= nullptr*/ )
+bool comparison::blockMatchSearch(  const unsigned int                  blockLength,
+                                    const std::vector<unsigned char>&   data1,
+                                    const std::vector<unsigned char>&   data2,
+                                    const std::multiset<byteRange>&     data1SkipRanges,
+                                    const std::multiset<byteRange>&     data2SkipRanges,
+                                          std::multiset<blockMatchSet>* resultMatches /*= nullptr*/ )
 {
     if (0 == blockLength) {
         return false;
@@ -160,17 +165,58 @@ bool comparison::blockMatchSearch(  unsigned int blockLength,
     std::multiset<HashIndexPair> hashes2;
 
 
+    //skipRanges are presumed to be non-overlapping
+    auto isBlockSkipped = [&blockLength](const unsigned int startIndex, const std::multiset<byteRange>& skipRanges) {
+
+        //if block overlaps a byteRange in skipRange, then this block is skipped
+        byteRange block(startIndex, blockLength);
+
+        auto equalRange = skipRanges.equal_range(block);
+
+        if (equalRange.first != equalRange.second) {
+            //equal range is non-zero: a byteRange starting at startIndex is in skipRanges (guaranteed overlap)
+            return true;
+        }
+
+        //because we didn't just return, we know that equalRange.first and .second are the same
+
+        if (equalRange.first != skipRanges.begin()) {
+            //there is a byterange in skipRanges with a start index less than block's
+            auto& previous = equalRange.first;
+            --previous; //point to the previous byteRange
+
+            if (block.overlaps(*previous)) {
+                return true;
+            }
+        }
+
+        if (equalRange.first != skipRanges.end()) {
+            //there is a byterange in skipRanges with a start index greater than block's
+            auto& next = equalRange.first;
+            --next; //point to the next byteRange
+
+            if (block.overlaps(*next)) {
+                return true;
+            }
+        }
+
+        //if this is reached, byteRanges adjacent to block in the sort order don't overlap it
+        return false;
+
+    };
+
+
     auto addToHashes1 = [&hashes1](unsigned int hashValue, unsigned int){
          hashes1.push_back(hashValue);
-        std::cout << "h1 " << std::hex << hashValue << std::endl;
+    //    std::cout << "h1 " << std::hex << hashValue << std::endl;
     };
 
     auto addToHashes2 = [&hashes2](unsigned int hashValue, unsigned int index){
          hashes2.insert(HashIndexPair(hashValue, index));
-        std::cout << "h2 " << std::hex << hashValue << std::endl;
+    //    std::cout << "h2 " << std::hex << hashValue << std::endl;
     };
 
-    auto getAllHashes = [this, blockLength](std::vector<unsigned char>& data, std::function<void(unsigned int, unsigned int)>storeHashValue)
+    auto getAllHashes = [this, blockLength](const std::vector<unsigned char>& data, std::function<void(unsigned int, unsigned int)>storeHashValue)
     {
         if (data.size() < blockLength) {return;}    //if there isn't enough for a full block, just return
 
@@ -192,8 +238,8 @@ bool comparison::blockMatchSearch(  unsigned int blockLength,
         }
     };
 
-    auto blocksAreBytewiseEqual = [&blockLength](   unsigned int block1StartIndex, std::vector<unsigned char>& data1,
-                                                    unsigned int block2StartIndex, std::vector<unsigned char>& data2) -> bool
+    auto blocksAreBytewiseEqual = [&blockLength](   const unsigned int block1StartIndex, const std::vector<unsigned char>& data1,
+                                                    const unsigned int block2StartIndex, const std::vector<unsigned char>& data2) -> bool
     {
         for (unsigned int i = 0; i < blockLength; ++i) {
             if (    data1[block1StartIndex + i]
@@ -212,11 +258,11 @@ bool comparison::blockMatchSearch(  unsigned int blockLength,
 
     //adds a block to an existing blockMatchSet, if there is one
     //returns false if this index/dataset's byte contents are not already in a blockMatchSet
-    auto addToExistingBlockMatchSet = [&allMatches, &blockLength, &data1, &data2, &blocksAreBytewiseEqual]
+    auto addToExistingBlockMatchSet = [&resultMatches, &blockLength, &data1, &data2, &blocksAreBytewiseEqual]
                                       (const unsigned int hash, const unsigned int startIndex, const whichDataSet&& source) -> bool
     {
         //select source data set to refer to
-        std::vector<unsigned char> *sourceDataSet = nullptr;
+        const std::vector<unsigned char> *sourceDataSet = nullptr;
         if (whichDataSet::first == source) {
             sourceDataSet = &data1;
         }
@@ -228,7 +274,7 @@ bool comparison::blockMatchSearch(  unsigned int blockLength,
         }
 
         //find all blockMatchSets with the hash we're looking for
-        auto matchRange = allMatches->equal_range(blockMatchSet(hash,0,0,0));
+        auto matchRange = resultMatches->equal_range(blockMatchSet(hash,0,0,0));
 
         //iterate through them
         auto iter = matchRange.first;
@@ -290,11 +336,17 @@ bool comparison::blockMatchSearch(  unsigned int blockLength,
     //loop through all the hashes of blocks from data set 1
     //(they're stored in order, so the index in hashes1[] is also the start index of the block in data1)
     for (unsigned int data1BlockStartIndex = 0; data1BlockStartIndex < hashes1.size(); ++data1BlockStartIndex) {
+
+        if (isBlockSkipped(data1BlockStartIndex, data1SkipRanges)) {
+            //if this block is to be skipped (i.e., would overlap previously completed match results), skip it
+            continue;
+        }
+
         unsigned int data1BlockHash = hashes1[data1BlockStartIndex];
 
-        //if allMatches exists, we're returning full match results instead of a quick bool return
+        //if resultMatches exists, we're returning full match results instead of a quick bool return
         //if not, we return true on the first match, so we can skip this
-        if (allMatches) {
+        if (resultMatches) {
             //check if the byte content from this data set 1 block is already in a blockMatchSet
 
             //add this data set 1 block to an existing blockMatchSet that matches its byte contents (if there is one)
@@ -314,9 +366,15 @@ bool comparison::blockMatchSearch(  unsigned int blockLength,
         for (auto iter = matchRange.first; iter != matchRange.second; ++iter ) {
 
             unsigned int data2BlockStartIndex = iter->index;
+
+            if (isBlockSkipped(data2BlockStartIndex, data2SkipRanges)) {
+                //if this block is to be skipped (i.e., would overlap previously completed match results), skip it
+                continue;
+            }
+
             if (blocksAreBytewiseEqual(data1BlockStartIndex, data1, data2BlockStartIndex, data2)){
                 //match found
-                if(!allMatches) {
+                if(!resultMatches) {
                     return true;    //if no output storage is provided by the caller, just return the result
                 }
 
@@ -324,14 +382,14 @@ bool comparison::blockMatchSearch(  unsigned int blockLength,
                 //add this block to an existing blockMatchSet that matches its byte contents (if there is one)
                 if (!addToExistingBlockMatchSet(data1BlockHash, data2BlockStartIndex, whichDataSet::second)) {
                     //if not, make a new blockMatchSet and add this block pair
-                    allMatches->emplace(data1BlockHash, blockLength, data1BlockStartIndex, data2BlockStartIndex);
+                    resultMatches->emplace(data1BlockHash, blockLength, data1BlockStartIndex, data2BlockStartIndex);
                 }
                 matchFound = true;  //update return value to reflect successful match
             }
         }
     }
 
-    if (allMatches) {
+    if (resultMatches) {
         //return true if a blockMatchSet was added
         return matchFound;
     }
@@ -339,6 +397,23 @@ bool comparison::blockMatchSearch(  unsigned int blockLength,
     //if this is reached, no matches were found
     return false;
 }
+
+void comparison::addMatchesToSkipRanges(  const std::multiset<blockMatchSet>& matches,
+                                                std::multiset<byteRange>&     data1SkipRanges,
+                                                std::multiset<byteRange>&     data2SkipRanges )
+{
+    for (const blockMatchSet& match : matches) {
+
+        for (auto& index : match.data1_BlockStartIndices) {
+            data1SkipRanges.emplace(index,match.blockSize);
+        }
+
+        for (auto& index : match.data2_BlockStartIndices) {
+            data2SkipRanges.emplace(index,match.blockSize);
+        }
+    }
+}
+
 
 void comparison::rollingHashTest2()
 {

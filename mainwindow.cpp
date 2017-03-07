@@ -537,10 +537,18 @@ void MainWindow::on_actionTest_Compare2_triggered()
     std::vector<unsigned char> dS1 = m_dataSet1->getData()->toStdVector();
     std::vector<unsigned char> dS2 = m_dataSet2->getData()->toStdVector();
 
+    std::multiset<byteRange> data1SkipRanges;
+    std::multiset<byteRange> data2SkipRanges;
+
+    data1SkipRanges.emplace(2, 3);
+    data1SkipRanges.emplace(6, 2);
+    data2SkipRanges.emplace(3, 3);
+    data2SkipRanges.emplace(7, 2);
+
     for (unsigned int i = 0; i <= qMin(dS1.size(), dS2.size()); ++i) {
 
         QString res;
-        if (C.blockMatchSearch(i, dS1, dS2)) {
+        if (C.blockMatchSearch(i, dS1, dS2, data1SkipRanges, data2SkipRanges)) {
             res = "yes";
         }
         else {
@@ -550,16 +558,26 @@ void MainWindow::on_actionTest_Compare2_triggered()
     }
 
     {
-        std::multiset<blockMatchSet> allMatches;
-        C.blockMatchSearch(3, dS1, dS2, &allMatches);
+        std::multiset<blockMatchSet> matches;
+        C.blockMatchSearch(3, dS1, dS2, data1SkipRanges, data2SkipRanges, &matches);
         LOG.Debug("!");
+        m_dataSetView1->clearHighlighting();
+        m_dataSetView2->clearHighlighting();
+        m_dataSetView1->addHighlighting(matches, true);
+        m_dataSetView2->addHighlighting(matches, false);
+        m_dataSetView1->addHighlighting(data1SkipRanges);
+        m_dataSetView2->addHighlighting(data2SkipRanges);
+        m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
+        m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
     }
+
+
 }
 
 void MainWindow::on_actionTest_Compare3_triggered()
 {
-    doLoadFile1("tinytest1");
-    doLoadFile2("tinytest3");
+    doLoadFile1("test1");
+    doLoadFile2("test2");
 
     comparison C;
 
@@ -569,9 +587,30 @@ void MainWindow::on_actionTest_Compare3_triggered()
 
     std::vector<unsigned char> dS1 = m_dataSet1->getData()->toStdVector();
     std::vector<unsigned char> dS2 = m_dataSet2->getData()->toStdVector();
+    std::multiset<byteRange> data1SkipRanges;
+    std::multiset<byteRange> data2SkipRanges;
+    std::multiset<blockMatchSet> matches;
+
+    for (int i = 0; i < 3; ++i) {
+
+        unsigned int largest = C.findLargestMatchingBlocks(dS1, dS2, data1SkipRanges, data2SkipRanges, matches);
+        LOG.Debug(QString("Largest Matching Block Size: %1").arg(largest));
+
+        data1SkipRanges.clear();
+        data2SkipRanges.clear();
+        //should this function clear every time, or should a per-iteration match list be maintained?
+        comparison::addMatchesToSkipRanges(matches, data1SkipRanges, data2SkipRanges);
+    }
+
+    m_dataSetView1->clearHighlighting();
+    m_dataSetView2->clearHighlighting();
+    m_dataSetView1->addHighlighting(matches, true);
+    m_dataSetView2->addHighlighting(matches, false);
+    //m_dataSetView1->addHighlighting(data1SkipRanges);
+    //m_dataSetView2->addHighlighting(data2SkipRanges);
+    m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
+    m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
 
 
-    unsigned int largest = C.findLargestMatchingBlock(dS1, dS2);
-    LOG.Debug(QString("Largest Matching Block Size: %1").arg(largest));
 
 }

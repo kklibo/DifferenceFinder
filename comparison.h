@@ -10,6 +10,8 @@
 #include "rollinghashcpp/rabinkarphash.h"
 #include "rollinghashcpp/generalhash.h"
 #include "blockmatchset.h"
+#include "byteRange.h"
+
 #include "defensivecoding.h"
 
 
@@ -25,11 +27,22 @@ public:
 
     unique_ptr<std::vector<unsigned int>> getRollingHashValues(std::vector<unsigned char>& data);
 
-    unsigned int findLargestMatchingBlock(std::vector<unsigned char>& data1, std::vector<unsigned char>& data2);
-    bool blockMatchSearch(  unsigned int blockLength,
-                            std::vector<unsigned char>& data1,
-                            std::vector<unsigned char>& data2,
-                            std::multiset<blockMatchSet>* allMatches = nullptr );
+    unsigned int findLargestMatchingBlocks( const std::vector<unsigned char>&   data1,
+                                            const std::vector<unsigned char>&   data2,
+                                            const std::multiset<byteRange>&     data1SkipRanges,
+                                            const std::multiset<byteRange>&     data2SkipRanges,
+                                                  std::multiset<blockMatchSet>& matches );
+
+    bool blockMatchSearch(  const unsigned int blockLength,
+                            const std::vector<unsigned char>& data1,
+                            const std::vector<unsigned char>& data2,
+                            const std::multiset<byteRange>& data1SkipRanges,
+                            const std::multiset<byteRange>& data2SkipRanges,
+                                  std::multiset<blockMatchSet>* allMatches = nullptr );
+
+    static void addMatchesToSkipRanges(   const std::multiset<blockMatchSet>& matches,
+                                                std::multiset<byteRange>&     data1SkipRanges,
+                                                std::multiset<byteRange>&     data2SkipRanges );
 
 private:
 
