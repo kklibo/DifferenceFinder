@@ -40,6 +40,9 @@ public:
                             const std::multiset<byteRange>& data2SkipRanges,
                                   std::multiset<blockMatchSet>* allMatches = nullptr );
 
+    static void chooseValidMatchSet( blockMatchSet& match );
+    static void chooseValidMatchSets( std::multiset<blockMatchSet>& matches );
+
     static void addMatchesToSkipRanges(   const std::multiset<blockMatchSet>& matches,
                                                 std::multiset<byteRange>&     data1SkipRanges,
                                                 std::multiset<byteRange>&     data2SkipRanges );

@@ -398,7 +398,62 @@ bool comparison::blockMatchSearch(  const unsigned int                  blockLen
     return false;
 }
 
-void comparison::addMatchesToSkipRanges(  const std::multiset<blockMatchSet>& matches,
+/*static*/ void comparison::chooseValidMatchSet( blockMatchSet& match ) {
+    //called with blockMatchSet cast to non-const: don't modify blockMatchSet::hash or multiset ordering will be disrupted
+
+    //this function assumes that the blockMatchSet index lists are sorted in increasing order
+
+    //step forward through the index lists, accepting the first block and then all future non-overlapping blocks (greedy algorithm)
+    const unsigned int blockLength = match.blockSize;
+    auto makeValidList = [&blockLength](const std::vector<unsigned int>& indices, std::vector<unsigned int>& validIndices) {
+
+        for (unsigned int index : indices) {
+            if ( 0 == validIndices.size() ) {
+                validIndices.push_back(index);  //just add the first index as valid
+            }
+            else {
+                //compare the current block to the last validated block
+                byteRange current   (index,                 blockLength);
+                byteRange lastValid (validIndices.back(),   blockLength);
+
+                //add the current block only if it doesn't overlap the validated block
+                if ( !current.overlaps(lastValid) ) {
+                    validIndices.push_back(index);
+                }
+            }
+        }
+    };
+
+    std::vector<unsigned int> validated_data1_BlockStartIndices;
+    std::vector<unsigned int> validated_data2_BlockStartIndices;
+
+    makeValidList(match.data1_BlockStartIndices, validated_data1_BlockStartIndices);
+    makeValidList(match.data2_BlockStartIndices, validated_data2_BlockStartIndices);
+
+
+    //truncate the longer list to the shorter list's length
+    unsigned long count = std::min( validated_data1_BlockStartIndices.size(),
+                                    validated_data2_BlockStartIndices.size());
+
+    validated_data1_BlockStartIndices.resize(count);
+    validated_data2_BlockStartIndices.resize(count);
+    //these index lists should now point to equal numbers of non-overlapping matching blocks
+
+    //move validated index lists into match
+    match.data1_BlockStartIndices = std::move(validated_data1_BlockStartIndices);
+    match.data2_BlockStartIndices = std::move(validated_data2_BlockStartIndices);
+
+}
+
+/*static*/ void comparison::chooseValidMatchSets( std::multiset<blockMatchSet>& matches ) {
+
+    for (const blockMatchSet& match : matches) {
+        //casting to non-const: don't modify blockMatchSet::hash or multiset ordering will be disrupted
+        chooseValidMatchSet(const_cast<blockMatchSet&>(match));
+    }
+}
+
+/*static*/ void comparison::addMatchesToSkipRanges(  const std::multiset<blockMatchSet>& matches,
                                                 std::multiset<byteRange>&     data1SkipRanges,
                                                 std::multiset<byteRange>&     data2SkipRanges )
 {
@@ -455,7 +510,7 @@ void comparison::rollingHashTest2()
 }
 
 
-void comparison::rollingHashTest()
+/*static*/ void comparison::rollingHashTest()
 {
     std::vector<unsigned char> data = {0,1,2,3,4,0,1,2,3,4};
 

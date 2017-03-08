@@ -361,9 +361,18 @@ void dataSetView::addHighlighting(const std::multiset<blockMatchSet>& matches, b
         QColor::fromRgb(255,128,128),
         QColor::fromRgb(128,255,128),
         QColor::fromRgb(128,128,255),
+
         QColor::fromRgb(128,255,255),
         QColor::fromRgb(255,128,255),
-        QColor::fromRgb(255,255,128)
+        QColor::fromRgb(255,255,128),
+
+        QColor::fromRgb(255,128,0),
+        QColor::fromRgb(0,255,128),
+        QColor::fromRgb(128,0,255),
+
+        QColor::fromRgb(128,0,0),
+        QColor::fromRgb(0,128,0),
+        QColor::fromRgb(0,0,128)
     };
 
     for (const blockMatchSet& match : matches) {

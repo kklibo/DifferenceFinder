@@ -591,16 +591,31 @@ void MainWindow::on_actionTest_Compare3_triggered()
     std::multiset<byteRange> data2SkipRanges;
     std::multiset<blockMatchSet> matches;
 
-    for (int i = 0; i < 3; ++i) {
+    //for (int i = 0; i < 3; ++i) {
+    unsigned int largest = 1;
+    do {
 
-        unsigned int largest = C.findLargestMatchingBlocks(dS1, dS2, data1SkipRanges, data2SkipRanges, matches);
+        largest = C.findLargestMatchingBlocks(dS1, dS2, data1SkipRanges, data2SkipRanges, matches);
         LOG.Debug(QString("Largest Matching Block Size: %1").arg(largest));
+
+        comparison::chooseValidMatchSets(matches);
 
         data1SkipRanges.clear();
         data2SkipRanges.clear();
-        //should this function clear every time, or should a per-iteration match list be maintained?
+        //should this function clear every time, or should a per-iteration match list be maintained? (added/sorted in to main match set on each iteration)
+        //  probably per-iteration, so de-mutual_exclusion doesn't repeat work
         comparison::addMatchesToSkipRanges(matches, data1SkipRanges, data2SkipRanges);
-    }
+
+        if (!byteRange::isNonOverlapping(data1SkipRanges)) {
+            LOG.Debug("data1SkipRanges");
+        }
+        if (!byteRange::isNonOverlapping(data2SkipRanges)) {
+            LOG.Debug("data2SkipRanges");
+        }
+
+
+
+    } while (largest > 0);
 
     m_dataSetView1->clearHighlighting();
     m_dataSetView2->clearHighlighting();
