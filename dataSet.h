@@ -34,6 +34,8 @@ public:
 
     QVector<unsigned char>* getData() const;
 
+    unsigned int getSize() const;
+
     bool isLoaded() const;
 
 private:

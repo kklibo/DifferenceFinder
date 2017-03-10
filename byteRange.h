@@ -2,6 +2,7 @@
 #define BYTERANGE_H
 
 #include <vector>
+#include <list>
 #include <algorithm>
 
 /*
@@ -18,11 +19,14 @@ public:
         count = 0;
     }
 
+    /*
+     * removed to prevent unintended type conversion
+     *
     //creates a range of 1 byte at the start index
     byteRange(unsigned int start){
         this->start = start;
         count = 1;
-    }
+    }*/
 
     byteRange(unsigned int start, unsigned int count){
         this->start = start;
@@ -46,6 +50,28 @@ public:
         else {
             return start < b.end();
         }
+    }
+
+    //for containers of byteRanges
+    template <typename T>
+    bool overlapsAnyIn(const T& byteRanges) const {
+        for (const byteRange& r : byteRanges) {
+            if (overlaps(r)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    //for containers of start indices (with a fixed count value)
+    template <typename T>
+    bool overlapsAnyIn(const T& startIndices, const unsigned int& count) const {
+        for (const unsigned int& r : startIndices) {
+            if (overlaps( byteRange(r,count) )) {
+                return true;
+            }
+        }
+        return false;
     }
 
     bool operator==(const byteRange& b) const {
@@ -93,6 +119,40 @@ public:
         std::sort(sortCopy.begin(), sortCopy.end());
 
         return isNonDecreasingAndNonOverlapping(sortCopy);
+    }
+
+
+    //this function assumes isNonDecreasingAndNonOverlapping(blocks) would return true
+    static void fillEmptySpaces(const byteRange& fillThisRange, std::list<byteRange>& blocks, std::list<byteRange>& copiesOfAddedBlocks)
+    {
+        unsigned int currentGapStart = fillThisRange.start;
+
+        for (std::list<byteRange>::iterator it = blocks.begin(); it != blocks.end(); ++it) {
+
+            if (0 == it->count) {
+                //skip blocks w/ count 0 (don't break filler blocks on them)
+                continue;
+            }
+
+            if (currentGapStart < it->start)   //if there's a gap
+            {
+                //make a block to fill the current gap and record it
+                byteRange newFiller(currentGapStart, it->start - currentGapStart);
+                blocks              .insert(it, newFiller);
+                copiesOfAddedBlocks .push_back(newFiller);
+            }
+
+            //continue search at first index past this block
+            currentGapStart = it->end();
+        }
+
+        if (currentGapStart < fillThisRange.end()) {
+            //make a block to fill the rest of the range and record it
+            byteRange lastBlock(currentGapStart, fillThisRange.end() - currentGapStart);
+            blocks              .push_back(lastBlock);
+            copiesOfAddedBlocks .push_back(lastBlock);
+        }
+
     }
 
 
@@ -148,6 +208,46 @@ public:
 
         std::vector<byteRange> r5 = { byteRange(40,10), byteRange(20,15), byteRange(30,1), byteRange(10,10) };
         result = result && (  ! isNonOverlapping(r5)   );
+
+        byteRange c(20,10);
+        std::vector<byteRange> o1 = { byteRange(10,10), byteRange(30,10), byteRange(25,0)};
+        result = result && (  ! c.overlapsAnyIn(o1)             );
+        std::vector<byteRange> o2 = { byteRange(10,10), byteRange(30,10), byteRange(25,5)};
+        result = result && (    c.overlapsAnyIn(o2)             );
+
+        {
+            byteRange fillThisRange(0,50);
+            std::list<byteRange> blocks = { byteRange(10,10), byteRange(25,10), byteRange(40,0)};
+            std::list<byteRange> copiesOfAddedBlocks;
+            fillEmptySpaces(fillThisRange, blocks, copiesOfAddedBlocks);
+            result = result && (  ! isNonDecreasingAndNonOverlapping(blocks)    );   //nondecreasing property broken by count 0 byteRange
+            result = result && (    copiesOfAddedBlocks == std::list<byteRange>{ byteRange(0,10), byteRange(20,5), byteRange(35,15) });
+        }
+        {
+            byteRange fillThisRange(0,50);
+            std::list<byteRange> blocks;
+            std::list<byteRange> copiesOfAddedBlocks;
+            fillEmptySpaces(fillThisRange, blocks, copiesOfAddedBlocks);
+            result = result && (    isNonDecreasingAndNonOverlapping(blocks)    );
+            result = result && (    copiesOfAddedBlocks == std::list<byteRange>{ byteRange(0,50) } );
+        }
+        {
+            byteRange fillThisRange(10,20);
+            std::list<byteRange> blocks = { byteRange(0,15), byteRange(25,20)};
+            std::list<byteRange> copiesOfAddedBlocks;
+            fillEmptySpaces(fillThisRange, blocks, copiesOfAddedBlocks);
+            result = result && (    isNonDecreasingAndNonOverlapping(blocks)    );
+            result = result && (    copiesOfAddedBlocks == std::list<byteRange>{ byteRange(15,10) } );
+        }
+        {
+            byteRange fillThisRange(0,20);
+            std::list<byteRange> blocks = { byteRange(0,10), byteRange(10,0), byteRange(10,10)};
+            std::list<byteRange> copiesOfAddedBlocks;
+            fillEmptySpaces(fillThisRange, blocks, copiesOfAddedBlocks);
+            result = result && (    isNonDecreasingAndNonOverlapping(blocks)    );
+            result = result && (    copiesOfAddedBlocks.empty()                 );
+        }
+
 
         return result;
     }

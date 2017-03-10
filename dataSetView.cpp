@@ -358,7 +358,7 @@ void dataSetView::addHighlighting(const std::multiset<blockMatchSet>& matches, b
 {
     unsigned int currentColor = 0;
     std::vector<QColor> colorCycle = {
-        QColor::fromRgb(255,128,128),
+    /*    QColor::fromRgb(255,128,128),
         QColor::fromRgb(128,255,128),
         QColor::fromRgb(128,128,255),
 
@@ -368,11 +368,15 @@ void dataSetView::addHighlighting(const std::multiset<blockMatchSet>& matches, b
 
         QColor::fromRgb(255,128,0),
         QColor::fromRgb(0,255,128),
-        QColor::fromRgb(128,0,255),
+        QColor::fromRgb(128,0,255),*/
 
-        QColor::fromRgb(128,0,0),
-        QColor::fromRgb(0,128,0),
-        QColor::fromRgb(0,0,128)
+        QColor::fromRgb(64,0,0),
+        QColor::fromRgb(0,64,0),
+        QColor::fromRgb(0,0,64),
+
+        QColor::fromRgb(0,64,64),
+        QColor::fromRgb(64,0,64),
+        QColor::fromRgb(64,64,0)
     };
 
     for (const blockMatchSet& match : matches) {
@@ -388,7 +392,7 @@ void dataSetView::addHighlighting(const std::multiset<blockMatchSet>& matches, b
         }
 
         dataSetView::highlightSet hSet(byteRanges);
-        hSet.setForegroundColor(QColor::fromRgb(0,0,0));
+        hSet.setForegroundColor(QColor::fromRgb(192,192,192));
         hSet.setBackgroundColor(colorCycle[ currentColor++ % colorCycle.size() ]);
         addHighlightSet(hSet);
 
@@ -415,6 +419,31 @@ void dataSetView::addHighlighting(const std::multiset<byteRange>& ranges)
     hSet.setBackgroundColor(colorCycle[ currentColor++ % colorCycle.size() ]);
     addHighlightSet(hSet);
 
+}
+
+void dataSetView::addDiffHighlighting(const std::list<byteRange>& ranges)
+{
+    static unsigned int currentColor = 0;
+    std::vector<QColor> colorCycle = {
+        QColor::fromRgb(192,255,255),
+        QColor::fromRgb(255,192,255),
+        QColor::fromRgb(255,255,192),
+
+        QColor::fromRgb(255,192,192),
+        QColor::fromRgb(192,255,192),
+        QColor::fromRgb(192,192,255)
+    };
+
+    for (const byteRange& range : ranges) {
+
+        auto byteRanges = QSharedPointer<QVector<byteRange>>::create();
+        byteRanges->push_back(range);
+
+        dataSetView::highlightSet hSet(byteRanges);
+        hSet.setForegroundColor(QColor::fromRgb(255,0,0));
+        hSet.setBackgroundColor(colorCycle[ currentColor++ % colorCycle.size() ]);
+        addHighlightSet(hSet);
+    }
 }
 
 void dataSetView::clearHighlighting()

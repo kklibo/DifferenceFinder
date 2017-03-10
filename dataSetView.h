@@ -81,7 +81,8 @@ public:
     void addHighlightSet(const highlightSet& hSet);
 
     void addHighlighting(const std::multiset<blockMatchSet>& matches, bool useFirstDataSet);
-    void addHighlighting(const std::multiset<byteRange>& matches);
+    void addHighlighting(const std::multiset<byteRange>& ranges);
+    void addDiffHighlighting(const std::list<byteRange>& ranges);
     void clearHighlighting();
 
     unsigned int getBytesPerRow();

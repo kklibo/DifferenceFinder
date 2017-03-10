@@ -13,6 +13,17 @@ QVector<unsigned char>* dataSet::getData() const
     return m_data.data();
 }
 
+unsigned int dataSet::getSize() const
+{
+    if (!m_loaded) {
+        return 0;
+    }
+
+    int s = m_data->size();
+    ASSERT_NOT_NEGATIVE(s);
+    return static_cast<unsigned int>(s);
+}
+
 bool dataSet::isLoaded() const
 {
     return m_loaded;
@@ -86,7 +97,7 @@ dataSet::compareResult dataSet::compare(const dataSet& dataSet1, const dataSet& 
                 Q_ASSERT(0 != diffs.size());
                 diffs.last().count++;   //add one to the count of the current diff byteRange
             } else {
-                diffs.push_back(byteRange(byteindex));  //add a new diff byteRange of count 1 at this index
+                diffs.push_back(byteRange(byteindex, 1));  //add a new diff byteRange of count 1 at this index
                 inDiffSection = true;
             }
 

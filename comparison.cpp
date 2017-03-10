@@ -98,7 +98,11 @@ unsigned int comparison::findLargestMatchingBlocks( const std::vector<unsigned c
             //if any are found, they are the largest matching blocks between data1 and data2
             result = blockMatchSearch(blockSize, data1, data2, data1SkipRanges, data2SkipRanges, &matches);
 
+            //remove some results (if necessary) to ensure that no matched block overlaps any other
+            comparison::chooseValidMatchSets(matches);
+
             if (result) {
+                ASSERT(0 < matches.size());
                 return blockSize;
             }
 
@@ -165,37 +169,13 @@ bool comparison::blockMatchSearch(  const unsigned int                  blockLen
     std::multiset<HashIndexPair> hashes2;
 
 
-    //skipRanges are presumed to be non-overlapping
     auto isBlockSkipped = [&blockLength](const unsigned int startIndex, const std::multiset<byteRange>& skipRanges) {
 
         //if block overlaps a byteRange in skipRange, then this block is skipped
         byteRange block(startIndex, blockLength);
 
-        auto equalRange = skipRanges.equal_range(block);
-
-        if (equalRange.first != equalRange.second) {
-            //equal range is non-zero: a byteRange starting at startIndex is in skipRanges (guaranteed overlap)
-            return true;
-        }
-
-        //because we didn't just return, we know that equalRange.first and .second are the same
-
-        if (equalRange.first != skipRanges.begin()) {
-            //there is a byterange in skipRanges with a start index less than block's
-            auto& previous = equalRange.first;
-            --previous; //point to the previous byteRange
-
-            if (block.overlaps(*previous)) {
-                return true;
-            }
-        }
-
-        if (equalRange.first != skipRanges.end()) {
-            //there is a byterange in skipRanges with a start index greater than block's
-            auto& next = equalRange.first;
-            --next; //point to the next byteRange
-
-            if (block.overlaps(*next)) {
+        for (auto& skipRange : skipRanges) {
+            if (block.overlaps(skipRange)) {
                 return true;
             }
         }
@@ -398,16 +378,27 @@ bool comparison::blockMatchSearch(  const unsigned int                  blockLen
     return false;
 }
 
-/*static*/ void comparison::chooseValidMatchSet( blockMatchSet& match ) {
+/*static*/ void comparison::chooseValidMatchSet( blockMatchSet& match,
+                                                 const std::vector<unsigned int>& alreadyChosen1,
+                                                 const std::vector<unsigned int>& alreadyChosen2 )
+{
     //called with blockMatchSet cast to non-const: don't modify blockMatchSet::hash or multiset ordering will be disrupted
 
     //this function assumes that the blockMatchSet index lists are sorted in increasing order
 
     //step forward through the index lists, accepting the first block and then all future non-overlapping blocks (greedy algorithm)
     const unsigned int blockLength = match.blockSize;
-    auto makeValidList = [&blockLength](const std::vector<unsigned int>& indices, std::vector<unsigned int>& validIndices) {
+    auto makeValidList = [&blockLength](const std::vector<unsigned int>& indices,
+                                              std::vector<unsigned int>& validIndices,
+                                        const std::vector<unsigned int>& alreadyChosen ) {
 
         for (unsigned int index : indices) {
+
+            //if this block would overlap a block already validated in another blockMatchSet, skip it
+            if (byteRange(index, blockLength).overlapsAnyIn(alreadyChosen, blockLength)) {
+                continue;
+            }
+
             if ( 0 == validIndices.size() ) {
                 validIndices.push_back(index);  //just add the first index as valid
             }
@@ -427,8 +418,8 @@ bool comparison::blockMatchSearch(  const unsigned int                  blockLen
     std::vector<unsigned int> validated_data1_BlockStartIndices;
     std::vector<unsigned int> validated_data2_BlockStartIndices;
 
-    makeValidList(match.data1_BlockStartIndices, validated_data1_BlockStartIndices);
-    makeValidList(match.data2_BlockStartIndices, validated_data2_BlockStartIndices);
+    makeValidList(match.data1_BlockStartIndices, validated_data1_BlockStartIndices, alreadyChosen1);
+    makeValidList(match.data2_BlockStartIndices, validated_data2_BlockStartIndices, alreadyChosen2);
 
 
     //truncate the longer list to the shorter list's length
@@ -447,9 +438,31 @@ bool comparison::blockMatchSearch(  const unsigned int                  blockLen
 
 /*static*/ void comparison::chooseValidMatchSets( std::multiset<blockMatchSet>& matches ) {
 
-    for (const blockMatchSet& match : matches) {
+    //lists of already chosen blocks from previous iterations
+    // (to ensure that valid match sets in matches are chosen without overlapping each other)
+    std::vector<unsigned int> alreadyChosen1;
+    std::vector<unsigned int> alreadyChosen2;
+
+    auto appendVector = [](std::vector<unsigned int> appendThis, std::vector<unsigned int> toThis){
+        toThis.reserve(toThis.size() + appendThis.size());
+        toThis.insert(toThis.end(), appendThis.begin(), appendThis.end());
+    };
+
+    //for (const blockMatchSet& match : matches) {
+    for (std::multiset<blockMatchSet>::iterator match = matches.begin(); match != matches.end(); ++match) {
         //casting to non-const: don't modify blockMatchSet::hash or multiset ordering will be disrupted
-        chooseValidMatchSet(const_cast<blockMatchSet&>(match));
+        chooseValidMatchSet(const_cast<blockMatchSet&>(*match), alreadyChosen1, alreadyChosen2);
+
+        //remove match if empty
+        if (    ( 0 == match->data1_BlockStartIndices.size())
+             && ( 0 == match->data2_BlockStartIndices.size()) ) {
+            match = matches.erase(match);
+        }
+        else {
+            //record chosen blocks
+            appendVector(match->data1_BlockStartIndices, alreadyChosen1);
+            appendVector(match->data2_BlockStartIndices, alreadyChosen2);
+        }
     }
 }
 
