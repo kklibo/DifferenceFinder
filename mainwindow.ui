@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>qtBinCompGUI1 v0.1</string>
+   <string>qtBinCompGUI1 v0.2</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <property name="sizePolicy">
@@ -209,6 +209,9 @@
          <width>0</width>
          <height>25</height>
         </size>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
        </property>
       </widget>
      </widget>

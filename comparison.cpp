@@ -180,7 +180,7 @@ bool comparison::blockMatchSearch(  const unsigned int                  blockLen
             }
         }
 
-        //if this is reached, byteRanges adjacent to block in the sort order don't overlap it
+        //if this is reached, block doesn't overlap any byteRanges in skipRanges
         return false;
 
     };
@@ -385,6 +385,8 @@ bool comparison::blockMatchSearch(  const unsigned int                  blockLen
     //called with blockMatchSet cast to non-const: don't modify blockMatchSet::hash or multiset ordering will be disrupted
 
     //this function assumes that the blockMatchSet index lists are sorted in increasing order
+    ASSERT(byteRange::isNonDecreasing(match.data1_BlockStartIndices));
+    ASSERT(byteRange::isNonDecreasing(match.data2_BlockStartIndices));
 
     //step forward through the index lists, accepting the first block and then all future non-overlapping blocks (greedy algorithm)
     const unsigned int blockLength = match.blockSize;

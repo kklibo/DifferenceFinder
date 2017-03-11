@@ -104,6 +104,42 @@ public:
         return true;    //no violations found
     }
 
+    template <typename T>
+    static bool isNonDecreasingAndNonOverlapping(const T& startIndices, const unsigned int& count) {
+
+        unsigned int minStart = 0;  //minimum start for subsequent acceptible byteRanges
+
+        for (const unsigned int& i : startIndices) {
+
+            if (i < minStart) {
+                return false;   //the start of this range is before or inside a previous range
+            }
+
+            minStart = i + count; //update minStart and continue stepping through the byteRanges
+
+        }
+
+        return true;    //no violations found
+    }
+
+    template <typename T>
+    static bool isNonDecreasing(const T& startIndices) {
+
+        unsigned int minStart = 0;  //minimum start for subsequent acceptible start indices
+
+        for (const unsigned int& i : startIndices) {
+
+            if (i < minStart) {
+                return false;   //the start of this range is before or inside a previous range
+            }
+
+            minStart = i; //update minStart and continue stepping through the indices
+
+        }
+
+        return true;    //no violations found
+    }
+
     //if possible, call isNonDecreasingAndNonOverlapping instead:
     // this function copies and sorts the byteRanges
     //note: this function throws out byteRanges with count 0 (they can't overlap anything)
@@ -121,6 +157,23 @@ public:
         return isNonDecreasingAndNonOverlapping(sortCopy);
     }
 
+    //if possible, call isNonDecreasingAndNonOverlapping instead:
+    // this function copies and sorts the indices
+    template <typename T>
+    static bool isNonOverlapping(const T& startIndices, const unsigned int& count) {
+
+        if ( 0 == count ) {
+            return true;    //count 0 ranges don't overlap anything
+        }
+
+        std::vector<byteRange> sortCopy;
+        for (const unsigned int& i : startIndices) {
+            sortCopy.push_back(byteRange(i, count));
+        }
+        std::sort(sortCopy.begin(), sortCopy.end());
+
+        return isNonDecreasingAndNonOverlapping(sortCopy);
+    }
 
     //this function assumes isNonDecreasingAndNonOverlapping(blocks) would return true
     static void fillEmptySpaces(const byteRange& fillThisRange, std::list<byteRange>& blocks, std::list<byteRange>& copiesOfAddedBlocks)
@@ -194,26 +247,81 @@ public:
         result = result && (  ! b.overlaps(byteRange(15,10))    );
         result = result && (  ! b.overlaps(byteRange(20,10))    );
 
-        std::vector<byteRange> r1 = { byteRange(10,10), byteRange(20,10), byteRange(35,0), byteRange(35,10) };
-        result = result && (    isNonDecreasingAndNonOverlapping(r1)   );
+        {
+            std::vector<byteRange> ranges = { byteRange(10,10), byteRange(20,10), byteRange(35,0), byteRange(35,10) };
+            result = result && (    isNonDecreasingAndNonOverlapping(ranges)   );
+        }
+        {
+            std::vector<byteRange> ranges = { byteRange(10,10), byteRange(35,0), byteRange(20,10), byteRange(35,10) };
+            result = result && (  ! isNonDecreasingAndNonOverlapping(ranges)   );
+        }
 
-        std::vector<byteRange> r2 = { byteRange(10,10), byteRange(35,0), byteRange(20,10), byteRange(35,10) };
-        result = result && (  ! isNonDecreasingAndNonOverlapping(r2)   );
+        {
+            std::vector<unsigned int> uints = {1,2,3};
+            unsigned int blockSize = 0;
+            result = result && (    isNonDecreasingAndNonOverlapping(uints, blockSize) );
+            result = result && (    isNonOverlapping                (uints, blockSize) );
+            result = result && (    isNonDecreasing                 (uints           ) );
+        }
+        {
+            std::vector<unsigned int> uints = {10,20,30,45};
+            unsigned int blockSize = 10;
+            result = result && (    isNonDecreasingAndNonOverlapping(uints, blockSize) );
+            result = result && (    isNonOverlapping                (uints, blockSize) );
+            result = result && (    isNonDecreasing                 (uints           ) );
+        }
+        {
+            std::list<unsigned int> uints = {10,20,45,30};
+            unsigned int blockSize = 10;
+            result = result && (  ! isNonDecreasingAndNonOverlapping(uints, blockSize) );
+            result = result && (    isNonOverlapping                (uints, blockSize) );
+            result = result && (  ! isNonDecreasing                 (uints           ) );
+        }
+        {
+            std::list<unsigned int> uints = {10,20,30,35};
+            unsigned int blockSize = 10;
+            result = result && (  ! isNonDecreasingAndNonOverlapping(uints, blockSize) );
+            result = result && (  ! isNonOverlapping                (uints, blockSize) );
+            result = result && (    isNonDecreasing                 (uints           ) );
+        }
 
-        std::vector<byteRange> r3 = { byteRange(40,10), byteRange(20,10), byteRange(30,0), byteRange(10,10) };
-        result = result && (    isNonOverlapping(r3)   );
+        {
+            std::vector<byteRange> ranges = { byteRange(40,10), byteRange(20,10), byteRange(30,0), byteRange(10,10) };
+            result = result && (    isNonOverlapping(ranges)   );
+        }
+        {
+            std::vector<byteRange> ranges = { byteRange(40,10), byteRange(20,15), byteRange(30,0), byteRange(10,10) };
+            result = result && (    isNonOverlapping(ranges)   );
+        }
+        {
+            std::vector<byteRange> ranges = { byteRange(40,10), byteRange(20,15), byteRange(30,1), byteRange(10,10) };
+            result = result && (  ! isNonOverlapping(ranges)   );
+        }
 
-        std::vector<byteRange> r4 = { byteRange(40,10), byteRange(20,15), byteRange(30,0), byteRange(10,10) };
-        result = result && (    isNonOverlapping(r4)   );
+        {
+            byteRange c(20,10);
+            {
+                std::vector<byteRange> ranges = { byteRange(10,10), byteRange(30,10), byteRange(25,0)};
+                result = result && (  ! c.overlapsAnyIn(ranges)             );
+            }
+            {
+                std::vector<byteRange> ranges = { byteRange(10,10), byteRange(30,10), byteRange(25,5)};
+                result = result && (    c.overlapsAnyIn(ranges)             );
+            }
+        }
 
-        std::vector<byteRange> r5 = { byteRange(40,10), byteRange(20,15), byteRange(30,1), byteRange(10,10) };
-        result = result && (  ! isNonOverlapping(r5)   );
-
-        byteRange c(20,10);
-        std::vector<byteRange> o1 = { byteRange(10,10), byteRange(30,10), byteRange(25,0)};
-        result = result && (  ! c.overlapsAnyIn(o1)             );
-        std::vector<byteRange> o2 = { byteRange(10,10), byteRange(30,10), byteRange(25,5)};
-        result = result && (    c.overlapsAnyIn(o2)             );
+        {
+            byteRange range(20,10);
+            unsigned int blockSize = 10;
+            {
+                std::vector<unsigned int> uints = {5,10,30,35};
+                result = result && (  ! range.overlapsAnyIn(uints, blockSize) );
+            }
+            {
+                std::vector<unsigned int> uints = {15};
+                result = result && (    range.overlapsAnyIn(uints, blockSize) );
+            }
+        }
 
         {
             byteRange fillThisRange(0,50);

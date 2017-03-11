@@ -2,9 +2,9 @@
 
 dataSet::dataSet() :
     m_data(new QVector<unsigned char>()),
-    m_fileName(new QString())
+    m_fileName(new QString()),
+    m_loaded(false)
 {
-    m_loaded = false;
 }
 
 //returns a raw pointer to the data, is there a safer way?
