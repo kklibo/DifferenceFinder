@@ -62,6 +62,8 @@ private slots:
 
     void on_actionTest_Compare3_triggered();
 
+    void on_actionUnit_tester_triggered();
+
 private:
     Ui::MainWindow *ui;
     void doScrollBar(int value);
@@ -85,6 +87,7 @@ private:
     QSharedPointer<dataSetView> m_dataSetView2;
 
     void doCompare();
+    void doSimpleCompare();
     void displayLogMessage(QString str, QColor color);
 
     UserSettings m_userSettings;

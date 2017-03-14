@@ -208,7 +208,7 @@ void MainWindow::doLoadFile2(const QString filename)
     }
 }
 
-void MainWindow::doCompare()
+void MainWindow::doSimpleCompare()
 {
     if (m_dataSet1.isNull() || m_dataSet2.isNull()) {
         return;
@@ -246,6 +246,61 @@ void MainWindow::doCompare()
 
     connect(m_dataSetView1.data(), &dataSetView::subsetChanged, m_DebugWindow.data(), &DebugWindow::dataSet1RangeChanged);
     connect(m_dataSetView2.data(), &dataSetView::subsetChanged, m_DebugWindow.data(), &DebugWindow::dataSet2RangeChanged);
+}
+
+void MainWindow::doCompare()
+{
+    comparison C;
+
+    if (!m_dataSet1->getData() || !m_dataSet2->getData()) {
+        return;
+    }
+
+    std::vector<unsigned char> dS1 = m_dataSet1->getData()->toStdVector();
+    std::vector<unsigned char> dS2 = m_dataSet2->getData()->toStdVector();
+    std::multiset<byteRange> data1SkipRanges;
+    std::multiset<byteRange> data2SkipRanges;
+    std::multiset<blockMatchSet> allMatches;
+
+    unsigned int largest = 1;
+
+    do {
+        std::multiset<blockMatchSet> matches; //matches for this iteration (will all have the same block size)
+
+        largest = C.findLargestMatchingBlocks(dS1, dS2, data1SkipRanges, data2SkipRanges, matches);
+        LOG.Debug(QString("Largest Matching Block Size: %1").arg(largest));
+
+        comparison::addMatchesToSkipRanges(matches, data1SkipRanges, data2SkipRanges);
+
+        if (!byteRange::isNonOverlapping(data1SkipRanges)) {
+            LOG.Warning("data1SkipRanges");
+        }
+        if (!byteRange::isNonOverlapping(data2SkipRanges)) {
+            LOG.Warning("data2SkipRanges");
+        }
+
+        //add to main match list
+        allMatches.insert(matches.begin(), matches.end());
+
+    } while (largest > 1);//0);
+
+    byteRange data1_FullRange (0, m_dataSet1->getSize());
+    auto data1_unmatchedBlocks = comparison::findUnmatchedBlocks(data1_FullRange, allMatches, comparison::whichDataSet::first);
+
+    byteRange data2_FullRange (0, m_dataSet2->getSize());
+    auto data2_unmatchedBlocks = comparison::findUnmatchedBlocks(data2_FullRange, allMatches, comparison::whichDataSet::second);
+
+    m_dataSetView1->clearHighlighting();
+    m_dataSetView2->clearHighlighting();
+    m_dataSetView1->addHighlighting(allMatches, true);
+    m_dataSetView2->addHighlighting(allMatches, false);
+    m_dataSetView1->addDiffHighlighting(*data1_unmatchedBlocks);
+    m_dataSetView2->addDiffHighlighting(*data2_unmatchedBlocks);
+
+    //m_dataSetView1->addHighlighting(data1SkipRanges);
+    //m_dataSetView2->addHighlighting(data2SkipRanges);
+    m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
+    m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
 }
 
 void MainWindow::applyUserSettings()
@@ -579,6 +634,7 @@ void MainWindow::on_actionTest_Compare3_triggered()
     doLoadFile1("test1");
     doLoadFile2("test2");
 
+
     comparison C;
 
     if (!m_dataSet1->getData() || !m_dataSet2->getData()) {
@@ -687,4 +743,9 @@ void MainWindow::on_actionTest_Compare3_triggered()
 
 
 
+}
+
+void MainWindow::on_actionUnit_tester_triggered()
+{
+    byteRange::test();
 }

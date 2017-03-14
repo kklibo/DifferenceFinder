@@ -247,6 +247,7 @@
     <addaction name="actionTest_Compare1"/>
     <addaction name="actionTest_Compare2"/>
     <addaction name="actionTest_Compare3"/>
+    <addaction name="actionUnit_tester"/>
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
@@ -307,6 +308,11 @@
   <action name="actionTest_Compare3">
    <property name="text">
     <string>Test Compare3</string>
+   </property>
+  </action>
+  <action name="actionUnit_tester">
+   <property name="text">
+    <string>unit tester</string>
    </property>
   </action>
  </widget>

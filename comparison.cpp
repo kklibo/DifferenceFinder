@@ -231,11 +231,6 @@ bool comparison::blockMatchSearch(  const unsigned int                  blockLen
         return true;
     };
 
-    enum class whichDataSet{
-        first,
-        second
-    };
-
     //adds a block to an existing blockMatchSet, if there is one
     //returns false if this index/dataset's byte contents are not already in a blockMatchSet
     auto addToExistingBlockMatchSet = [&resultMatches, &blockLength, &data1, &data2, &blocksAreBytewiseEqual]
@@ -469,8 +464,8 @@ bool comparison::blockMatchSearch(  const unsigned int                  blockLen
 }
 
 /*static*/ void comparison::addMatchesToSkipRanges(  const std::multiset<blockMatchSet>& matches,
-                                                std::multiset<byteRange>&     data1SkipRanges,
-                                                std::multiset<byteRange>&     data2SkipRanges )
+                                                           std::multiset<byteRange>&     data1SkipRanges,
+                                                           std::multiset<byteRange>&     data2SkipRanges )
 {
     for (const blockMatchSet& match : matches) {
 
@@ -482,6 +477,42 @@ bool comparison::blockMatchSearch(  const unsigned int                  blockLen
             data2SkipRanges.emplace(index,match.blockSize);
         }
     }
+}
+
+/*static*/ std::unique_ptr<std::list<byteRange>> comparison::findUnmatchedBlocks(   const byteRange& fillThisRange,
+                                                                                    const std::multiset<blockMatchSet>& matches,
+                                                                                    const whichDataSet which )
+{
+    std::list<byteRange> allBlocks;
+
+    for (auto& match : matches) {
+
+        const std::vector<unsigned int>& startIndices =
+                whichDataSet::first == which
+                ? match.data1_BlockStartIndices
+                : match.data2_BlockStartIndices;
+
+        for (auto& start : startIndices) {
+            allBlocks.emplace_back(start, match.blockSize);
+        }
+    }
+
+    allBlocks.sort();
+
+    if(!byteRange::isNonDecreasingAndNonOverlapping(allBlocks)) {
+        LOG.Warning("findUnmatchedBlocks block corruption");
+    }
+
+    //find spaces between blocks
+    std::unique_ptr<std::list<byteRange>> copiesOfAddedBlocks ( new std::list<byteRange>() );
+    byteRange::fillEmptySpaces(fillThisRange, allBlocks, *copiesOfAddedBlocks);
+
+    //confirm partition
+    if( !byteRange::isExactAscendingPartition(fillThisRange, allBlocks)) {
+        LOG.Warning("findUnmatchedBlocks partition failure");
+    }
+
+    return copiesOfAddedBlocks;
 }
 
 

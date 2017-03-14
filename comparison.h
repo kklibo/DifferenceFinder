@@ -20,6 +20,12 @@
 class comparison
 {
 public:
+
+    enum class whichDataSet{
+        first,
+        second
+    };
+
     comparison();
 
     static void rollingHashTest();
@@ -49,6 +55,10 @@ public:
     static void addMatchesToSkipRanges(   const std::multiset<blockMatchSet>& matches,
                                                 std::multiset<byteRange>&     data1SkipRanges,
                                                 std::multiset<byteRange>&     data2SkipRanges );
+
+    static std::unique_ptr<std::list<byteRange>> findUnmatchedBlocks(   const byteRange& fillThisRange,
+                                                                        const std::multiset<blockMatchSet>& matches,
+                                                                        const whichDataSet which );
 
 private:
 
