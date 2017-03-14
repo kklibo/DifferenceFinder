@@ -209,6 +209,47 @@ public:
     }
 
 
+    //
+    //  returns true if and only if blocks
+    //      include every index in partitionRange exactly once
+    //          (i.e., no gaps between blocks, and no overlapping blocks),
+    //      include no indices outside partitionRange,
+    //      and are in ascending order
+    //
+    //  note: returns false for size 0 partition range or an empty list of blocks,
+    //      because these states are expected to be errors
+    //
+    static bool isExactAscendingPartition(const byteRange& partitionRange, const std::list<byteRange>& blocks)
+    {
+        if (    0 == partitionRange.count ||
+                0 == blocks.size()  )
+        {
+            return false;
+        }
+
+        unsigned int nextRequiredIndex
+
+            //for an exact ascending partition, the first block should have the same start index as partitionRange
+            = partitionRange.start;
+
+        for (auto it = blocks.begin(); it != blocks.end(); ++it)
+        {
+            //if this block doesn't start where it was required to, it isn't an exact ascending partition
+            if (nextRequiredIndex != it->start) {
+                return false;
+            }
+
+            //byteRange::end() returns 1 index past the last index in the range
+            //  if this is an exact ascending partition, the next block must start there
+            nextRequiredIndex = it->end();
+        }
+
+        //if this is reached: the blocks form an exact ascending partition of partitionRange
+        //  if and only if the last block ends exactly at the end of partitionRange
+        return (nextRequiredIndex == partitionRange.end());
+    }
+
+
     static bool test() {
 
         bool result = true;
@@ -356,6 +397,36 @@ public:
             result = result && (    copiesOfAddedBlocks.empty()                 );
         }
 
+        {   //size zero partitionRange
+            byteRange partitionRange(10,0);
+            std::list<byteRange> blocks = { byteRange(10,10), byteRange(20,5), byteRange(25,5) };
+            result = result && (  ! isExactAscendingPartition(partitionRange, blocks)   );
+        }
+        {   //size zero blocks
+            byteRange partitionRange(10,20);
+            std::list<byteRange> blocks;
+            result = result && (  ! isExactAscendingPartition(partitionRange, blocks)   );
+        }
+        {
+            byteRange partitionRange(10,20);
+            std::list<byteRange> blocks = { byteRange(10,10), byteRange(20,5), byteRange(25,5) };
+            result = result && (    isExactAscendingPartition(partitionRange, blocks)   );
+        }
+        {   //blocks start before partitionRange
+            byteRange partitionRange(10,20);
+            std::list<byteRange> blocks = { byteRange(5,15), byteRange(20,5), byteRange(25,5) };
+            result = result && (  ! isExactAscendingPartition(partitionRange, blocks)   );
+        }
+        {   //blocks extent past partitionRange
+            byteRange partitionRange(10,20);
+            std::list<byteRange> blocks = { byteRange(5,15), byteRange(20,5), byteRange(25,10) };
+            result = result && (  ! isExactAscendingPartition(partitionRange, blocks)   );
+        }
+        {   //not ascending order
+            byteRange partitionRange(10,20);
+            std::list<byteRange> blocks = { byteRange(10,10), byteRange(25,5), byteRange(20,5) };
+            result = result && (  ! isExactAscendingPartition(partitionRange, blocks)   );
+        }
 
         return result;
     }
