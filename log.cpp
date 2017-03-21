@@ -4,27 +4,27 @@ Log LOG;    //global log object
 
 void Log::Info(QString str)
 {
-    sendMessage(str, QColor(96,96,128));
+    emit sendMessage(str, QColor(96,96,128));
 }
 
 void Log::Warning(QString str)
 {
-    sendMessage(str, QColor(255,128,96));
+    emit sendMessage(str, QColor(255,128,96));
 }
 
 void Log::Error(QString str)
 {
-    sendMessage(str, QColor(192,128,128));
+    emit sendMessage(str, QColor(192,128,128));
 }
 
 void Log::Debug(QString str)
 {
-    sendMessage(str, QColor(128,32,128));
+    emit sendMessage(str, QColor(128,32,128));
 }
 
 void Log::Defensive(QString str)
 {
-    sendMessage(str, QColor(64,192,64));
+    emit sendMessage(str, QColor(64,192,64));
 }
 
 void Log::sendMessage(QString str, QColor color, bool timestamp)
@@ -36,5 +36,5 @@ void Log::sendMessage(QString str, QColor color, bool timestamp)
         outStr = str;
     }
 
-    message(outStr, color);
+    emit message(outStr, color);
 }

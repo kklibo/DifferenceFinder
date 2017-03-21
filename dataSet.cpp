@@ -8,7 +8,7 @@ dataSet::dataSet() :
 }
 
 //returns a raw pointer to the data, is there a safer way?
-QVector<unsigned char>* dataSet::getData() const
+const QVector<unsigned char> *dataSet::getData() const
 {
     return m_data.data();
 }

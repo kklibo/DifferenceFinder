@@ -32,7 +32,7 @@ public:
         SUCCESS, ERROR_SizeMismatch};
     static compareResult compare(const dataSet& dataSet1, const dataSet& dataSet2, QVector<byteRange>& diffs);
 
-    QVector<unsigned char>* getData() const;
+    const QVector<unsigned char>* getData() const;
 
     unsigned int getSize() const;
 

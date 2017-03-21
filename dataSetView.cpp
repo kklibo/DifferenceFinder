@@ -251,7 +251,7 @@ bool dataSetView::printByteGrid(QTextEdit* textEdit, QTextEdit* addressColumn)
 
     //get the data to be displayed
     Q_CHECK_PTR(theDataSet->getData());
-    QVector<unsigned char>& theData = *theDataSet->getData();
+    const QVector<unsigned char>& theData = *theDataSet->getData();
 
     unsigned int bytesPrinted = 0;
     ASSERT_LE_INT_MAX(m_subset.end());  //ensure static_cast<int>(i) in loop is safe

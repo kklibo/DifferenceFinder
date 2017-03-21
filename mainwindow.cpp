@@ -5,7 +5,8 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     m_DebugWindow(new DebugWindow()),
-    m_userSettings()
+    m_userSettings(),
+    m_comparisonThread()
 {
     ui->setupUi(this);
 
@@ -25,6 +26,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->textEdit_dataSet2, &hexField::resized, this, &MainWindow::resizeHexField2);
 
     connect(&LOG, &Log::message, this, &MainWindow::displayLogMessage);
+
+    connect(&m_comparisonThread, &comparisonThread::sendMessage, this, &MainWindow::displayLogMessage);
+    connect(&m_comparisonThread, &comparisonThread::resultsAreReady, this, &MainWindow::onComparisonThreadResultsReady);
 
     //set initial log area size (first entry should just be nonzero, 2nd one is initial log area size)
     ui->logAreaSplitter->setSizes(QList<int>() << 50 << 120 );
@@ -748,4 +752,42 @@ void MainWindow::on_actionTest_Compare3_triggered()
 void MainWindow::on_actionUnit_tester_triggered()
 {
     byteRange::test();
+}
+
+void MainWindow::on_actionThread_test1_triggered()
+{
+    LOG.Debug("on_actionThread_test1_triggered");
+    m_comparisonThread.setDataSet1(m_dataSet1);
+    m_comparisonThread.setDataSet2(m_dataSet2);
+    m_comparisonThread.doCompare();
+}
+
+void MainWindow::onComparisonThreadResultsReady()
+{
+    LOG.Debug("onComparisonThreadResultsReady");
+
+    auto allMatches             = m_comparisonThread.getResultMatches();
+    auto data1_unmatchedBlocks  = m_comparisonThread.getData1_unmatchedBlocks();
+    auto data2_unmatchedBlocks  = m_comparisonThread.getData2_unmatchedBlocks();
+
+    if (    !allMatches
+         || !data1_unmatchedBlocks
+         || !data2_unmatchedBlocks
+         || !m_dataSetView1
+         || !m_dataSetView2 )
+    {
+        return;
+    }
+
+    m_dataSetView1->clearHighlighting();
+    m_dataSetView2->clearHighlighting();
+    m_dataSetView1->addHighlighting(*allMatches, true);
+    m_dataSetView2->addHighlighting(*allMatches, false);
+    m_dataSetView1->addDiffHighlighting(*data1_unmatchedBlocks);
+    m_dataSetView2->addDiffHighlighting(*data2_unmatchedBlocks);
+
+    //m_dataSetView1->addHighlighting(data1SkipRanges);
+    //m_dataSetView2->addHighlighting(data2SkipRanges);
+    m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
+    m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
 }

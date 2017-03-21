@@ -22,6 +22,7 @@
 #include "usersettings.h"
 #include "defensivecoding.h"
 #include "comparison.h"
+#include "comparisonthread.h"
 
 #include <set>
 
@@ -64,6 +65,11 @@ private slots:
 
     void on_actionUnit_tester_triggered();
 
+    void on_actionThread_test1_triggered();
+
+
+    void onComparisonThreadResultsReady();
+
 private:
     Ui::MainWindow *ui;
     void doScrollBar(int value);
@@ -73,6 +79,7 @@ private:
     void resizeHexField1();
     void resizeHexField2();
     void applyUserSettings();
+
 
     void closeEvent(QCloseEvent* event) Q_DECL_OVERRIDE;
 
@@ -91,6 +98,8 @@ private:
     void displayLogMessage(QString str, QColor color);
 
     UserSettings m_userSettings;
+
+    comparisonThread m_comparisonThread;
 
 };
 
