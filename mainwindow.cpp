@@ -254,57 +254,10 @@ void MainWindow::doSimpleCompare()
 
 void MainWindow::doCompare()
 {
-    comparison C;
-
-    if (!m_dataSet1->getData() || !m_dataSet2->getData()) {
-        return;
-    }
-
-    std::vector<unsigned char> dS1 = m_dataSet1->getData()->toStdVector();
-    std::vector<unsigned char> dS2 = m_dataSet2->getData()->toStdVector();
-    std::multiset<byteRange> data1SkipRanges;
-    std::multiset<byteRange> data2SkipRanges;
-    std::multiset<blockMatchSet> allMatches;
-
-    unsigned int largest = 1;
-
-    do {
-        std::multiset<blockMatchSet> matches; //matches for this iteration (will all have the same block size)
-
-        largest = C.findLargestMatchingBlocks(dS1, dS2, data1SkipRanges, data2SkipRanges, matches);
-        LOG.Debug(QString("Largest Matching Block Size: %1").arg(largest));
-
-        comparison::addMatchesToSkipRanges(matches, data1SkipRanges, data2SkipRanges);
-
-        if (!byteRange::isNonOverlapping(data1SkipRanges)) {
-            LOG.Warning("data1SkipRanges");
-        }
-        if (!byteRange::isNonOverlapping(data2SkipRanges)) {
-            LOG.Warning("data2SkipRanges");
-        }
-
-        //add to main match list
-        allMatches.insert(matches.begin(), matches.end());
-
-    } while (largest > 1);//0);
-
-    byteRange data1_FullRange (0, m_dataSet1->getSize());
-    auto data1_unmatchedBlocks = comparison::findUnmatchedBlocks(data1_FullRange, allMatches, comparison::whichDataSet::first);
-
-    byteRange data2_FullRange (0, m_dataSet2->getSize());
-    auto data2_unmatchedBlocks = comparison::findUnmatchedBlocks(data2_FullRange, allMatches, comparison::whichDataSet::second);
-
-    m_dataSetView1->clearHighlighting();
-    m_dataSetView2->clearHighlighting();
-    m_dataSetView1->addHighlighting(allMatches, true);
-    m_dataSetView2->addHighlighting(allMatches, false);
-    m_dataSetView1->addDiffHighlighting(*data1_unmatchedBlocks);
-    m_dataSetView2->addDiffHighlighting(*data2_unmatchedBlocks);
-
-    //m_dataSetView1->addHighlighting(data1SkipRanges);
-    //m_dataSetView2->addHighlighting(data2SkipRanges);
-    m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
-    m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
+    LOG.Debug("MainWindow::doCompare");
+    m_comparisonThread.setDataSet1(m_dataSet1);
+    m_comparisonThread.setDataSet2(m_dataSet2);
+    m_comparisonThread.doCompare();
 }
 
 void MainWindow::applyUserSettings()
@@ -638,115 +591,9 @@ void MainWindow::on_actionTest_Compare3_triggered()
     doLoadFile1("test1");
     doLoadFile2("test2");
 
-
-    comparison C;
-
-    if (!m_dataSet1->getData() || !m_dataSet2->getData()) {
-        return;
-    }
-
-    std::vector<unsigned char> dS1 = m_dataSet1->getData()->toStdVector();
-    std::vector<unsigned char> dS2 = m_dataSet2->getData()->toStdVector();
-    std::multiset<byteRange> data1SkipRanges;
-    std::multiset<byteRange> data2SkipRanges;
-    std::multiset<blockMatchSet> allMatches;
-
-    //for (int i = 0; i < 3; ++i) {
-    unsigned int largest = 1;
-    do {
-        std::multiset<blockMatchSet> matches; //matches for this iteration (will all have the same block size)
-
-        largest = C.findLargestMatchingBlocks(dS1, dS2, data1SkipRanges, data2SkipRanges, matches);
-        LOG.Debug(QString("Largest Matching Block Size: %1").arg(largest));
-
-        //comparison::chooseValidMatchSets(matches);
-//check for matches == empty here?
-
-       // data1SkipRanges.clear();
-       // data2SkipRanges.clear();
-        //should this function clear every time, or should a per-iteration match list be maintained? (added/sorted in to main match set on each iteration)
-        //  probably per-iteration, so de-mutual_exclusion doesn't repeat work
-        comparison::addMatchesToSkipRanges(matches, data1SkipRanges, data2SkipRanges);
-
-        if (!byteRange::isNonOverlapping(data1SkipRanges)) {
-            LOG.Debug("data1SkipRanges");
-        }
-        if (!byteRange::isNonOverlapping(data2SkipRanges)) {
-            LOG.Debug("data2SkipRanges");
-        }
-
-        //add to main match list
-        allMatches.insert(matches.begin(), matches.end());
-
-    } while (largest > 0);
-
-
-    //identify unmatched blocks
-    std::list<byteRange> allBlocks1;
-    std::list<byteRange> allBlocks2;
-    for (auto& match : allMatches) {
-        for (auto& start : match.data1_BlockStartIndices) {
-            allBlocks1.emplace_back(start, match.blockSize);
-        }
-        for (auto& start : match.data2_BlockStartIndices) {
-            allBlocks2.emplace_back(start, match.blockSize);
-        }
-    }
-
-    allBlocks1.sort();
-    allBlocks2.sort();
-
-    if(!byteRange::isNonDecreasingAndNonOverlapping(allBlocks1)) {
-        LOG.Debug("allBlocks1");
-    }
-    if(!byteRange::isNonDecreasingAndNonOverlapping(allBlocks2)) {
-        LOG.Debug("allBlocks2");
-    }
-
-    //find spaces between blocks
-    byteRange fillThisRange1 (0, m_dataSet1->getSize());
-    std::list<byteRange> copiesOfAddedBlocks1;
-    byteRange::fillEmptySpaces(fillThisRange1, allBlocks1, copiesOfAddedBlocks1);
-
-    byteRange fillThisRange2 (0, m_dataSet2->getSize());
-    std::list<byteRange> copiesOfAddedBlocks2;
-    byteRange::fillEmptySpaces(fillThisRange2, allBlocks2, copiesOfAddedBlocks2);
-
-
-    //confirm partition
-
-    if(!byteRange::isNonDecreasingAndNonOverlapping(allBlocks1)) {
-        LOG.Debug("allBlocks1 #2");
-    }
-    if(!byteRange::isNonDecreasingAndNonOverlapping(allBlocks2)) {
-        LOG.Debug("allBlocks2 #2");
-    }
-
-
-    if(!byteRange::isNonDecreasingAndNonOverlapping(copiesOfAddedBlocks1)) {
-        LOG.Debug("copiesOfAddedBlocks1");
-    }
-    if(!byteRange::isNonDecreasingAndNonOverlapping(copiesOfAddedBlocks2)) {
-        LOG.Debug("copiesOfAddedBlocks2");
-    }
-
-
-
-
-    m_dataSetView1->clearHighlighting();
-    m_dataSetView2->clearHighlighting();
-    m_dataSetView1->addHighlighting(allMatches, true);
-    m_dataSetView2->addHighlighting(allMatches, false);
-    m_dataSetView1->addDiffHighlighting(copiesOfAddedBlocks1);
-    m_dataSetView2->addDiffHighlighting(copiesOfAddedBlocks2);
-
-    //m_dataSetView1->addHighlighting(data1SkipRanges);
-    //m_dataSetView2->addHighlighting(data2SkipRanges);
-    m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
-    m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
-
-
-
+    m_comparisonThread.setDataSet1(m_dataSet1);
+    m_comparisonThread.setDataSet2(m_dataSet2);
+    m_comparisonThread.doCompare();
 }
 
 void MainWindow::on_actionUnit_tester_triggered()
