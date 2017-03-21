@@ -94,7 +94,7 @@ private:
     bool highlightByteGrid(QTextEdit* textEdit, highlightSet& hSet);
 
     QWeakPointer<dataSet> m_dataSet;            //the dataSet that this dataSetView will display
-    QVector<highlightSet> m_highlightSets;	//highlight regions which color the text
+    QVector<highlightSet> m_highlightSets;      //highlight regions which color the text
     byteRange m_subset;                         //the subset of the dataSet that is displayed by this dataSetView
     unsigned int m_bytesPerRow;                 //bytes per row in byte display grid
 

@@ -356,27 +356,17 @@ bool dataSetView::highlightByteGrid(QTextEdit* textEdit, highlightSet& hSet)
 
 void dataSetView::addHighlighting(const std::multiset<blockMatchSet>& matches, bool useFirstDataSet)
 {
+    const unsigned char a = 48;
+    const unsigned char B = 0;
     unsigned int currentColor = 0;
     std::vector<QColor> colorCycle = {
-    /*    QColor::fromRgb(255,128,128),
-        QColor::fromRgb(128,255,128),
-        QColor::fromRgb(128,128,255),
+        QColor::fromRgb(a,B,B),
+        QColor::fromRgb(B,a,B),
+        QColor::fromRgb(B,B,a),
 
-        QColor::fromRgb(128,255,255),
-        QColor::fromRgb(255,128,255),
-        QColor::fromRgb(255,255,128),
-
-        QColor::fromRgb(255,128,0),
-        QColor::fromRgb(0,255,128),
-        QColor::fromRgb(128,0,255),*/
-
-        QColor::fromRgb(64,0,0),
-        QColor::fromRgb(0,64,0),
-        QColor::fromRgb(0,0,64),
-
-        QColor::fromRgb(0,64,64),
-        QColor::fromRgb(64,0,64),
-        QColor::fromRgb(64,64,0)
+        QColor::fromRgb(B,a,a),
+        QColor::fromRgb(a,B,a),
+        QColor::fromRgb(a,a,B)
     };
 
     for (const blockMatchSet& match : matches) {
@@ -392,7 +382,7 @@ void dataSetView::addHighlighting(const std::multiset<blockMatchSet>& matches, b
         }
 
         dataSetView::highlightSet hSet(byteRanges);
-        hSet.setForegroundColor(QColor::fromRgb(192,192,192));
+        hSet.setForegroundColor(QColor::fromRgb(128,128,128));
         hSet.setBackgroundColor(colorCycle[ currentColor++ % colorCycle.size() ]);
         addHighlightSet(hSet);
 
@@ -401,11 +391,17 @@ void dataSetView::addHighlighting(const std::multiset<blockMatchSet>& matches, b
 
 void dataSetView::addHighlighting(const std::multiset<byteRange>& ranges)
 {
-    static unsigned int currentColor = 0;
+    const unsigned char a = 128;
+    const unsigned char B = 0;
+    unsigned int currentColor = 0;
     std::vector<QColor> colorCycle = {
-        QColor::fromRgb(128,0,0),
-        QColor::fromRgb(0,128,0),
-        QColor::fromRgb(0,0,128),
+        QColor::fromRgb(a,B,B),
+        QColor::fromRgb(B,a,B),
+        QColor::fromRgb(B,B,a),
+
+        QColor::fromRgb(B,a,a),
+        QColor::fromRgb(a,B,a),
+        QColor::fromRgb(a,a,B)
     };
 
     auto byteRanges = QSharedPointer<QVector<byteRange>>::create();
@@ -423,15 +419,17 @@ void dataSetView::addHighlighting(const std::multiset<byteRange>& ranges)
 
 void dataSetView::addDiffHighlighting(const std::list<byteRange>& ranges)
 {
-    static unsigned int currentColor = 0;
+    const unsigned char a = 192;
+    const unsigned char B = 255;
+    unsigned int currentColor = 0;
     std::vector<QColor> colorCycle = {
-        QColor::fromRgb(192,255,255),
-        QColor::fromRgb(255,192,255),
-        QColor::fromRgb(255,255,192),
+        QColor::fromRgb(a,B,B),
+        QColor::fromRgb(B,a,B),
+        QColor::fromRgb(B,B,a),
 
-        QColor::fromRgb(255,192,192),
-        QColor::fromRgb(192,255,192),
-        QColor::fromRgb(192,192,255)
+        QColor::fromRgb(B,a,a),
+        QColor::fromRgb(a,B,a),
+        QColor::fromRgb(a,a,B)
     };
 
     for (const byteRange& range : ranges) {
@@ -440,7 +438,7 @@ void dataSetView::addDiffHighlighting(const std::list<byteRange>& ranges)
         byteRanges->push_back(range);
 
         dataSetView::highlightSet hSet(byteRanges);
-        hSet.setForegroundColor(QColor::fromRgb(255,0,0));
+        hSet.setForegroundColor(QColor::fromRgb(0,0,0));
         hSet.setBackgroundColor(colorCycle[ currentColor++ % colorCycle.size() ]);
         addHighlightSet(hSet);
     }
