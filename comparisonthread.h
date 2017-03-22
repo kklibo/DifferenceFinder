@@ -26,9 +26,7 @@ public:
 
     void doCompare();
 
-    QSharedPointer<std::multiset<blockMatchSet>> getResultMatches();
-    QSharedPointer<std::list<byteRange>> getData1_unmatchedBlocks();
-    QSharedPointer<std::list<byteRange>> getData2_unmatchedBlocks();
+    std::unique_ptr<comparison::results> getResults();
 
     void setDataSet1(QSharedPointer<dataSet> dataSet1);
     void setDataSet2(QSharedPointer<dataSet> dataSet2);
@@ -52,10 +50,8 @@ private:
     QSharedPointer<dataSet> m_dataSet1;
     QSharedPointer<dataSet> m_dataSet2;
 
-    //outputs
-    QSharedPointer<std::multiset<blockMatchSet>> m_resultMatches;
-    QSharedPointer<std::list<byteRange>> m_result_data1_unmatchedBlocks;
-    QSharedPointer<std::list<byteRange>> m_result_data2_unmatchedBlocks;
+    //output
+    std::unique_ptr<comparison::results> m_results;
 
 };
 

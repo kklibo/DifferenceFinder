@@ -613,25 +613,22 @@ void MainWindow::onComparisonThreadResultsReady()
 {
     LOG.Debug("onComparisonThreadResultsReady");
 
-    auto allMatches             = m_comparisonThread.getResultMatches();
-    auto data1_unmatchedBlocks  = m_comparisonThread.getData1_unmatchedBlocks();
-    auto data2_unmatchedBlocks  = m_comparisonThread.getData2_unmatchedBlocks();
+    auto results = m_comparisonThread.getResults();
+    if (!results) {
+        LOG.Error("comparison results should be ready, but aren't");
+    }
 
-    if (    !allMatches
-         || !data1_unmatchedBlocks
-         || !data2_unmatchedBlocks
-         || !m_dataSetView1
-         || !m_dataSetView2 )
-    {
+    if ( !m_dataSetView1 || !m_dataSetView2 ) {
         return;
     }
 
     m_dataSetView1->clearHighlighting();
     m_dataSetView2->clearHighlighting();
-    m_dataSetView1->addHighlighting(*allMatches, true);
-    m_dataSetView2->addHighlighting(*allMatches, false);
-    m_dataSetView1->addDiffHighlighting(*data1_unmatchedBlocks);
-    m_dataSetView2->addDiffHighlighting(*data2_unmatchedBlocks);
+
+    m_dataSetView1->addHighlighting(results->matches, true);
+    m_dataSetView2->addHighlighting(results->matches, false);
+    m_dataSetView1->addDiffHighlighting(results->data1_unmatchedBlocks);
+    m_dataSetView2->addDiffHighlighting(results->data2_unmatchedBlocks);
 
     //m_dataSetView1->addHighlighting(data1SkipRanges);
     //m_dataSetView2->addHighlighting(data2SkipRanges);

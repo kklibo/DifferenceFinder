@@ -26,6 +26,13 @@ public:
         second
     };
 
+    class results {
+    public:
+        std::multiset<blockMatchSet> matches;
+        std::list<byteRange> data1_unmatchedBlocks;
+        std::list<byteRange> data2_unmatchedBlocks;
+    };
+
     comparison();
 
     static void rollingHashTest();
@@ -59,6 +66,9 @@ public:
     static std::unique_ptr<std::list<byteRange>> findUnmatchedBlocks(   const byteRange& fillThisRange,
                                                                         const std::multiset<blockMatchSet>& matches,
                                                                         const whichDataSet which );
+
+    static std::unique_ptr<comparison::results> doCompare(  const std::vector<unsigned char>& data1,
+                                                            const std::vector<unsigned char>& data2 );
 
 private:
 

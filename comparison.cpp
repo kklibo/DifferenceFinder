@@ -515,6 +515,53 @@ bool comparison::blockMatchSearch(  const unsigned int                  blockLen
     return copiesOfAddedBlocks;
 }
 
+/*static*/ std::unique_ptr<comparison::results> comparison::doCompare(  const std::vector<unsigned char>& data1,
+                                                                        const std::vector<unsigned char>& data2 )
+{
+    if (!data1.size() || !data2.size()) {
+        return nullptr;
+    }
+
+    comparison C;
+
+    auto Results = std::unique_ptr<comparison::results>( new comparison::results );
+    //comparison::results Results;
+
+    std::multiset<byteRange> data1SkipRanges;
+    std::multiset<byteRange> data2SkipRanges;
+
+
+    unsigned int largest = 1;
+
+    do {
+        std::multiset<blockMatchSet> matches; //matches for this iteration (will all have the same block size)
+
+        largest = C.findLargestMatchingBlocks(data1, data2, data1SkipRanges, data2SkipRanges, matches);
+        LOG.Debug(QString("Largest Matching Block Size: %1").arg(largest));
+
+        comparison::addMatchesToSkipRanges(matches, data1SkipRanges, data2SkipRanges);
+
+        if (!byteRange::isNonOverlapping(data1SkipRanges)) {
+            LOG.Warning("data1SkipRanges");
+        }
+        if (!byteRange::isNonOverlapping(data2SkipRanges)) {
+            LOG.Warning("data2SkipRanges");
+        }
+
+        //add to main match list
+        Results->matches.insert(matches.begin(), matches.end());
+
+    } while (largest > 1);//0);
+
+    byteRange data1_FullRange (0, data1.size());
+    Results->data1_unmatchedBlocks = *comparison::findUnmatchedBlocks(data1_FullRange, Results->matches, comparison::whichDataSet::first).release();
+
+    byteRange data2_FullRange (0, data2.size());
+    Results->data2_unmatchedBlocks = *comparison::findUnmatchedBlocks(data2_FullRange, Results->matches, comparison::whichDataSet::second).release();
+
+    return Results;
+}
+
 
 void comparison::rollingHashTest2()
 {
