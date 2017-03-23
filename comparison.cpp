@@ -186,7 +186,7 @@ bool comparison::blockMatchSearch(  const unsigned int                  blockLen
     };
 
 
-    auto addToHashes1 = [&hashes1](unsigned int hashValue, unsigned int){
+    auto addToHashes1 = [&hashes1](unsigned int hashValue, unsigned int /*not used*/){
          hashes1.push_back(hashValue);
     //    std::cout << "h1 " << std::hex << hashValue << std::endl;
     };
@@ -532,7 +532,8 @@ bool comparison::blockMatchSearch(  const unsigned int                  blockLen
 
 
     unsigned int largest = 1;
-
+stopwatch sw;
+sw.recordTime();
     do {
         std::multiset<blockMatchSet> matches; //matches for this iteration (will all have the same block size)
 
@@ -550,15 +551,19 @@ bool comparison::blockMatchSearch(  const unsigned int                  blockLen
 
         //add to main match list
         Results->matches.insert(matches.begin(), matches.end());
-
-    } while (largest > 1);//0);
+sw.recordTime("finished largest " + std::to_string(largest));
+    } while (largest > 0);//0);
 
     byteRange data1_FullRange (0, data1.size());
     Results->data1_unmatchedBlocks = *comparison::findUnmatchedBlocks(data1_FullRange, Results->matches, comparison::whichDataSet::first).release();
 
     byteRange data2_FullRange (0, data2.size());
     Results->data2_unmatchedBlocks = *comparison::findUnmatchedBlocks(data2_FullRange, Results->matches, comparison::whichDataSet::second).release();
-
+sw.recordTime("found unmatched blocks");
+sw.reportTimes([](std::string str){LOG.Debug(QString::fromStdString(str));});
+//sw.reportTimes(std::bind(&Log::testMessage, std::placeholders::_1, LOG));
+//sw.reportTimes([](std::string str){LOG.testMessage(str);});
+//sw.reportTimes(&Log::testMessage);
     return Results;
 }
 

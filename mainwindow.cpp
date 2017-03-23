@@ -31,7 +31,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&m_comparisonThread, &comparisonThread::resultsAreReady, this, &MainWindow::onComparisonThreadResultsReady);
 
     //set initial log area size (first entry should just be nonzero, 2nd one is initial log area size)
-    ui->logAreaSplitter->setSizes(QList<int>() << 50 << 120 );
+    ui->logAreaSplitter->setSizes(QList<int>() << 50 << 240);//120 );
 
     //make log area collapsible
     ui->logAreaSplitter->setCollapsible(1,true);

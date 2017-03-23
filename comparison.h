@@ -13,6 +13,7 @@
 #include "byteRange.h"
 
 #include "defensivecoding.h"
+#include "stopwatch.h"
 
 
 #include <iostream>
