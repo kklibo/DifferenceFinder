@@ -560,10 +560,8 @@ sw.recordTime("finished largest " + std::to_string(largest));
     byteRange data2_FullRange (0, data2.size());
     Results->data2_unmatchedBlocks = *comparison::findUnmatchedBlocks(data2_FullRange, Results->matches, comparison::whichDataSet::second).release();
 sw.recordTime("found unmatched blocks");
-sw.reportTimes([](std::string str){LOG.Debug(QString::fromStdString(str));});
-//sw.reportTimes(std::bind(&Log::testMessage, std::placeholders::_1, LOG));
-//sw.reportTimes([](std::string str){LOG.testMessage(str);});
-//sw.reportTimes(&Log::testMessage);
+sw.reportTimes(&Log::strMessage);
+
     return Results;
 }
 

@@ -16,7 +16,7 @@ void stopwatch::clear()
     m_times.clear();
 }
 
-void stopwatch::reportTimes(std::function<void (std::string)> callThisOnEach, bool reportSplitTimes /*= true*/)
+void stopwatch::reportTimes(std::function<void (std::string)> callThisOnEach, bool reportSplitTimes /*= true*/) const
 {
     if (m_times.empty()) {
         return;
@@ -24,7 +24,7 @@ void stopwatch::reportTimes(std::function<void (std::string)> callThisOnEach, bo
 
     auto it = m_times.begin();
 
-    auto& diffTime = it->time;
+    auto diffTime = it->time;
 
     //start message
     {

@@ -15,7 +15,7 @@ public:
 
     void clear();
 
-    void reportTimes(std::function<void(std::string)> callThisOnEach, bool reportSplitTimes = true);
+    void reportTimes(std::function<void(std::string)> callThisOnEach, bool reportSplitTimes = true) const;
 
 
 private:
