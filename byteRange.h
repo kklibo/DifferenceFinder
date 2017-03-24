@@ -19,9 +19,9 @@ public:
         count = 0;
     }
 
-    /*
-     * removed to prevent unintended type conversion
-     *
+    byteRange(unsigned int) = delete;
+    /* removed to prevent unintended type conversion
+
     //creates a range of 1 byte at the start index
     byteRange(unsigned int start){
         this->start = start;
@@ -187,12 +187,19 @@ public:
                 continue;
             }
 
-            if (currentGapStart < it->start)   //if there's a gap
-            {
+            const unsigned int gapEnd = std::min( it->start, fillThisRange.end() );
+
+            if (currentGapStart < gapEnd) { //if there's a gap
+
                 //make a block to fill the current gap and record it
-                byteRange newFiller(currentGapStart, it->start - currentGapStart);
+                byteRange newFiller(currentGapStart, gapEnd - currentGapStart);
                 blocks              .insert(it, newFiller);
                 copiesOfAddedBlocks .push_back(newFiller);
+            }
+
+            if (gapEnd == fillThisRange.end()) {
+                //the end of the range has been reached
+                return;
             }
 
             //continue search at first index past this block
@@ -205,9 +212,48 @@ public:
             blocks              .push_back(lastBlock);
             copiesOfAddedBlocks .push_back(lastBlock);
         }
-
     }
 
+    //this function assumes isNonDecreasingAndNonOverlapping(blocks) would return true
+    static unsigned int findSizeOfLargestEmptySpace(const byteRange& inThisRange, const std::list<byteRange>& aroundTheseBlocks)
+    {
+        unsigned int largestGapSize = 0;
+
+        unsigned int currentGapStart = inThisRange.start;
+
+        for (std::list<byteRange>::const_iterator it = aroundTheseBlocks.begin(); it != aroundTheseBlocks.end(); ++it) {
+
+            if (0 == it->count) {
+                //skip blocks w/ count 0 (don't break filler blocks on them)
+                continue;
+            }
+
+            const unsigned int gapEnd = std::min( it->start, inThisRange.end() );
+
+            if (currentGapStart < gapEnd) { //if there's a gap
+
+                //update largestGapSize if this gap is larger
+                unsigned int gapSize = gapEnd - currentGapStart;
+                largestGapSize = std::max(largestGapSize, gapSize);
+            }
+
+            if (gapEnd == inThisRange.end()) {
+                //the end of the range has been reached
+                return largestGapSize;
+            }
+
+            //continue search at first index past this block
+            currentGapStart = it->end();
+        }
+
+        if (currentGapStart < inThisRange.end()) {
+            //check the gap between the last block and the end of the search range
+            unsigned int gapSize = inThisRange.end() - currentGapStart;
+            largestGapSize = std::max(largestGapSize, gapSize);
+        }
+
+        return largestGapSize;
+    }
 
     //
     //  returns true if and only if blocks
@@ -367,14 +413,18 @@ public:
         {
             byteRange fillThisRange(0,50);
             std::list<byteRange> blocks = { byteRange(10,10), byteRange(25,10), byteRange(40,0)};
+            result = result && ( 15 == findSizeOfLargestEmptySpace(fillThisRange, blocks)  );
+
             std::list<byteRange> copiesOfAddedBlocks;
             fillEmptySpaces(fillThisRange, blocks, copiesOfAddedBlocks);
             result = result && (  ! isNonDecreasingAndNonOverlapping(blocks)    );   //nondecreasing property broken by count 0 byteRange
-            result = result && (    copiesOfAddedBlocks == std::list<byteRange>{ byteRange(0,10), byteRange(20,5), byteRange(35,15) });
+            result = result && (    copiesOfAddedBlocks == std::list<byteRange>{ byteRange(0,10), byteRange(20,5), byteRange(35,15) });            
         }
         {
             byteRange fillThisRange(0,50);
             std::list<byteRange> blocks;
+            result = result && ( 50 == findSizeOfLargestEmptySpace(fillThisRange, blocks)  );
+
             std::list<byteRange> copiesOfAddedBlocks;
             fillEmptySpaces(fillThisRange, blocks, copiesOfAddedBlocks);
             result = result && (    isNonDecreasingAndNonOverlapping(blocks)    );
@@ -383,14 +433,38 @@ public:
         {
             byteRange fillThisRange(10,20);
             std::list<byteRange> blocks = { byteRange(0,15), byteRange(25,20)};
+            result = result && ( 10 == findSizeOfLargestEmptySpace(fillThisRange, blocks)  );
+
             std::list<byteRange> copiesOfAddedBlocks;
             fillEmptySpaces(fillThisRange, blocks, copiesOfAddedBlocks);
             result = result && (    isNonDecreasingAndNonOverlapping(blocks)    );
             result = result && (    copiesOfAddedBlocks == std::list<byteRange>{ byteRange(15,10) } );
         }
         {
+            byteRange fillThisRange(10,10);
+            std::list<byteRange> blocks = { byteRange(0,15), byteRange(25,20)};
+            result = result && ( 5 == findSizeOfLargestEmptySpace(fillThisRange, blocks)  );
+
+            std::list<byteRange> copiesOfAddedBlocks;
+            fillEmptySpaces(fillThisRange, blocks, copiesOfAddedBlocks);
+            result = result && (    isNonDecreasingAndNonOverlapping(blocks)    );
+            result = result && (    copiesOfAddedBlocks == std::list<byteRange>{ byteRange(15,5) } );
+        }
+        {
+            byteRange fillThisRange(10,0);
+            std::list<byteRange> blocks = { byteRange(0,15), byteRange(25,20)};
+            result = result && ( 0 == findSizeOfLargestEmptySpace(fillThisRange, blocks)  );
+
+            std::list<byteRange> copiesOfAddedBlocks;
+            fillEmptySpaces(fillThisRange, blocks, copiesOfAddedBlocks);
+            result = result && (    isNonDecreasingAndNonOverlapping(blocks)    );
+            result = result && (    copiesOfAddedBlocks == std::list<byteRange>{} );
+        }
+        {
             byteRange fillThisRange(0,20);
             std::list<byteRange> blocks = { byteRange(0,10), byteRange(10,0), byteRange(10,10)};
+            result = result && ( 0 == findSizeOfLargestEmptySpace(fillThisRange, blocks)  );
+
             std::list<byteRange> copiesOfAddedBlocks;
             fillEmptySpaces(fillThisRange, blocks, copiesOfAddedBlocks);
             result = result && (    isNonDecreasingAndNonOverlapping(blocks)    );
