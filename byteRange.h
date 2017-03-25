@@ -215,13 +215,14 @@ public:
     }
 
     //this function assumes isNonDecreasingAndNonOverlapping(blocks) would return true
-    static unsigned int findSizeOfLargestEmptySpace(const byteRange& inThisRange, const std::list<byteRange>& aroundTheseBlocks)
+    template <typename T>
+    static unsigned int findSizeOfLargestEmptySpace(const byteRange& inThisRange, const T& aroundTheseBlocks)
     {
         unsigned int largestGapSize = 0;
 
         unsigned int currentGapStart = inThisRange.start;
 
-        for (std::list<byteRange>::const_iterator it = aroundTheseBlocks.begin(); it != aroundTheseBlocks.end(); ++it) {
+        for (auto it = aroundTheseBlocks.begin(); it != aroundTheseBlocks.end(); ++it) {
 
             if (0 == it->count) {
                 //skip blocks w/ count 0 (don't break filler blocks on them)

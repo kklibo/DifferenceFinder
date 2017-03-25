@@ -64,18 +64,36 @@ unsigned int comparison::findLargestMatchingBlocks( const std::vector<unsigned c
                                                           std::multiset<blockMatchSet>& matches )
 {
 /*
-    This returns the size (in bytes) of the largest contiguous block(s) of bytes in data1 and data2
+    This finds the largest set of matching blocks occurring in both data1 and data2
+    (or multiple sets, if there is a multi-way tie for largest).
+
+    Bytes in the skip ranges will be ignored by this search;
+    skip ranges are used to exclude blocks which have already been matched.
+
+    Returns: the size (in bytes) of the largest matching blocks in data1 and data2.
 
     for current n: calculate rolling hash values across data1 and data2
         if there are no matches, decrease n
         if there are matches, increase n
         increase/decrease amounts are set for binary search
-
 */
 
+
     //the upper bound in the search (inclusive)
-    //  initial value is the minimum of the 2 data sets' sizes (the largest possible matching block size)
-    unsigned int upperBound = std::min(data1.size(), data2.size());
+    unsigned int upperBound;
+    //
+    // the initial upper bound value will be the largest possible match that the search could return,
+    //  which is the largest unbroken (by skip ranges) range that appears in both data1 and data2
+    //
+    //  if this happens to be the first iteration in a file comparison
+    //   (i.e., skip ranges are empty because no blocks have been selected for matches yet),
+    //   the initial upper bound will always be the minimum of the 2 data sets' sizes
+    //
+    {
+        unsigned int largestGap_data1 = byteRange::findSizeOfLargestEmptySpace( byteRange(0, data1.size()), data1SkipRanges );
+        unsigned int largestGap_data2 = byteRange::findSizeOfLargestEmptySpace( byteRange(0, data2.size()), data2SkipRanges );
+        upperBound = std::min( largestGap_data1, largestGap_data2 );
+    }
 
     //the lower bound in the search (inclusive)
     //  initial value is zero (the data sets might have no bytes in common)
@@ -560,7 +578,7 @@ sw.recordTime("finished largest " + std::to_string(largest));
     byteRange data2_FullRange (0, data2.size());
     Results->data2_unmatchedBlocks = *comparison::findUnmatchedBlocks(data2_FullRange, Results->matches, comparison::whichDataSet::second).release();
 sw.recordTime("found unmatched blocks");
-sw.reportTimes(&Log::strMessage);
+sw.reportTimes(&Log::strMessageLvl1);
 
     return Results;
 }

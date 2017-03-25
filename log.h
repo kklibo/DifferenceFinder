@@ -29,7 +29,8 @@ public:
 
     void sendMessage(QString str = "", QColor color = QColor(0,0,0), bool timestamp = true);
 
-    static void strMessage(std::string str);
+    static void strMessageLvl1(std::string str);
+    static void strMessageLvl2(std::string str);
 
 signals:
     void message(QString str, QColor color);

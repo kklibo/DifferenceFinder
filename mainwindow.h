@@ -70,6 +70,8 @@ private slots:
 
     void onComparisonThreadResultsReady();
 
+    void on_actionDoSimpleCompare_triggered();
+
 private:
     Ui::MainWindow *ui;
     void doScrollBar(int value);
@@ -101,6 +103,7 @@ private:
 
     comparisonThread m_comparisonThread;
 
+stopwatch STOPWATCH1;
 };
 
 #endif // MAINWINDOW_H

@@ -344,9 +344,10 @@ void MainWindow::displayLogMessage(QString str, QColor color)
     ui->textEdit_log->setTextColor(orig);
 }
 
-
 void MainWindow::on_B_Compare_clicked()
 {
+STOPWATCH1.clear();
+STOPWATCH1.recordTime("Compare operation Total:");
     doCompare();
 }
 
@@ -634,4 +635,12 @@ void MainWindow::onComparisonThreadResultsReady()
     //m_dataSetView2->addHighlighting(data2SkipRanges);
     m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
     m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
+
+STOPWATCH1.recordTime();
+STOPWATCH1.reportTimes(&Log::strMessageLvl2);
+}
+
+void MainWindow::on_actionDoSimpleCompare_triggered()
+{
+    doSimpleCompare();
 }
