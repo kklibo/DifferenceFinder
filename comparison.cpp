@@ -161,6 +161,17 @@ bool comparison::blockMatchSearch(  const unsigned int                  blockLen
         return false;
     }
 
+    unsigned int spuriousHashCollisions = 0;
+    auto reportSpuriousHashCollisions = MakeScopeExit(
+
+        [&spuriousHashCollisions]() {
+            if (!spuriousHashCollisions) {
+                return;
+            }
+            std::string outStr = "spurious hash collisions: " + std::to_string(spuriousHashCollisions);
+            Log::strMessageLvl3(outStr);
+    } );
+
 
     unsigned int hashBits = 32;
     createNewHasher(blockLength, hashBits);
@@ -251,7 +262,7 @@ bool comparison::blockMatchSearch(  const unsigned int                  blockLen
 
     //adds a block to an existing blockMatchSet, if there is one
     //returns false if this index/dataset's byte contents are not already in a blockMatchSet
-    auto addToExistingBlockMatchSet = [&resultMatches, &blockLength, &data1, &data2, &blocksAreBytewiseEqual]
+    auto addToExistingBlockMatchSet = [&resultMatches, &blockLength, &data1, &data2, &blocksAreBytewiseEqual, &spuriousHashCollisions]
                                       (const unsigned int hash, const unsigned int startIndex, const whichDataSet&& source) -> bool
     {
         //select source data set to refer to
@@ -306,6 +317,10 @@ bool comparison::blockMatchSearch(  const unsigned int                  blockLen
 
                 //we found a match and stored this block in it, stop searching
                 break;
+            }
+            else {
+                //the blocks didn't match each other: a spurious hash collision occurred
+                ++spuriousHashCollisions;
             }
         }
 
@@ -378,6 +393,10 @@ bool comparison::blockMatchSearch(  const unsigned int                  blockLen
                     resultMatches->emplace(data1BlockHash, blockLength, data1BlockStartIndex, data2BlockStartIndex);
                 }
                 matchFound = true;  //update return value to reflect successful match
+            }
+            else {
+                //the blocks didn't match each other: a spurious hash collision occurred
+                ++spuriousHashCollisions;
             }
         }
     }

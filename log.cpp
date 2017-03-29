@@ -39,14 +39,20 @@ void Log::sendMessage(QString str, QColor color, bool timestamp)
     emit message(outStr, color);
 }
 
-/*static*/ void Log::strMessageLvl1(std::string str)
+/*static*/ void Log::strMessageLvl1(const std::string& str)
 {
     QString qstr = QString::fromStdString(str);
     LOG.sendMessage(qstr, QColor(192,192,64));
 }
 
-/*static*/ void Log::strMessageLvl2(std::string str)
+/*static*/ void Log::strMessageLvl2(const std::string& str)
 {
     QString qstr = QString::fromStdString(str);
     LOG.sendMessage(qstr, QColor(192,64,192));
+}
+
+/*static*/ void Log::strMessageLvl3(const std::string& str)
+{
+    QString qstr = QString::fromStdString(str);
+    LOG.sendMessage(qstr, QColor(64,192,64));
 }

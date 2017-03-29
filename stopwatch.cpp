@@ -16,7 +16,7 @@ void stopwatch::clear()
     m_times.clear();
 }
 
-void stopwatch::reportTimes(std::function<void (std::string)> callThisOnEach, bool reportSplitTimes /*= true*/) const
+void stopwatch::reportTimes(std::function<void (std::string const&)> callThisOnEach, bool reportSplitTimes /*= true*/) const
 {
     if (m_times.empty()) {
         return;

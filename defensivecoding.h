@@ -20,4 +20,19 @@ ASSERT_EQ
 
 #define FAIL()                      do{                           LOG.Defensive(QString("FAIL (should be unreachable): %1:%2")  .arg(__FILE__).arg(__LINE__)); }while(false)
 
+
+template <typename T>
+struct ScopeExit {
+    ScopeExit(T callThis) : m_func(callThis) {}
+    ~ScopeExit() { m_func(); }
+    T m_func;
+};
+
+template <typename T>
+ScopeExit<T> MakeScopeExit(T callThis) {
+    return ScopeExit<T>(callThis);
+}
+
+
+
 #endif // DEFENSIVECODING_H
