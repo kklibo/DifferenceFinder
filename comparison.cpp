@@ -1,38 +1,10 @@
 #include "comparison.h"
 
-comparison::comparison()
-{
-}
-
-std::unique_ptr<std::vector<unsigned int>> comparison::getRollingHashValues(std::vector<unsigned char>& data, const unsigned int blockLength)
-{
-    auto ret = std::unique_ptr<std::vector<unsigned int>>(new std::vector<unsigned int>());
-
-    //int n = hasher->n;  //length 'n' of the n-gram being hashed
-    //int n = hasher->getHashWindowSize();  //length 'n' of the n-gram being hashed
-    int n = blockLength;
-    buzhash hasher(n);
-
-    unsigned int hashValue;
-    for(unsigned int i = 0; i < data.size(); ++i) {
-
-        unsigned char c = data[i];
-        //hashValue = getNextRollingHashValue(c);
-        hashValue = hasher.hashByte(c);
-
-        if (i >= n-1){   //generate output when we have n values from this data set in the hash range
-            ret->emplace_back(hashValue);
-        }
-    }
-
-    return ret;
-}
-
-unsigned int comparison::findLargestMatchingBlocks( const std::vector<unsigned char>&   data1,
-                                                    const std::vector<unsigned char>&   data2,
-                                                    const std::multiset<byteRange>&     data1SkipRanges,
-                                                    const std::multiset<byteRange>&     data2SkipRanges,
-                                                          std::multiset<blockMatchSet>& matches )
+/*static*/ unsigned int comparison::findLargestMatchingBlocks(  const std::vector<unsigned char>&   data1,
+                                                                const std::vector<unsigned char>&   data2,
+                                                                const std::multiset<byteRange>&     data1SkipRanges,
+                                                                const std::multiset<byteRange>&     data2SkipRanges,
+                                                                      std::multiset<blockMatchSet>& matches )
 {
 /*
     This finds the largest set of matching blocks occurring in both data1 and data2
@@ -121,12 +93,12 @@ if resultMatches is nullptr, results won't being returned, so
  the function will return true as soon as any block match between the 2 sets is found
 
 */
-bool comparison::blockMatchSearch(  const unsigned int                  blockLength,
-                                    const std::vector<unsigned char>&   data1,
-                                    const std::vector<unsigned char>&   data2,
-                                    const std::multiset<byteRange>&     data1SkipRanges,
-                                    const std::multiset<byteRange>&     data2SkipRanges,
-                                          std::multiset<blockMatchSet>* resultMatches /*= nullptr*/ )
+/*static*/ bool comparison::blockMatchSearch(   const unsigned int                  blockLength,
+                                                const std::vector<unsigned char>&   data1,
+                                                const std::vector<unsigned char>&   data2,
+                                                const std::multiset<byteRange>&     data1SkipRanges,
+                                                const std::multiset<byteRange>&     data2SkipRanges,
+                                                      std::multiset<blockMatchSet>* resultMatches /*= nullptr*/ )
 {
     if (0 == blockLength) {
         return false;
@@ -193,7 +165,7 @@ bool comparison::blockMatchSearch(  const unsigned int                  blockLen
     //    std::cout << "h2 " << std::hex << hashValue << std::endl;
     };
 
-    auto getAllHashes = [this, blockLength](const std::vector<unsigned char>& data, std::function<void(unsigned int, unsigned int)>storeHashValue)
+    auto getAllHashes = [blockLength](const std::vector<unsigned char>& data, std::function<void(unsigned int, unsigned int)>storeHashValue)
     {
         if (data.size() < blockLength) {return;}    //if there isn't enough for a full block, just return
 
@@ -530,8 +502,6 @@ bool comparison::blockMatchSearch(  const unsigned int                  blockLen
         return nullptr;
     }
 
-    comparison C;
-
     auto Results = std::unique_ptr<comparison::results>( new comparison::results );
     //comparison::results Results;
 
@@ -545,7 +515,7 @@ sw.recordTime();
     do {
         std::multiset<blockMatchSet> matches; //matches for this iteration (will all have the same block size)
 
-        largest = C.findLargestMatchingBlocks(data1, data2, data1SkipRanges, data2SkipRanges, matches);
+        largest = comparison::findLargestMatchingBlocks(data1, data2, data1SkipRanges, data2SkipRanges, matches);
         LOG.Debug(QString("Largest Matching Block Size: %1").arg(largest));
 
         comparison::addMatchesToSkipRanges(matches, data1SkipRanges, data2SkipRanges);
@@ -572,85 +542,3 @@ sw.reportTimes(&Log::strMessageLvl1);
 
     return Results;
 }
-
-
-void comparison::rollingHashTest2()
-{
-    std::vector<unsigned char> data = {0,1,2,3,4,0,1,2,3,4};
-
-
-    std::cout<<"rollingHashTest2" << std::endl;
-
-    unsigned int n = 5;
-    int L = 9;
-
-    buzhash hasher(n);
-
-    int index=0;
-    unsigned int hashValue;
-    for(unsigned int k = 0; k<n;++k) {
-              unsigned char c = data[index++]; ; // grab some character
-              hashValue = hasher.hashByte(c);
-    }
-
-    for (int i = 0; i < 2; ++i) {
-
-        std::cout<< " initial hashvalue: " << std::hex << hashValue << std::endl;
-
-        while(index < data.size()) {
-
-            unsigned char c = data[index];// points to the next character
-            hashValue = hasher.hashByte(c);
-
-           std::cout<< " hashvalue: 0x" << std::hex << hashValue << "  c: 0x" << std::hex << (unsigned int)c << std::endl;
-
-           index++;
-        }
-
-        std::cout << std::endl;
-        index = n;
-    }
-
-}
-
-
-/*static*/ void comparison::rollingHashTest()
-{
-    std::vector<unsigned char> data = {0,1,2,3,4,0,1,2,3,4};
-
-
-    std::cout<<"rollingHashTest" << std::endl;
-
-    unsigned int n = 5;
-    int L = 9;
-
-    buzhash hf(n);
-
-    int index=0;
-    for(unsigned int k = 0; k<n;++k) {
-              unsigned char c = data[index++]; ; // grab some character
-              hf.hashByte(c); // feed it to the hasher
-    }
-
-    for (int i = 0; i < 2; ++i) {
-
-        std::cout<< " initial hashvalue: " << std::hex << hf.getHash() << std::endl;
-
-        while(index < data.size()) { // go over your string
-
-           unsigned char c = data[index];// points to the next character
-           unsigned char out = data[index-n]; // character we want to forget
-
-           hf.hashByte(c); // update hash value
-
-           std::cout<< " hashvalue: 0x" << std::hex << hf.getHash() << "  c: 0x" << std::hex << (unsigned int)c << "  out: 0x" << std::hex << (unsigned int)out << std::endl;
-
-           index++;
-        }
-
-        std::cout << std::endl;
-        index = n;
-    }
-
-}
-

@@ -22,7 +22,6 @@ SOURCES += main.cpp\
     settingsdialog.cpp \
     usersettings.cpp \
     comparison.cpp \
-    rollinghashcpp/mersennetwister.cpp \
     blockmatchset.cpp \
     comparisonthread.cpp \
     stopwatch.cpp \

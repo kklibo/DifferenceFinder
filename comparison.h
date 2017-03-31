@@ -20,6 +20,8 @@ class comparison
 {
 public:
 
+    comparison() = delete;  //static class only
+
     enum class whichDataSet{
         first,
         second
@@ -32,26 +34,21 @@ public:
         std::list<byteRange> data2_unmatchedBlocks;
     };
 
-    comparison();
 
-    //test functions
-    static void rollingHashTest();
-    void rollingHashTest2();
-    std::unique_ptr<std::vector<unsigned int>> getRollingHashValues(std::vector<unsigned char>& data, const unsigned int blockLength);
-    //
 
-    unsigned int findLargestMatchingBlocks( const std::vector<unsigned char>&   data1,
-                                            const std::vector<unsigned char>&   data2,
-                                            const std::multiset<byteRange>&     data1SkipRanges,
-                                            const std::multiset<byteRange>&     data2SkipRanges,
-                                                  std::multiset<blockMatchSet>& matches );
 
-    bool blockMatchSearch(  const unsigned int blockLength,
-                            const std::vector<unsigned char>& data1,
-                            const std::vector<unsigned char>& data2,
-                            const std::multiset<byteRange>& data1SkipRanges,
-                            const std::multiset<byteRange>& data2SkipRanges,
-                                  std::multiset<blockMatchSet>* allMatches = nullptr );
+    static unsigned int findLargestMatchingBlocks(  const std::vector<unsigned char>&   data1,
+                                                    const std::vector<unsigned char>&   data2,
+                                                    const std::multiset<byteRange>&     data1SkipRanges,
+                                                    const std::multiset<byteRange>&     data2SkipRanges,
+                                                          std::multiset<blockMatchSet>& matches );
+
+    static bool blockMatchSearch(   const unsigned int blockLength,
+                                    const std::vector<unsigned char>& data1,
+                                    const std::vector<unsigned char>& data2,
+                                    const std::multiset<byteRange>& data1SkipRanges,
+                                    const std::multiset<byteRange>& data2SkipRanges,
+                                          std::multiset<blockMatchSet>* allMatches = nullptr );
 
     static void chooseValidMatchSet(       blockMatchSet& match,
                                      const std::vector<unsigned int>& alreadyChosen1,
@@ -69,11 +66,6 @@ public:
 
     static std::unique_ptr<comparison::results> doCompare(  const std::vector<unsigned char>& data1,
                                                             const std::vector<unsigned char>& data2 );
-
-private:
-
-    void createNewHasher(unsigned int n, unsigned int hashBits);
-    unsigned int getNextRollingHashValue(unsigned char nextByte);
 
 };
 
