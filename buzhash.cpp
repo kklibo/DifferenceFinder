@@ -11,15 +11,24 @@ buzhash::buzhash(unsigned int hashWindowSize)
     ASSERT(4 == sizeof(unsigned int));
 }
 
-unsigned int buzhash::hashByte(const unsigned char b)
+unsigned int buzhash::hashByte(const unsigned char nextByte)
 {
     //https://en.wikipedia.org/wiki/Rolling_hash#Cyclic_polynomial
+
+    //The general idea: to move the hash window one byte forward:
+    // 1. barrel shift the hash value left
+    // 2. XOR the hash value with the bytehash of the new byte
+    // 3. negate the addition of the oldest byte:
+    //    XOR the hash value with the bytehash of the oldest character,
+    //    after barrel shifting it to compensate for the shifts from (step 1)
+    //    since it was added
+
 
     //barrel shift the hash value left
     state = (state << 1) | (state >> 31);
 
     //add the new byte to the hash value
-    state ^= bytehash[b];
+    state ^= bytehash[nextByte];
 
     //if the hash window has been filled, the oldest byte must be removed from the hash value
     // to keep the hash window length constant
@@ -41,7 +50,7 @@ unsigned int buzhash::hashByte(const unsigned char b)
     }
 
     //manage the hash window circular buffer
-    buffer[bufferPos] = b;  //add the new byte to the buffer
+    buffer[bufferPos] = nextByte;  //add the new byte to the buffer
     ++bufferPos;
 
     if (bufferPos == n) {

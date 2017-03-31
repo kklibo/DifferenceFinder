@@ -1,58 +1,24 @@
 #include "comparison.h"
 
 comparison::comparison()
-    :   toRemove(make_shared<std::queue<unsigned char>>()),
-        hasher(nullptr)
 {
-
 }
 
-unsigned int comparison::getNextRollingHashValue(unsigned char nextByte)
+std::unique_ptr<std::vector<unsigned int>> comparison::getRollingHashValues(std::vector<unsigned char>& data, const unsigned int blockLength)
 {
-    toRemove->push(nextByte);
-//    auto remove = toRemove->front();
- //   hasher->update(remove, nextByte);
-    //hasher->update(toRemove->front(), nextByte);
-    hasher->hashByte(nextByte);
- //   std::cout << hex << (unsigned int)(toRemove->front()) << " " << hex << (unsigned int)nextByte; //<< std::endl;
-
-    toRemove->pop();
-
- //   std::cout << "         " << hasher->hashvalue << std::endl;
-
-    //return hasher->hashvalue;
-    return hasher->getHash();
-}
-
-void comparison::createNewHasher(unsigned int n, unsigned int hashBits)
-{
-    //hasher = make_shared<CyclicHash<>>(n,hashBits);
-    hasher = make_shared<buzhash>(n);
-    toRemove = make_shared<std::queue<unsigned char>>();
-    for (int i = 0; i < n; ++i) {
-        //load n values (so the update calls have something to remove)
-        //hasher->eat(0);
-        hasher->hashByte(0);
-        toRemove->push(0);
-    }
-}
-
-unique_ptr<std::vector<unsigned int>> comparison::getRollingHashValues(std::vector<unsigned char>& data)
-{
-    if (nullptr == hasher) {
-        return nullptr;
-    }
-
-    auto ret = unique_ptr<std::vector<unsigned int>>(new std::vector<unsigned int>());
+    auto ret = std::unique_ptr<std::vector<unsigned int>>(new std::vector<unsigned int>());
 
     //int n = hasher->n;  //length 'n' of the n-gram being hashed
-    int n = hasher->getHashWindowSize();  //length 'n' of the n-gram being hashed
+    //int n = hasher->getHashWindowSize();  //length 'n' of the n-gram being hashed
+    int n = blockLength;
+    buzhash hasher(n);
 
     unsigned int hashValue;
     for(unsigned int i = 0; i < data.size(); ++i) {
 
         unsigned char c = data[i];
-        hashValue = getNextRollingHashValue(c);
+        //hashValue = getNextRollingHashValue(c);
+        hashValue = hasher.hashByte(c);
 
         if (i >= n-1){   //generate output when we have n values from this data set in the hash range
             ret->emplace_back(hashValue);
@@ -178,9 +144,6 @@ bool comparison::blockMatchSearch(  const unsigned int                  blockLen
     } );
 
 
-    unsigned int hashBits = 32;
-    createNewHasher(blockLength, hashBits);
-
     //quickly traversable storage
     std::vector<unsigned int> hashes1;
 
@@ -236,15 +199,18 @@ bool comparison::blockMatchSearch(  const unsigned int                  blockLen
 
         unsigned int index = 0;
         unsigned int hashValue;
+
+        buzhash hasher(blockLength);
+
         //preload the hasher so the next byte completes the first block
         while (index < blockLength-1) {
                   unsigned char c = data[index++];
-                  hashValue = getNextRollingHashValue(c);
+                  hashValue = hasher.hashByte(c);
         }
 
         while(index < data.size()) {
             unsigned char c = data[index];
-            hashValue = getNextRollingHashValue(c);
+            hashValue = hasher.hashByte(c);
 
             unsigned int blockStartIndex = index + 1 - blockLength;
             storeHashValue(hashValue, blockStartIndex);
@@ -615,28 +581,28 @@ void comparison::rollingHashTest2()
 
     std::cout<<"rollingHashTest2" << std::endl;
 
-    uint32 n = 5;
+    unsigned int n = 5;
     int L = 9;
 
-    createNewHasher(n,L);
+    buzhash hasher(n);
 
     int index=0;
     unsigned int hashValue;
-    for(uint32 k = 0; k<n;++k) {
+    for(unsigned int k = 0; k<n;++k) {
               unsigned char c = data[index++]; ; // grab some character
-              hashValue = getNextRollingHashValue(c);
+              hashValue = hasher.hashByte(c);
     }
 
     for (int i = 0; i < 2; ++i) {
 
-        std::cout<< " initial hashvalue: " << hex << hashValue << std::endl;
+        std::cout<< " initial hashvalue: " << std::hex << hashValue << std::endl;
 
         while(index < data.size()) {
 
             unsigned char c = data[index];// points to the next character
-            hashValue = getNextRollingHashValue(c);
+            hashValue = hasher.hashByte(c);
 
-           std::cout<< " hashvalue: 0x" << hex << hashValue << "  c: 0x" << hex << (uint32)c << std::endl;
+           std::cout<< " hashvalue: 0x" << std::hex << hashValue << "  c: 0x" << std::hex << (unsigned int)c << std::endl;
 
            index++;
         }
@@ -655,37 +621,29 @@ void comparison::rollingHashTest2()
 
     std::cout<<"rollingHashTest" << std::endl;
 
-    uint32 n = 5;
+    unsigned int n = 5;
     int L = 9;
 
-    //GeneralHash<> hf(n,L );
-    //KarpRabinHash<> hf(n,L );
-    CyclicHash<> hf(n,L );
+    buzhash hf(n);
 
     int index=0;
-    for(uint32 k = 0; k<n;++k) {
+    for(unsigned int k = 0; k<n;++k) {
               unsigned char c = data[index++]; ; // grab some character
-              hf.eat(c); // feed it to the hasher
+              hf.hashByte(c); // feed it to the hasher
     }
 
     for (int i = 0; i < 2; ++i) {
 
-/*
-        for(uint32 k = 0; k<n;++k) {
-                  unsigned char c = data[index++]; ; // grab some character
-                  hf.eat(c); // feed it to the hasher
-        }
-*/
-        std::cout<< " initial hashvalue: " << hex << hf.hashvalue << std::endl;
+        std::cout<< " initial hashvalue: " << std::hex << hf.getHash() << std::endl;
 
         while(index < data.size()) { // go over your string
-           hf.hashvalue; // at all times, this contains the hash value
+
            unsigned char c = data[index];// points to the next character
            unsigned char out = data[index-n]; // character we want to forget
 
-           hf.update(out,c); // update hash value
+           hf.hashByte(c); // update hash value
 
-           std::cout<< " hashvalue: 0x" << hex << hf.hashvalue << "  c: 0x" << hex << (uint32)c << "  out: 0x" << hex << (uint32)out << std::endl;
+           std::cout<< " hashvalue: 0x" << std::hex << hf.getHash() << "  c: 0x" << std::hex << (unsigned int)c << "  out: 0x" << std::hex << (unsigned int)out << std::endl;
 
            index++;
         }

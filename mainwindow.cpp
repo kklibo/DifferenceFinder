@@ -497,7 +497,7 @@ void MainWindow::on_actionTest_Compare1_triggered()
 
         for (int i = 0; i < 1; i++) {
 
-            auto res = C.getRollingHashValues(test1);
+            auto res = C.getRollingHashValues(test1, 5);
             LOG.Debug(QString("rollingHashTest- data size: %1").arg(test1.size()));
             for (auto& v : *res.get()) {
                 QString s = QString("0x%1").arg(v,8,16,QChar('0'));

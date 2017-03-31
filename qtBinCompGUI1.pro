@@ -39,13 +39,6 @@ HEADERS  += mainwindow.h \
     usersettings.h \
     defensivecoding.h \
     comparison.h \
-    rollinghashcpp/characterhash.h \
-    rollinghashcpp/cyclichash.h \
-    rollinghashcpp/generalhash.h \
-    rollinghashcpp/mersennetwister.h \
-    rollinghashcpp/rabinkarphash.h \
-    rollinghashcpp/threewisehash.h \
-    rollinghashcpp/ztimer.h \
     blockmatchset.h \
     comparisonthread.h \
     stopwatch.h \

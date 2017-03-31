@@ -37,7 +37,7 @@ public:
     buzhash(unsigned int hashWindowSize);
 
     //add a byte to the hash (returns the new hash value)
-    unsigned int hashByte(const unsigned char b);
+    unsigned int hashByte(const unsigned char nextByte);
 
     void reset();   //resets (like a new object)
 

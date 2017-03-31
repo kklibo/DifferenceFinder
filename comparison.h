@@ -6,9 +6,6 @@
 #include <set>
 #include <memory>
 #include <utility>
-#include "rollinghashcpp/cyclichash.h"
-#include "rollinghashcpp/rabinkarphash.h"
-#include "rollinghashcpp/generalhash.h"
 #include "blockmatchset.h"
 #include "byteRange.h"
 #include "buzhash.h"
@@ -37,10 +34,11 @@ public:
 
     comparison();
 
+    //test functions
     static void rollingHashTest();
     void rollingHashTest2();
-
-    unique_ptr<std::vector<unsigned int>> getRollingHashValues(std::vector<unsigned char>& data);
+    std::unique_ptr<std::vector<unsigned int>> getRollingHashValues(std::vector<unsigned char>& data, const unsigned int blockLength);
+    //
 
     unsigned int findLargestMatchingBlocks( const std::vector<unsigned char>&   data1,
                                             const std::vector<unsigned char>&   data2,
@@ -76,9 +74,6 @@ private:
 
     void createNewHasher(unsigned int n, unsigned int hashBits);
     unsigned int getNextRollingHashValue(unsigned char nextByte);
-    std::shared_ptr<std::queue<unsigned char>> toRemove;
-    //std::shared_ptr<CyclicHash<>> hasher;
-    std::shared_ptr<buzhash> hasher;
 
 };
 
