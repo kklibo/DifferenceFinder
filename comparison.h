@@ -11,6 +11,7 @@
 #include "rollinghashcpp/generalhash.h"
 #include "blockmatchset.h"
 #include "byteRange.h"
+#include "buzhash.h"
 
 #include "defensivecoding.h"
 #include "stopwatch.h"
@@ -76,7 +77,8 @@ private:
     void createNewHasher(unsigned int n, unsigned int hashBits);
     unsigned int getNextRollingHashValue(unsigned char nextByte);
     std::shared_ptr<std::queue<unsigned char>> toRemove;
-    std::shared_ptr<CyclicHash<>> hasher;
+    //std::shared_ptr<CyclicHash<>> hasher;
+    std::shared_ptr<buzhash> hasher;
 
 };
 

@@ -12,23 +12,27 @@ unsigned int comparison::getNextRollingHashValue(unsigned char nextByte)
     toRemove->push(nextByte);
 //    auto remove = toRemove->front();
  //   hasher->update(remove, nextByte);
-    hasher->update(toRemove->front(), nextByte);
+    //hasher->update(toRemove->front(), nextByte);
+    hasher->hashByte(nextByte);
  //   std::cout << hex << (unsigned int)(toRemove->front()) << " " << hex << (unsigned int)nextByte; //<< std::endl;
 
     toRemove->pop();
 
  //   std::cout << "         " << hasher->hashvalue << std::endl;
 
-    return hasher->hashvalue;
+    //return hasher->hashvalue;
+    return hasher->getHash();
 }
 
 void comparison::createNewHasher(unsigned int n, unsigned int hashBits)
 {
-    hasher = make_shared<CyclicHash<>>(n,hashBits);
+    //hasher = make_shared<CyclicHash<>>(n,hashBits);
+    hasher = make_shared<buzhash>(n);
     toRemove = make_shared<std::queue<unsigned char>>();
     for (int i = 0; i < n; ++i) {
         //load n values (so the update calls have something to remove)
-        hasher->eat(0);
+        //hasher->eat(0);
+        hasher->hashByte(0);
         toRemove->push(0);
     }
 }
@@ -41,7 +45,8 @@ unique_ptr<std::vector<unsigned int>> comparison::getRollingHashValues(std::vect
 
     auto ret = unique_ptr<std::vector<unsigned int>>(new std::vector<unsigned int>());
 
-    int n = hasher->n;  //length 'n' of the n-gram being hashed
+    //int n = hasher->n;  //length 'n' of the n-gram being hashed
+    int n = hasher->getHashWindowSize();  //length 'n' of the n-gram being hashed
 
     unsigned int hashValue;
     for(unsigned int i = 0; i < data.size(); ++i) {

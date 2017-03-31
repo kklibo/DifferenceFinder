@@ -25,7 +25,8 @@ SOURCES += main.cpp\
     rollinghashcpp/mersennetwister.cpp \
     blockmatchset.cpp \
     comparisonthread.cpp \
-    stopwatch.cpp
+    stopwatch.cpp \
+    buzhash.cpp
 
 HEADERS  += mainwindow.h \
     dataSet.h \
@@ -47,7 +48,8 @@ HEADERS  += mainwindow.h \
     rollinghashcpp/ztimer.h \
     blockmatchset.h \
     comparisonthread.h \
-    stopwatch.h
+    stopwatch.h \
+    buzhash.h
 
 FORMS    += mainwindow.ui \
     debugwindow.ui \
