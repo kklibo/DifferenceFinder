@@ -1,6 +1,6 @@
 #include "comparison.h"
 
-/*static*/ std::atomic_bool comparison::m_abortThread{false};
+/*static*/ std::atomic_bool comparison::m_abort{false};
 
 /*static*/ unsigned int comparison::findLargestMatchingBlocks(  const std::vector<unsigned char>&   data1,
                                                                 const std::vector<unsigned char>&   data2,
@@ -54,6 +54,10 @@
         //current block size
         unsigned int blockSize = (upperBound+lowerBound+1)/2;  //average the current search bounds, rounding up
         //(rounding up prevents infinite loop from unchanging blockSize when upper and lower bounds are 1 apart)
+
+        if (m_abort) {
+            return 0;   //comparison has been aborted, just return immediately (results will be marked as aborted)
+        }
 
         bool result;
         if (blockSize == upperBound){
@@ -500,7 +504,7 @@ if resultMatches is nullptr, results won't being returned, so
 /*static*/ std::unique_ptr<comparison::results> comparison::doCompare(  const std::vector<unsigned char>& data1,
                                                                         const std::vector<unsigned char>& data2 )
 {
-    m_abortThread = false; //clear abort flag
+    m_abort = false; //clear abort flag
 
     auto Results = std::unique_ptr<comparison::results>( new comparison::results );
 
@@ -522,13 +526,12 @@ sw.recordTime();
         largest = comparison::findLargestMatchingBlocks(data1, data2, data1SkipRanges, data2SkipRanges, matches);
         LOG.Debug(QString("Largest Matching Block Size: %1").arg(largest));
 
-        if (m_abortThread){
-            LOG.Debug(QString("comparison::doCompare aborted"));
+        if (m_abort) {
+            //if the comparison is aborted while the above call to findLargestMatchingBlocks is running,
+            // it will immediately return 0 (probably incorrectly).
+            //this will mark the results as aborted and stop the algorithm
             Results->aborted = true;
             return Results;
-        }
-        else {
-            LOG.Debug(QString("comparison::doCompare NOT aborted"));
         }
 
         comparison::addMatchesToSkipRanges(matches, data1SkipRanges, data2SkipRanges);
@@ -558,5 +561,5 @@ sw.reportTimes(&Log::strMessageLvl1);
 
 void comparison::abort()
 {
-    m_abortThread=true;
+    m_abort = true;
 }

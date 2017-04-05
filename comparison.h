@@ -76,7 +76,7 @@ public:
     static void abort();
 
 private:
-    static std::atomic_bool m_abortThread;  //abort flag
+    static std::atomic_bool m_abort;  //abort flag
 
 };
 
