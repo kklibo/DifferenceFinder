@@ -66,9 +66,11 @@ private slots:
     void on_actionThread_test1_triggered();
 
 
-    void onComparisonThreadResultsReady();
+    void onComparisonThreadEnded();
 
     void on_actionDoSimpleCompare_triggered();
+
+    void on_actionStop_thread_triggered();
 
 private:
     Ui::MainWindow *ui;

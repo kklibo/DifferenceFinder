@@ -28,7 +28,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&LOG, &Log::message, this, &MainWindow::displayLogMessage);
 
     connect(&m_comparisonThread, &comparisonThread::sendMessage, this, &MainWindow::displayLogMessage);
-    connect(&m_comparisonThread, &comparisonThread::resultsAreReady, this, &MainWindow::onComparisonThreadResultsReady);
+    connect(&m_comparisonThread, &comparisonThread::finished, this, &MainWindow::onComparisonThreadEnded);
 
     //set initial log area size (first entry should just be nonzero, 2nd one is initial log area size)
     ui->logAreaSplitter->setSizes(QList<int>() << 50 << 240);//120 );
@@ -536,13 +536,25 @@ void MainWindow::on_actionThread_test1_triggered()
     m_comparisonThread.doCompare();
 }
 
-void MainWindow::onComparisonThreadResultsReady()
+void MainWindow::onComparisonThreadEnded()
 {
-    LOG.Debug("onComparisonThreadResultsReady");
+    LOG.Debug("onComparisonThreadEnded");
 
     auto results = m_comparisonThread.getResults();
+
     if (!results) {
         LOG.Error("comparison results should be ready, but aren't");
+        return;
+    }
+
+    if (results->aborted) {
+        LOG.Info("comparison was aborted");
+        return;
+    }
+
+    if (results->internalError) {
+        LOG.Error("comparison failed due to an internal error");
+        return;
     }
 
     if ( !m_dataSetView1 || !m_dataSetView2 ) {
@@ -569,4 +581,9 @@ STOPWATCH1.reportTimes(&Log::strMessageLvl2);
 void MainWindow::on_actionDoSimpleCompare_triggered()
 {
     doSimpleCompare();
+}
+
+void MainWindow::on_actionStop_thread_triggered()
+{
+    m_comparisonThread.abort();
 }

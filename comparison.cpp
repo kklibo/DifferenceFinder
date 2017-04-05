@@ -1,5 +1,7 @@
 #include "comparison.h"
 
+/*static*/ std::atomic_bool comparison::m_abortThread{false};
+
 /*static*/ unsigned int comparison::findLargestMatchingBlocks(  const std::vector<unsigned char>&   data1,
                                                                 const std::vector<unsigned char>&   data2,
                                                                 const std::multiset<byteRange>&     data1SkipRanges,
@@ -498,12 +500,14 @@ if resultMatches is nullptr, results won't being returned, so
 /*static*/ std::unique_ptr<comparison::results> comparison::doCompare(  const std::vector<unsigned char>& data1,
                                                                         const std::vector<unsigned char>& data2 )
 {
-    if (!data1.size() || !data2.size()) {
-        return nullptr;
-    }
+    m_abortThread = false; //clear abort flag
 
     auto Results = std::unique_ptr<comparison::results>( new comparison::results );
-    //comparison::results Results;
+
+    if (!data1.size() || !data2.size()) {
+        Results->internalError = true;
+        return Results;
+    }
 
     std::multiset<byteRange> data1SkipRanges;
     std::multiset<byteRange> data2SkipRanges;
@@ -518,6 +522,15 @@ sw.recordTime();
         largest = comparison::findLargestMatchingBlocks(data1, data2, data1SkipRanges, data2SkipRanges, matches);
         LOG.Debug(QString("Largest Matching Block Size: %1").arg(largest));
 
+        if (m_abortThread){
+            LOG.Debug(QString("comparison::doCompare aborted"));
+            Results->aborted = true;
+            return Results;
+        }
+        else {
+            LOG.Debug(QString("comparison::doCompare NOT aborted"));
+        }
+
         comparison::addMatchesToSkipRanges(matches, data1SkipRanges, data2SkipRanges);
 
         if (!byteRange::isNonOverlapping(data1SkipRanges)) {
@@ -530,7 +543,7 @@ sw.recordTime();
         //add to main match list
         Results->matches.insert(matches.begin(), matches.end());
 sw.recordTime("finished largest " + std::to_string(largest));
-    } while (largest > 0);//0);
+    } while (largest > 0);
 
     byteRange data1_FullRange (0, data1.size());
     Results->data1_unmatchedBlocks = *comparison::findUnmatchedBlocks(data1_FullRange, Results->matches, comparison::whichDataSet::first).release();
@@ -541,4 +554,9 @@ sw.recordTime("found unmatched blocks");
 sw.reportTimes(&Log::strMessageLvl1);
 
     return Results;
+}
+
+void comparison::abort()
+{
+    m_abortThread=true;
 }

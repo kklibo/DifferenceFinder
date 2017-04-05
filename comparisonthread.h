@@ -25,6 +25,7 @@ public:
     ~comparisonThread();
 
     void doCompare();
+    void abort();
 
     std::unique_ptr<comparison::results> getResults();
 
@@ -33,8 +34,7 @@ public:
 
 
 signals:
-    void sendMessage(QString message, QColor color);
-    void resultsAreReady();
+    void sendMessage(QString message, QColor color);    //for displaying log messages
 
 
 protected:
@@ -43,8 +43,6 @@ protected:
 
 private:
     QMutex m_mutex;
-    bool m_abort;
-    bool m_resultsReady;
 
     //inputs
     QSharedPointer<dataSet> m_dataSet1;

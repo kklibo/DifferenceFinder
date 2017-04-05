@@ -6,6 +6,7 @@
 #include <set>
 #include <memory>
 #include <utility>
+#include <atomic>
 #include "blockmatchset.h"
 #include "byteRange.h"
 #include "buzhash.h"
@@ -20,7 +21,7 @@ class comparison
 {
 public:
 
-    comparison() = delete;  //static class only
+    comparison() = delete;  //static functions only
 
     enum class whichDataSet{
         first,
@@ -32,6 +33,11 @@ public:
         std::multiset<blockMatchSet> matches;
         std::list<byteRange> data1_unmatchedBlocks;
         std::list<byteRange> data2_unmatchedBlocks;
+
+        bool aborted;
+        bool internalError;
+
+        results() : aborted(false), internalError(false) {}
     };
 
 
@@ -66,6 +72,11 @@ public:
 
     static std::unique_ptr<comparison::results> doCompare(  const std::vector<unsigned char>& data1,
                                                             const std::vector<unsigned char>& data2 );
+
+    static void abort();
+
+private:
+    static std::atomic_bool m_abortThread;  //abort flag
 
 };
 
