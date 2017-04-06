@@ -17,7 +17,6 @@
 #include "byteRange.h"
 #include "dataSet.h"
 #include "dataSetView.h"
-#include "debugwindow.h"
 #include "settingsdialog.h"
 #include "usersettings.h"
 #include "defensivecoding.h"
@@ -39,8 +38,6 @@ public:
     ~MainWindow();
 
 private slots:
-    void on_actionShow_Debug_triggered();
-
     void on_actionTest_triggered();
 
     void on_B_Compare_clicked();
@@ -84,8 +81,6 @@ private:
 
 
     void closeEvent(QCloseEvent* event) Q_DECL_OVERRIDE;
-
-    QScopedPointer<DebugWindow> m_DebugWindow;
 
     //the 2 dataSets we will compare
     QSharedPointer<dataSet> m_dataSet1;

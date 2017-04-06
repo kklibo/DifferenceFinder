@@ -4,7 +4,6 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    m_DebugWindow(new DebugWindow()),
     m_userSettings(),
     m_comparisonThread()
 {
@@ -76,11 +75,6 @@ void MainWindow::doScrollBar(int value)
     doScroll(m_dataSetView2, ui->textEdit_dataSet2, ui->textEdit_address2);
 }
 
-void MainWindow::on_actionShow_Debug_triggered()
-{
-    m_DebugWindow->show();
-}
-
 void MainWindow::resizeHexField1()
 {
     if (m_dataSetView1) {
@@ -101,7 +95,6 @@ void MainWindow::resizeHexField2()
 
 void MainWindow::closeEvent(QCloseEvent* event)
 {
-    m_DebugWindow->close();
     QMainWindow::closeEvent(event);
 }
 
@@ -246,10 +239,6 @@ void MainWindow::doSimpleCompare()
     m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
 
     updateScrollBarRange();
-
-
-    connect(m_dataSetView1.data(), &dataSetView::subsetChanged, m_DebugWindow.data(), &DebugWindow::dataSet1RangeChanged);
-    connect(m_dataSetView2.data(), &dataSetView::subsetChanged, m_DebugWindow.data(), &DebugWindow::dataSet2RangeChanged);
 }
 
 void MainWindow::doCompare()

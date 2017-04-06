@@ -241,7 +241,6 @@
     <property name="title">
      <string>Debug</string>
     </property>
-    <addaction name="actionShow_Debug"/>
     <addaction name="actionTest"/>
     <addaction name="actionTest_highlighting"/>
     <addaction name="actionTest_Compare2"/>
@@ -270,11 +269,6 @@
   <action name="actionLoad_File1_Left">
    <property name="text">
     <string>Load File1 (Left)</string>
-   </property>
-  </action>
-  <action name="actionShow_Debug">
-   <property name="text">
-    <string>Show Debug</string>
    </property>
   </action>
   <action name="actionTest">

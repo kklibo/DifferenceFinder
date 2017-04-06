@@ -88,7 +88,7 @@ public:
     unsigned int getBytesPerRow();
 
 signals:
-    void subsetChanged(byteRange subset);
+    void subsetChanged(byteRange subset);   //was used for debugging dataSetView, should this be removed?
 
 private:
     bool highlightByteGrid(QTextEdit* textEdit, highlightSet& hSet);
