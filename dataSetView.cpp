@@ -186,7 +186,7 @@ void dataSetView::updateByteGridDimensions(QTextEdit* textEdit)
             break;
 
         default:    //this should never happen
-            LOG.Error("unhandled ByteGridColumnMode value");
+            FAIL();
     }
 
     if (0 >= rowBytes) {return;}

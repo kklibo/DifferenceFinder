@@ -35,8 +35,13 @@
     //   the initial upper bound will always be the minimum of the 2 data sets' sizes
     //
     {
-        unsigned int largestGap_data1 = byteRange::findSizeOfLargestEmptySpace( byteRange(0, data1.size()), data1SkipRanges );
-        unsigned int largestGap_data2 = byteRange::findSizeOfLargestEmptySpace( byteRange(0, data2.size()), data2SkipRanges );
+        ASSERT_LE_UINT_MAX(data1.size());
+        ASSERT_LE_UINT_MAX(data2.size());
+        unsigned int data1Size = static_cast<unsigned int>(data1.size());
+        unsigned int data2Size = static_cast<unsigned int>(data2.size());
+
+        unsigned int largestGap_data1 = byteRange::findSizeOfLargestEmptySpace( byteRange(0, data1Size), data1SkipRanges );
+        unsigned int largestGap_data2 = byteRange::findSizeOfLargestEmptySpace( byteRange(0, data2Size), data2SkipRanges );
         upperBound = std::min( largestGap_data1, largestGap_data2 );
     }
 
@@ -548,11 +553,18 @@ sw.recordTime();
 sw.recordTime("finished largest " + std::to_string(largest));
     } while (largest > 0);
 
-    byteRange data1_FullRange (0, data1.size());
+    ASSERT_LE_UINT_MAX(data1.size());
+    unsigned int data1Size = static_cast<unsigned int>(data1.size());
+
+    byteRange data1_FullRange (0, data1Size);
     Results->data1_unmatchedBlocks = *comparison::findUnmatchedBlocks(data1_FullRange, Results->matches, comparison::whichDataSet::first).release();
 
-    byteRange data2_FullRange (0, data2.size());
+    ASSERT_LE_UINT_MAX(data2.size());
+    unsigned int data2Size = static_cast<unsigned int>(data2.size());
+
+    byteRange data2_FullRange (0, data2Size);
     Results->data2_unmatchedBlocks = *comparison::findUnmatchedBlocks(data2_FullRange, Results->matches, comparison::whichDataSet::second).release();
+
 sw.recordTime("found unmatched blocks");
 sw.reportTimes(&Log::strMessageLvl1);
 

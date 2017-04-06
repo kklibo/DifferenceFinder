@@ -4,12 +4,6 @@
 #include "log.h"
 
 /*
-PRECONDITION
-POSTCONDITION
-ASSERT
-ASSERT_EQ
-
-
     LOG.Info(QString("%1, %2, %3").arg(__FILE__).arg(__LINE__).arg(__func__));
 */
 
@@ -17,6 +11,7 @@ ASSERT_EQ
 #define ASSERT_EQ(lhv, rhv)         do{ if(lhv==rhv     ){break;} LOG.Defensive(QString("ASSERT_EQ Failed: %1:%2")              .arg(__FILE__).arg(__LINE__)); }while(false)
 #define ASSERT_NOT_NEGATIVE(val)    do{ if(0 <= val     ){break;} LOG.Defensive(QString("ASSERT_NOT_NEGATIVE Failed: %1:%2")    .arg(__FILE__).arg(__LINE__)); }while(false)
 #define ASSERT_LE_INT_MAX(val)      do{ if(val<=INT_MAX ){break;} LOG.Defensive(QString("ASSERT_LE_INT_MAX Failed: %1:%2")      .arg(__FILE__).arg(__LINE__)); }while(false)
+#define ASSERT_LE_UINT_MAX(val)     do{ if(val<=UINT_MAX){break;} LOG.Defensive(QString("ASSERT_LE_UINT_MAX Failed: %1:%2")     .arg(__FILE__).arg(__LINE__)); }while(false)
 
 #define FAIL()                      do{                           LOG.Defensive(QString("FAIL (should be unreachable): %1:%2")  .arg(__FILE__).arg(__LINE__)); }while(false)
 
