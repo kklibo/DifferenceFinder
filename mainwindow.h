@@ -38,8 +38,6 @@ public:
     ~MainWindow();
 
 private slots:
-    void on_actionTest_triggered();
-
     void on_B_Compare_clicked();
 
     void on_actionQuit_triggered();
@@ -50,24 +48,18 @@ private slots:
 
     void onHexFieldFontChange();
 
-    void on_actionTest_highlighting_triggered();
-
     void on_actionSettings_triggered();
-
-    void on_actionTest_Compare2_triggered();
 
     void on_actionTest_Compare3_triggered();
 
     void on_actionUnit_tester_triggered();
 
-    void on_actionThread_test1_triggered();
-
-
-    void onComparisonThreadEnded();
-
     void on_actionDoSimpleCompare_triggered();
 
     void on_actionStop_thread_triggered();
+
+
+    void onComparisonThreadEnded();
 
 private:
     Ui::MainWindow *ui;

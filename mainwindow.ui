@@ -241,12 +241,8 @@
     <property name="title">
      <string>Debug</string>
     </property>
-    <addaction name="actionTest"/>
-    <addaction name="actionTest_highlighting"/>
-    <addaction name="actionTest_Compare2"/>
     <addaction name="actionTest_Compare3"/>
     <addaction name="actionUnit_tester"/>
-    <addaction name="actionThread_test1"/>
     <addaction name="actionDoSimpleCompare"/>
     <addaction name="actionStop_thread"/>
    </widget>
@@ -271,29 +267,14 @@
     <string>Load File1 (Left)</string>
    </property>
   </action>
-  <action name="actionTest">
-   <property name="text">
-    <string>Test</string>
-   </property>
-  </action>
   <action name="actionQuit">
    <property name="text">
     <string>Quit</string>
    </property>
   </action>
-  <action name="actionTest_highlighting">
-   <property name="text">
-    <string>Test highlighting</string>
-   </property>
-  </action>
   <action name="actionSettings">
    <property name="text">
     <string>Settings...</string>
-   </property>
-  </action>
-  <action name="actionTest_Compare2">
-   <property name="text">
-    <string>Test Compare2</string>
    </property>
   </action>
   <action name="actionTest_Compare3">
@@ -304,11 +285,6 @@
   <action name="actionUnit_tester">
    <property name="text">
     <string>unit tester</string>
-   </property>
-  </action>
-  <action name="actionThread_test1">
-   <property name="text">
-    <string>thread test1</string>
    </property>
   </action>
   <action name="actionDoSimpleCompare">

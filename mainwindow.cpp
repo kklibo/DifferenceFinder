@@ -98,59 +98,6 @@ void MainWindow::closeEvent(QCloseEvent* event)
     QMainWindow::closeEvent(event);
 }
 
-void MainWindow::on_actionTest_triggered()
-{
-    doLoadFile1("test1");
-    doLoadFile2("test2");
-
-    doCompare();
-}
-
-void MainWindow::on_actionTest_highlighting_triggered()
-{
-    doLoadFile1("test1");
-    doLoadFile2("test2");
-
-    doCompare();
-
-    if (m_dataSetView1) {
-
-        {
-            auto ranges = QSharedPointer<QVector<byteRange>>::create();
-            ranges.data()->append(byteRange(40,10));
-            dataSetView::highlightSet hSet(ranges);
-            hSet.setForegroundColor(QColor::fromRgb(128,0,0));
-            hSet.setBackgroundColor(QColor::fromRgb(0,128,128));
-
-            m_dataSetView1->addHighlightSet(hSet);
-        }
-
-        {
-            auto ranges = QSharedPointer<QVector<byteRange>>::create();
-            ranges.data()->append(byteRange(55,10));
-            dataSetView::highlightSet hSet(ranges);
-            hSet.setForegroundColor(QColor::fromRgb(128,255,0));
-            hSet.setBackgroundColor(QColor::fromRgb(0,0,128));
-
-            m_dataSetView1->addHighlightSet(hSet);
-        }
-
-        {
-            auto ranges = QSharedPointer<QVector<byteRange>>::create();
-            ranges.data()->append(byteRange(30,10));
-            dataSetView::highlightSet hSet(ranges);
-            hSet.setForegroundColor(QColor::fromRgb(255,255,255));
-            hSet.setBackgroundColor(QColor::fromRgb(128,128,128));
-
-            m_dataSetView1->addHighlightSet(hSet);
-        }
-
-        m_dataSetView1->updateByteGridDimensions(ui->textEdit_dataSet1);
-        m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
-
-    }
-}
-
 void MainWindow::doLoadFile1(const QString filename)
 {
     dataSet::loadFileResult res = m_dataSet1->loadFile(filename);
@@ -449,59 +396,6 @@ void MainWindow::on_actionSettings_triggered()
     }
 }
 
-void MainWindow::on_actionTest_Compare2_triggered()
-{
-    doLoadFile1("smalltest1");
-    doLoadFile2("smalltest2");
-
-    //comparison::rollingHashTest();
-    //comparison C;
-    //C.rollingHashTest2();
-
-    if (!m_dataSet1->getData() || !m_dataSet2->getData()) {
-        return;
-    }
-
-    std::vector<unsigned char> dS1 = m_dataSet1->getData()->toStdVector();
-    std::vector<unsigned char> dS2 = m_dataSet2->getData()->toStdVector();
-
-    std::multiset<byteRange> data1SkipRanges;
-    std::multiset<byteRange> data2SkipRanges;
-
-    data1SkipRanges.emplace(2, 3);
-    data1SkipRanges.emplace(6, 2);
-    data2SkipRanges.emplace(3, 3);
-    data2SkipRanges.emplace(7, 2);
-
-    for (unsigned int i = 0; i <= qMin(dS1.size(), dS2.size()); ++i) {
-
-        QString res;
-        if (comparison::blockMatchSearch(i, dS1, dS2, data1SkipRanges, data2SkipRanges)) {
-            res = "yes";
-        }
-        else {
-            res = "no";
-        }
-        LOG.Debug(QString("%1: %2").arg(i).arg(res));
-    }
-
-    {
-        std::multiset<blockMatchSet> matches;
-        comparison::blockMatchSearch(3, dS1, dS2, data1SkipRanges, data2SkipRanges, &matches);
-        LOG.Debug("!");
-        m_dataSetView1->clearHighlighting();
-        m_dataSetView2->clearHighlighting();
-        m_dataSetView1->addHighlighting(matches, true);
-        m_dataSetView2->addHighlighting(matches, false);
-        m_dataSetView1->addHighlighting(data1SkipRanges);
-        m_dataSetView2->addHighlighting(data2SkipRanges);
-        m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
-        m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
-    }
-
-
-}
-
 void MainWindow::on_actionTest_Compare3_triggered()
 {
     doLoadFile1("test1");
@@ -515,14 +409,6 @@ void MainWindow::on_actionTest_Compare3_triggered()
 void MainWindow::on_actionUnit_tester_triggered()
 {
     byteRange::test();
-}
-
-void MainWindow::on_actionThread_test1_triggered()
-{
-    LOG.Debug("on_actionThread_test1_triggered");
-    m_comparisonThread.setDataSet1(m_dataSet1);
-    m_comparisonThread.setDataSet2(m_dataSet2);
-    m_comparisonThread.doCompare();
 }
 
 void MainWindow::onComparisonThreadEnded()
