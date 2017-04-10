@@ -101,11 +101,20 @@ void MainWindow::closeEvent(QCloseEvent* event)
 void MainWindow::doLoadFile1(const QString filename)
 {
     dataSet::loadFileResult res = m_dataSet1->loadFile(filename);
-    if      (res == dataSet::loadFileResult::ERROR_FileDoesNotExist) {
+    if      (res == dataSet::loadFileResult::SUCCESS) {
+        //do nothing
+    }
+    else if (res == dataSet::loadFileResult::ERROR_FileDoesNotExist) {
         LOG.Error("File \"" % filename % "\" does not exist.");
     }
     else if (res == dataSet::loadFileResult::ERROR_FileReadFailure) {
         LOG.Error("\"" % filename % "\" failed to read.");
+    }
+    else if (res == dataSet::loadFileResult::ERROR_ActiveDataReadLock) {
+        LOG.Error("File load canceled: Current file is still in use.");
+    }
+    else {
+        FAIL();
     }
 
     m_dataSetView1 = QSharedPointer<dataSetView>::create(m_dataSet1);
@@ -128,11 +137,20 @@ void MainWindow::doLoadFile1(const QString filename)
 void MainWindow::doLoadFile2(const QString filename)
 {
     dataSet::loadFileResult res = m_dataSet2->loadFile(filename);
-    if      (res == dataSet::loadFileResult::ERROR_FileDoesNotExist) {
+    if      (res == dataSet::loadFileResult::SUCCESS) {
+        //do nothing
+    }
+    else if (res == dataSet::loadFileResult::ERROR_FileDoesNotExist) {
         LOG.Error("File \"" % filename % "\" does not exist.");
     }
     else if (res == dataSet::loadFileResult::ERROR_FileReadFailure) {
         LOG.Error("\"" % filename % "\" failed to read.");
+    }
+    else if (res == dataSet::loadFileResult::ERROR_ActiveDataReadLock) {
+        LOG.Error("File load canceled: Current file is still in use.");
+    }
+    else {
+        FAIL();
     }
 
     m_dataSetView2 = QSharedPointer<dataSetView>::create(m_dataSet2);
@@ -224,8 +242,9 @@ void MainWindow::updateScrollBarRange()
             return 0;   //default to 0 scroll range if not loaded
         }
 
-        ASSERT_LE_INT_MAX(dsv->getSubset().count);
-        int scrollRange = ds->getData()->size() - static_cast<int>(dsv->getSubset().count);
+        const dataSet::DataReadLock& DRL = ds->getReadLock();
+        ASSERT_LE_INT_MAX(                 DRL.getData().size() - dsv->getSubset().count);
+        int scrollRange = static_cast<int>(DRL.getData().size() - dsv->getSubset().count);
 
         if (dataSetView::ByteGridScrollingMode::FixedRows == dsv->byteGridScrollingMode) {
             ASSERT_LE_INT_MAX(dsv->getBytesPerRow());

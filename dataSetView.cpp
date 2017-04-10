@@ -233,7 +233,6 @@ bool dataSetView::printByteGrid(QTextEdit* textEdit, QTextEdit* addressColumn)
     addressColumn->clear();
 
     QSharedPointer<dataSet> theDataSet = m_dataSet.lock();
-    //QSharedPointer<QVector<byteRange>> diffs = m_diffs.lock();
 
     //ensure that weak pointer lock succeeded
     if ( !theDataSet ){
@@ -250,14 +249,14 @@ bool dataSetView::printByteGrid(QTextEdit* textEdit, QTextEdit* addressColumn)
     QString addressText = "";   //text for the address column area
 
     //get the data to be displayed
-    Q_CHECK_PTR(theDataSet->getData());
-    const QVector<unsigned char>& theData = *theDataSet->getData();
+    const dataSet::DataReadLock& DRL = theDataSet->getReadLock();
+    const std::vector<unsigned char>& theData = DRL.getData();
 
     unsigned int bytesPrinted = 0;
     ASSERT_LE_INT_MAX(m_subset.end());  //ensure static_cast<int>(i) in loop is safe
     for (unsigned int i = m_subset.start; i < m_subset.end(); i++) {
 
-        if (static_cast<int>(i) >= theData.size()) {
+        if (static_cast<unsigned long>(i) >= theData.size()) {
             //break if we've exhausted the data
             //(this can happen if the file is smaller than the display area's capacity)
             break;
@@ -276,10 +275,10 @@ bool dataSetView::printByteGrid(QTextEdit* textEdit, QTextEdit* addressColumn)
         }
 
         //add the next byte
-        if (!(theData[static_cast<int>(i)] & 0xF0)){
+        if (!(theData[static_cast<unsigned long>(i)] & 0xF0)){
             displayText += "0"; //add a leading 0 for a most-significant half-byte of zero
         }
-        displayText +=  QString::number(theData[static_cast<int>(i)], 16 ).toUpper() + " ";   //display in hex w/capital letters
+        displayText +=  QString::number(theData[static_cast<unsigned long>(i)], 16 ).toUpper() + " ";   //display in hex w/capital letters
 
         ++bytesPrinted;
     }

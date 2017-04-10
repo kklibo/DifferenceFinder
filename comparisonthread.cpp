@@ -56,13 +56,11 @@ void comparisonThread::run()
         return;
     }
 
-    if (!m_dataSet1->getData() || !m_dataSet2->getData()) {
-        return;
-    }
+    const dataSet::DataReadLock& DRL1 = m_dataSet1->getReadLock();
+    const std::vector<unsigned char> &dS1 = DRL1.getData();
 
-    //convert from qt vector to std::vector (TODO: FIX THIS)
-    std::vector<unsigned char> dS1 = m_dataSet1->getData()->toStdVector();
-    std::vector<unsigned char> dS2 = m_dataSet2->getData()->toStdVector();
+    const dataSet::DataReadLock& DRL2 = m_dataSet2->getReadLock();
+    const std::vector<unsigned char> &dS2 = DRL2.getData();
 
     m_results = comparison::doCompare(dS1, dS2);
 }
