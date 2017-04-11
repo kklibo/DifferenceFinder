@@ -243,8 +243,10 @@ void MainWindow::updateScrollBarRange()
         }
 
         const dataSet::DataReadLock& DRL = ds->getReadLock();
-        ASSERT_LE_INT_MAX(                 DRL.getData().size() - dsv->getSubset().count);
-        int scrollRange = static_cast<int>(DRL.getData().size() - dsv->getSubset().count);
+
+        ASSERT_LE_INT_MAX(DRL.getData().size());
+        ASSERT_LE_INT_MAX(dsv->getSubset().count);
+        int scrollRange = static_cast<int>(DRL.getData().size()) - static_cast<int>(dsv->getSubset().count);
 
         if (dataSetView::ByteGridScrollingMode::FixedRows == dsv->byteGridScrollingMode) {
             ASSERT_LE_INT_MAX(dsv->getBytesPerRow());
