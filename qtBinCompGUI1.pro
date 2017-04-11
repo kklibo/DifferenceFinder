@@ -45,7 +45,8 @@ FORMS    += mainwindow.ui \
     settingsdialog.ui
 
 DISTFILES += \
-    log
+    log \
+    README.md
 
 SUBDIRS += \
     qtBinCompGUI1_Test.pro \
