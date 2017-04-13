@@ -7,7 +7,7 @@
 
 namespace gtestDefs
 {
-    QString testFilePath = "../qtBinCompTestFiles/";
+    const QString testFilePath = "TestFiles/";
 }
 
 

@@ -49,6 +49,9 @@ dataSet::loadFileResult dataSet::loadFile(const QString fileName)
     m_loaded = false;
     m_dataReadLockCount = 0;
 
+    if (fileName.isEmpty()) {
+        return loadFileResult::ERROR_FileDoesNotExist;
+    }
 
     QFile file(fileName);   //QFile will close itself when it is released
     if (!file.open(QIODevice::ReadOnly)) {

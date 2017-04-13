@@ -8,7 +8,7 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = qtBinCompGUI1
+TARGET = DifferenceFinder
 TEMPLATE = app
 
 
@@ -47,7 +47,3 @@ FORMS    += mainwindow.ui \
 DISTFILES += \
     log \
     README.md
-
-SUBDIRS += \
-    qtBinCompGUI1_Test.pro \
-    qtBinCompGUI1_Test.pro

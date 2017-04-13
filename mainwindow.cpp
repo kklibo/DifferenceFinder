@@ -419,8 +419,8 @@ void MainWindow::on_actionSettings_triggered()
 
 void MainWindow::on_actionTest_Compare3_triggered()
 {
-    doLoadFile1("test1");
-    doLoadFile2("test2");
+    doLoadFile1("TestFiles/test1_1");
+    doLoadFile2("TestFiles/test1_2");
 
     m_comparisonThread.setDataSet1(m_dataSet1);
     m_comparisonThread.setDataSet2(m_dataSet2);

@@ -1,6 +1,3 @@
-#include <gtest.h>
-#include <gtestDefs.h>
-
 #include <QSharedPointer>
 #include <QVector>
 
@@ -9,6 +6,12 @@
 
 #include "dataSet.h"
 #include "byteRange.h"
+
+#include "gtestDefs.h"
+
+//  gtest.h and defensivecoding.h have macro conflicts (FAIL and ASSERT_EQ so far)
+//  this is solved (for now) by including gtest.h last
+#include <gtest.h>
 
 TEST(dataSet, LoadBadFileNames){
     dataSet dataSet1;
@@ -26,8 +29,8 @@ TEST(dataSet, LoadAndCompareSameFile){
     dataSet dataSet2;
 
     dataSet::loadFileResult res1, res2;
-    res1 = dataSet1.loadFile(gtestDefs::testFilePath % "test1");
-    res2 = dataSet2.loadFile(gtestDefs::testFilePath % "test1");
+    res1 = dataSet1.loadFile(gtestDefs::testFilePath % "test2_1");
+    res2 = dataSet2.loadFile(gtestDefs::testFilePath % "test2_1");
     EXPECT_EQ(dataSet::loadFileResult::SUCCESS, res1) << "dataSet1 load failed";
     EXPECT_EQ(dataSet::loadFileResult::SUCCESS, res2) << "dataSet2 load failed";
 

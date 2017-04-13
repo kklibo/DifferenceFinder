@@ -8,7 +8,7 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = qtBinCompGUI1
+TARGET = DifferenceFinder
 TEMPLATE = app
 
 
@@ -17,26 +17,39 @@ SOURCES +=\
         mainwindow.cpp \
     dataSet.cpp \
     dataSetView.cpp \
-    debugwindow.cpp \
     hexfield.cpp \
     log.cpp \
+    settingsdialog.cpp \
+    usersettings.cpp \
+    comparison.cpp \
+    blockmatchset.cpp \
+    comparisonthread.cpp \
+    stopwatch.cpp \
+    buzhash.cpp \
     dataSetTest.cpp
 
 HEADERS  += mainwindow.h \
     dataSet.h \
     dataSetView.h \
-    debugwindow.h \
     hexfield.h \
     byteRange.h \
     log.h \
+    settingsdialog.h \
+    usersettings.h \
+    defensivecoding.h \
+    comparison.h \
+    blockmatchset.h \
+    comparisonthread.h \
+    stopwatch.h \
+    buzhash.h \
     gtestDefs.h
 
 FORMS    += mainwindow.ui \
-    debugwindow.ui
+    settingsdialog.ui
 
 DISTFILES += \
-    todo \
-    log
+    log \
+    README.md
 
 INCLUDEPATH += \
     /usr/include/gtest \
