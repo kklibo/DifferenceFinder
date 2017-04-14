@@ -427,11 +427,6 @@ void MainWindow::on_actionTest_Compare3_triggered()
     m_comparisonThread.doCompare();
 }
 
-void MainWindow::on_actionUnit_tester_triggered()
-{
-    byteRange::test();
-}
-
 void MainWindow::onComparisonThreadEnded()
 {
     LOG.Debug("onComparisonThreadEnded");

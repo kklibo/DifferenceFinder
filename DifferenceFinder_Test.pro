@@ -26,7 +26,8 @@ SOURCES +=\
     comparisonthread.cpp \
     stopwatch.cpp \
     buzhash.cpp \
-    dataSetTest.cpp
+    dataSet_gtest.cpp \
+    byteRange_gtest.cpp
 
 HEADERS  += mainwindow.h \
     dataSet.h \

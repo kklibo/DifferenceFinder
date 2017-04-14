@@ -168,12 +168,10 @@ if resultMatches is nullptr, results won't being returned, so
 
     auto addToHashes1 = [&hashes1](unsigned int hashValue, unsigned int /*not used*/){
          hashes1.push_back(hashValue);
-    //    std::cout << "h1 " << std::hex << hashValue << std::endl;
     };
 
     auto addToHashes2 = [&hashes2](unsigned int hashValue, unsigned int index){
          hashes2.insert(HashIndexPair(hashValue, index));
-    //    std::cout << "h2 " << std::hex << hashValue << std::endl;
     };
 
     auto getAllHashes = [blockLength](const std::vector<unsigned char>& data, std::function<void(unsigned int, unsigned int)>storeHashValue)
@@ -290,9 +288,7 @@ if resultMatches is nullptr, results won't being returned, so
 
     bool matchFound = false;    //this will be set to true if we find a match (for return value)
 
-  //  std::cout << std::endl << "=== blockLength " << blockLength << " === data1 ===" << std::endl;
     getAllHashes(data1, addToHashes1);
-  //  std::cout << std::endl << "=== blockLength " << blockLength << " === data2 ===" << std::endl;
     getAllHashes(data2, addToHashes2);
 
     //loop through all the hashes of blocks from data set 1

@@ -52,8 +52,6 @@ private slots:
 
     void on_actionTest_Compare3_triggered();
 
-    void on_actionUnit_tester_triggered();
-
     void on_actionDoSimpleCompare_triggered();
 
     void on_actionStop_thread_triggered();

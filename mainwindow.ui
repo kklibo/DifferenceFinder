@@ -242,7 +242,6 @@
      <string>Debug</string>
     </property>
     <addaction name="actionTest_Compare3"/>
-    <addaction name="actionUnit_tester"/>
     <addaction name="actionDoSimpleCompare"/>
     <addaction name="actionStop_thread"/>
    </widget>
@@ -280,11 +279,6 @@
   <action name="actionTest_Compare3">
    <property name="text">
     <string>Test Compare3</string>
-   </property>
-  </action>
-  <action name="actionUnit_tester">
-   <property name="text">
-    <string>unit tester</string>
    </property>
   </action>
   <action name="actionDoSimpleCompare">
