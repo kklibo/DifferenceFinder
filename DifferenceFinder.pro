@@ -24,7 +24,9 @@ SOURCES += main.cpp\
     blockmatchset.cpp \
     comparisonthread.cpp \
     stopwatch.cpp \
-    buzhash.cpp
+    buzhash.cpp \
+    offsetmetrics.cpp \
+    rangematch.cpp
 
 HEADERS  += mainwindow.h \
     dataSet.h \
@@ -39,7 +41,9 @@ HEADERS  += mainwindow.h \
     blockmatchset.h \
     comparisonthread.h \
     stopwatch.h \
-    buzhash.h
+    buzhash.h \
+    offsetmetrics.h \
+    rangematch.h
 
 FORMS    += mainwindow.ui \
     settingsdialog.ui

@@ -478,3 +478,83 @@ void MainWindow::on_actionStop_thread_triggered()
 {
     m_comparisonThread.abort();
 }
+
+void MainWindow::on_actionTest_triggered()
+{
+    STOPWATCH1.clear();
+    STOPWATCH1.recordTime("test time:");
+
+
+    const dataSet::DataReadLock& DRL1 = m_dataSet1->getReadLock();
+    const std::vector<unsigned char> &dS1 = DRL1.getData();
+
+    const dataSet::DataReadLock& DRL2 = m_dataSet2->getReadLock();
+    const std::vector<unsigned char> &dS2 = DRL2.getData();
+
+    auto offsetMap1to2 = offsetMetrics::getOffsetMap(dS1, dS2, 0, 0).release();
+    auto offsetMap2to1 = offsetMetrics::getOffsetMap(dS2, dS1, 0, 0).release();
+
+    auto offsetMap1to2withOffset = offsetMetrics::getOffsetMap(dS1, dS2, 10, 10).release();
+
+    //std::list<byteRange> alignmentRanges_file1;
+    //std::list<byteRange> alignmentRanges_file2;
+
+    std::list<byteRange> file1_matches;
+    std::list<byteRange> file1_differences;
+    std::list<byteRange> file2_matches;
+    std::list<byteRange> file2_differences;
+
+    unsigned int sourceStartIndex = 0;
+    unsigned int targetStartIndex = 0;
+
+    while(1) {
+        auto rangeResult = offsetMetrics::getNextAlignmentRange(dS1, dS2, sourceStartIndex, targetStartIndex);
+        if (rangeResult){
+            auto range = *rangeResult.release();
+            LOG.Info(QString("getNextAlignmentRange: %1, %2")
+                            .arg(range.startIndexInFile1)
+                            .arg(range.byteCount));
+
+            sourceStartIndex = range.getEndInFile1();
+            //targetStartIndex = sourceStartIndex + range.offset_File1ToFile2;
+            targetStartIndex = range.getEndInFile2();
+
+            //alignmentRanges_file1.emplace_back(range.startIndexInFile1, range.byteCount);
+            //alignmentRanges_file2.emplace_back(range.startIndexInFile2, range.byteCount);
+
+            offsetMetrics::getAlignmentRangeDiff(dS1, dS2, range,   file1_matches,
+                                                                    file1_differences,
+                                                                    file2_matches,
+                                                                    file2_differences   );
+
+        }
+        else
+        {
+            LOG.Info(QString("getNextAlignmentRange returned nullptr"));
+            break;
+        }
+    }
+
+
+    if ( !m_dataSetView1 || !m_dataSetView2 ) {
+        return;
+    }
+
+    m_dataSetView1->clearHighlighting();
+    m_dataSetView2->clearHighlighting();
+
+    //m_dataSetView1->addHighlighting(results->matches, true);
+    //m_dataSetView2->addHighlighting(results->matches, false);
+    //m_dataSetView1->addDiffHighlighting(alignmentRanges_file1);
+    //m_dataSetView2->addDiffHighlighting(alignmentRanges_file2);
+    m_dataSetView1->addHighlighting(file1_matches);
+    m_dataSetView2->addHighlighting(file2_matches);
+    m_dataSetView1->addDiffHighlighting(file1_differences);//matches);
+    m_dataSetView2->addDiffHighlighting(file2_differences);//matches);
+
+    m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
+    m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
+
+    STOPWATCH1.recordTime();
+    STOPWATCH1.reportTimes(&Log::strMessageLvl2);
+}

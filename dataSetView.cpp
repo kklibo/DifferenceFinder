@@ -416,6 +416,33 @@ void dataSetView::addHighlighting(const std::multiset<byteRange>& ranges)
 
 }
 
+void dataSetView::addHighlighting(const std::list<byteRange>& ranges)
+{
+    const unsigned char a = 48;
+    const unsigned char B = 0;
+    unsigned int currentColor = 0;
+    std::vector<QColor> colorCycle = {
+        QColor::fromRgb(a,B,B),
+        QColor::fromRgb(B,a,B),
+        QColor::fromRgb(B,B,a),
+
+        QColor::fromRgb(B,a,a),
+        QColor::fromRgb(a,B,a),
+        QColor::fromRgb(a,a,B)
+    };
+
+    for (const byteRange& range : ranges) {
+
+        auto byteRanges = QSharedPointer<QVector<byteRange>>::create();
+        byteRanges->push_back(range);
+
+        dataSetView::highlightSet hSet(byteRanges);
+        hSet.setForegroundColor(QColor::fromRgb(128,128,128));
+        hSet.setBackgroundColor(colorCycle[ currentColor++ % colorCycle.size() ]);
+        addHighlightSet(hSet);
+    }
+}
+
 void dataSetView::addDiffHighlighting(const std::list<byteRange>& ranges)
 {
     const unsigned char a = 192;

@@ -244,6 +244,7 @@
     <addaction name="actionTest_Compare3"/>
     <addaction name="actionDoSimpleCompare"/>
     <addaction name="actionStop_thread"/>
+    <addaction name="actionTest"/>
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
@@ -289,6 +290,11 @@
   <action name="actionStop_thread">
    <property name="text">
     <string>stop thread</string>
+   </property>
+  </action>
+  <action name="actionTest">
+   <property name="text">
+    <string>test</string>
    </property>
   </action>
  </widget>

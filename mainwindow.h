@@ -22,6 +22,7 @@
 #include "defensivecoding.h"
 #include "comparison.h"
 #include "comparisonthread.h"
+#include "offsetmetrics.h"
 
 #include <set>
 
@@ -58,6 +59,8 @@ private slots:
 
 
     void onComparisonThreadEnded();
+
+    void on_actionTest_triggered();
 
 private:
     Ui::MainWindow *ui;
