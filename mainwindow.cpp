@@ -491,14 +491,6 @@ void MainWindow::on_actionTest_triggered()
     const dataSet::DataReadLock& DRL2 = m_dataSet2->getReadLock();
     const std::vector<unsigned char> &dS2 = DRL2.getData();
 
-    auto offsetMap1to2 = offsetMetrics::getOffsetMap(dS1, dS2, 0, 0).release();
-    auto offsetMap2to1 = offsetMetrics::getOffsetMap(dS2, dS1, 0, 0).release();
-
-    auto offsetMap1to2withOffset = offsetMetrics::getOffsetMap(dS1, dS2, 10, 10).release();
-
-    //std::list<byteRange> alignmentRanges_file1;
-    //std::list<byteRange> alignmentRanges_file2;
-
     std::list<byteRange> file1_matches;
     std::list<byteRange> file1_differences;
     std::list<byteRange> file2_matches;

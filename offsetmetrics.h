@@ -13,46 +13,20 @@
 /*
     Offset Metrics -based comparison
     The general idea:
-        starting at the beginning of a file, for each byte (b):
-            starting at the beginning of the other file,
-            find the index offset to the next occurrence of (b) (continuing beyond already-matched indices)
-        after this file to file offset map is generated, analyze offsets and look for groups
+        use a simple search to find alignment ranges: blocks of >50% matches between the 2 files
+        (TODO: then look for alternate related match options that might be better)
 */
-
-
-
 
 class offsetMetrics
 {
 public:
-/*
-    class alignmentRange {
-    public:
-        byteRange rangeInFile1;
-        int offset_File1ToFile2;
 
-        alignmentRange(byteRange _rangeInFile1, int _offset_File1ToFile2)
-            :   rangeInFile1        (_rangeInFile1),
-                offset_File1ToFile2 (_offset_File1ToFile2) {}
-
-
-    };
-*/
-
-
-    offsetMetrics();
-
-
-    static std::unique_ptr<std::vector<int>> getOffsetMap(  const std::vector<unsigned char>& source,
-                                                            const std::vector<unsigned char>& target,
-                                                            const unsigned int sourceStartIndex,
-                                                            const unsigned int targetStartIndex
-                                                            );
+    offsetMetrics() = delete;   //static functions only
 
     static std::unique_ptr<rangeMatch> getNextAlignmentRange(   const std::vector<unsigned char>& source,
                                                                 const std::vector<unsigned char>& target,
-                                                                const unsigned int sourceStartIndex,
-                                                                const unsigned int targetStartIndex
+                                                                const unsigned int sourceSearchStartIndex,
+                                                                const unsigned int targetSearchStartIndex
                                                                 );
 
     static void getAlignmentRangeDiff(  const std::vector<unsigned char>& file1,
