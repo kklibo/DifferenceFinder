@@ -499,32 +499,69 @@ void MainWindow::on_actionTest_triggered()
     unsigned int sourceStartIndex = 0;
     unsigned int targetStartIndex = 0;
 
+    std::list<rangeMatch> alignmentRanges;
+
     while(1) {
-        auto rangeResult = offsetMetrics::getNextAlignmentRange(dS1, dS2, sourceStartIndex, targetStartIndex);
+        //auto rangeResult = offsetMetrics::getNextAlignmentRange(dS1, dS2, sourceStartIndex, targetStartIndex);
+
+
+        std::list<byteRange> targetSearchRanges;
+        {
+            //find valid target search ranges (temp code, avoid copying list?)
+            std::list<byteRange> alignmentRangesInTarget;
+
+            for (rangeMatch& alignmentRange : alignmentRanges) {
+                alignmentRangesInTarget.emplace_back(alignmentRange.startIndexInFile2, alignmentRange.byteCount);
+            }
+
+            alignmentRangesInTarget.sort();
+
+            //fillEmptySpaces requires nondecreasing and nonoverlapping
+            ASSERT(byteRange::                isNonOverlapping(alignmentRangesInTarget));
+            ASSERT(byteRange::isNonDecreasingAndNonOverlapping(alignmentRangesInTarget));
+
+            byteRange::fillEmptySpaces(byteRange(0, dS2.size()), alignmentRangesInTarget, targetSearchRanges);
+        }
+
+        std::unique_ptr<rangeMatch> rangeResult;
+        if (DEBUGFLAG1)
+        {
+            rangeResult = offsetMetrics::getNextAlignmentRange(dS1, dS2,
+                                                                    byteRange(sourceStartIndex, dS1.size() - sourceStartIndex),
+                                                                    byteRange(targetStartIndex, dS2.size() - targetStartIndex));
+        } else
+        {
+            rangeResult = offsetMetrics::getNextAlignmentRange(dS1, dS2,
+                                                                    byteRange(sourceStartIndex, dS1.size() - sourceStartIndex),
+                                                                    targetSearchRanges);
+        }
+
         if (rangeResult){
-            auto range = *rangeResult.release();
-            LOG.Info(QString("getNextAlignmentRange: %1, %2")
+            rangeMatch range = *rangeResult.release();
+            LOG.Info(QString("getNextAlignmentRange: %1, %2; %3")
                             .arg(range.startIndexInFile1)
+                            .arg(range.startIndexInFile2)
                             .arg(range.byteCount));
 
             sourceStartIndex = range.getEndInFile1();
-            //targetStartIndex = sourceStartIndex + range.offset_File1ToFile2;
             targetStartIndex = range.getEndInFile2();
 
-            //alignmentRanges_file1.emplace_back(range.startIndexInFile1, range.byteCount);
-            //alignmentRanges_file2.emplace_back(range.startIndexInFile2, range.byteCount);
-
-            offsetMetrics::getAlignmentRangeDiff(dS1, dS2, range,   file1_matches,
-                                                                    file1_differences,
-                                                                    file2_matches,
-                                                                    file2_differences   );
-
+            alignmentRanges.push_back(range);
         }
         else
         {
             LOG.Info(QString("getNextAlignmentRange returned nullptr"));
             break;
         }
+    }
+
+    for (const rangeMatch& alignmentRange : alignmentRanges) {
+
+        offsetMetrics::getAlignmentRangeDiff(dS1, dS2, alignmentRange,
+                                                        file1_matches,
+                                                        file1_differences,
+                                                        file2_matches,
+                                                        file2_differences   );
     }
 
 
@@ -549,4 +586,10 @@ void MainWindow::on_actionTest_triggered()
 
     STOPWATCH1.recordTime();
     STOPWATCH1.reportTimes(&Log::strMessageLvl2);
+}
+
+void MainWindow::on_actionDebugFlag_triggered()
+{
+    DEBUGFLAG1 = !DEBUGFLAG1;
+    LOG.Debug(QString("DEBUGFLAG1: %1").arg(DEBUGFLAG1));
 }

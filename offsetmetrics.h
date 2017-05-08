@@ -25,9 +25,22 @@ public:
 
     static std::unique_ptr<rangeMatch> getNextAlignmentRange(   const std::vector<unsigned char>& source,
                                                                 const std::vector<unsigned char>& target,
+                                                                const byteRange sourceSearchRange,
+                                                                const byteRange targetSearchRange
+                                                                );
+
+    static std::unique_ptr<rangeMatch> getNextAlignmentRange(   const std::vector<unsigned char>& source,
+                                                                const std::vector<unsigned char>& target,
                                                                 const unsigned int sourceSearchStartIndex,
                                                                 const unsigned int targetSearchStartIndex
                                                                 );
+
+    static std::unique_ptr<rangeMatch> getNextAlignmentRange( const std::vector<unsigned char>& source,
+                                                              const std::vector<unsigned char>& target,
+                                                              const byteRange sourceSearchRange,
+                                                              //this should be sorted by increasing start index
+                                                              const std::list<byteRange>& targetSearchRanges
+                                                              );
 
     static void getAlignmentRangeDiff(  const std::vector<unsigned char>& file1,
                                         const std::vector<unsigned char>& file2,
