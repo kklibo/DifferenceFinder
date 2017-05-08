@@ -26,6 +26,8 @@ SOURCES +=\
     comparisonthread.cpp \
     stopwatch.cpp \
     buzhash.cpp \
+    offsetmetrics.cpp \
+    rangematch.cpp \
     dataSet_gtest.cpp \
     byteRange_gtest.cpp
 
@@ -43,6 +45,8 @@ HEADERS  += mainwindow.h \
     comparisonthread.h \
     stopwatch.h \
     buzhash.h \
+    offsetmetrics.h \
+    rangematch.h \
     gtestDefs.h
 
 FORMS    += mainwindow.ui \

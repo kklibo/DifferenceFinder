@@ -478,3 +478,118 @@ void MainWindow::on_actionStop_thread_triggered()
 {
     m_comparisonThread.abort();
 }
+
+void MainWindow::on_actionTest_triggered()
+{
+    STOPWATCH1.clear();
+    STOPWATCH1.recordTime("test time:");
+
+
+    const dataSet::DataReadLock& DRL1 = m_dataSet1->getReadLock();
+    const std::vector<unsigned char> &dS1 = DRL1.getData();
+
+    const dataSet::DataReadLock& DRL2 = m_dataSet2->getReadLock();
+    const std::vector<unsigned char> &dS2 = DRL2.getData();
+
+    std::list<byteRange> file1_matches;
+    std::list<byteRange> file1_differences;
+    std::list<byteRange> file2_matches;
+    std::list<byteRange> file2_differences;
+
+    unsigned int sourceStartIndex = 0;
+    unsigned int targetStartIndex = 0;
+
+    std::list<rangeMatch> alignmentRanges;
+
+    while(1) {
+        //auto rangeResult = offsetMetrics::getNextAlignmentRange(dS1, dS2, sourceStartIndex, targetStartIndex);
+
+
+        std::list<byteRange> targetSearchRanges;
+        {
+            //find valid target search ranges (temp code, avoid copying list?)
+            std::list<byteRange> alignmentRangesInTarget;
+
+            for (rangeMatch& alignmentRange : alignmentRanges) {
+                alignmentRangesInTarget.emplace_back(alignmentRange.startIndexInFile2, alignmentRange.byteCount);
+            }
+
+            alignmentRangesInTarget.sort();
+
+            //fillEmptySpaces requires nondecreasing and nonoverlapping
+            ASSERT(byteRange::                isNonOverlapping(alignmentRangesInTarget));
+            ASSERT(byteRange::isNonDecreasingAndNonOverlapping(alignmentRangesInTarget));
+
+            byteRange::fillEmptySpaces(byteRange(0, dS2.size()), alignmentRangesInTarget, targetSearchRanges);
+        }
+
+        std::unique_ptr<rangeMatch> rangeResult;
+        if (DEBUGFLAG1)
+        {
+            rangeResult = offsetMetrics::getNextAlignmentRange(dS1, dS2,
+                                                                    byteRange(sourceStartIndex, dS1.size() - sourceStartIndex),
+                                                                    byteRange(targetStartIndex, dS2.size() - targetStartIndex));
+        } else
+        {
+            rangeResult = offsetMetrics::getNextAlignmentRange(dS1, dS2,
+                                                                    byteRange(sourceStartIndex, dS1.size() - sourceStartIndex),
+                                                                    targetSearchRanges);
+        }
+
+        if (rangeResult){
+            rangeMatch range = *rangeResult.release();
+            LOG.Info(QString("getNextAlignmentRange: %1, %2; %3")
+                            .arg(range.startIndexInFile1)
+                            .arg(range.startIndexInFile2)
+                            .arg(range.byteCount));
+
+            sourceStartIndex = range.getEndInFile1();
+            targetStartIndex = range.getEndInFile2();
+
+            alignmentRanges.push_back(range);
+        }
+        else
+        {
+            LOG.Info(QString("getNextAlignmentRange returned nullptr"));
+            break;
+        }
+    }
+
+    for (const rangeMatch& alignmentRange : alignmentRanges) {
+
+        offsetMetrics::getAlignmentRangeDiff(dS1, dS2, alignmentRange,
+                                                        file1_matches,
+                                                        file1_differences,
+                                                        file2_matches,
+                                                        file2_differences   );
+    }
+
+
+    if ( !m_dataSetView1 || !m_dataSetView2 ) {
+        return;
+    }
+
+    m_dataSetView1->clearHighlighting();
+    m_dataSetView2->clearHighlighting();
+
+    //m_dataSetView1->addHighlighting(results->matches, true);
+    //m_dataSetView2->addHighlighting(results->matches, false);
+    //m_dataSetView1->addDiffHighlighting(alignmentRanges_file1);
+    //m_dataSetView2->addDiffHighlighting(alignmentRanges_file2);
+    m_dataSetView1->addHighlighting(file1_matches);
+    m_dataSetView2->addHighlighting(file2_matches);
+    m_dataSetView1->addDiffHighlighting(file1_differences);//matches);
+    m_dataSetView2->addDiffHighlighting(file2_differences);//matches);
+
+    m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
+    m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
+
+    STOPWATCH1.recordTime();
+    STOPWATCH1.reportTimes(&Log::strMessageLvl2);
+}
+
+void MainWindow::on_actionDebugFlag_triggered()
+{
+    DEBUGFLAG1 = !DEBUGFLAG1;
+    LOG.Debug(QString("DEBUGFLAG1: %1").arg(DEBUGFLAG1));
+}

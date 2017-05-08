@@ -38,6 +38,11 @@ public:
         return start + count;
     }
 
+    bool contains(const unsigned int& index) const {
+        return (    ( start <= index )
+                 && ( index <  end() )  );
+    }
+
     bool overlaps(const byteRange& b) const {
 
         if ((0 == count) || (0 == b.count)) {

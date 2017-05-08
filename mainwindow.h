@@ -22,6 +22,7 @@
 #include "defensivecoding.h"
 #include "comparison.h"
 #include "comparisonthread.h"
+#include "offsetmetrics.h"
 
 #include <set>
 
@@ -59,6 +60,10 @@ private slots:
 
     void onComparisonThreadEnded();
 
+    void on_actionTest_triggered();
+
+    void on_actionDebugFlag_triggered();
+
 private:
     Ui::MainWindow *ui;
     void doScrollBar(int value);
@@ -89,6 +94,7 @@ private:
     comparisonThread m_comparisonThread;
 
 stopwatch STOPWATCH1;
+bool DEBUGFLAG1 = false;
 };
 
 #endif // MAINWINDOW_H
