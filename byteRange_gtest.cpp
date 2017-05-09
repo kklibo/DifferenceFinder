@@ -2,6 +2,22 @@
 #include "gtestDefs.h"
 #include <gtest.h>
 
+TEST(byteRange, contains){
+    //size zero
+    byteRange a(10, 0);
+    EXPECT_FALSE(   a.contains(0)                   );
+    EXPECT_FALSE(   a.contains(9)                   );
+    EXPECT_FALSE(   a.contains(10)                  );
+    EXPECT_FALSE(   a.contains(11)                  );
+
+    byteRange b(20, 10);
+
+    EXPECT_FALSE(   b.contains(0)                   );
+    EXPECT_TRUE (   b.contains(20)                  );
+    EXPECT_TRUE (   b.contains(29)                  );
+    EXPECT_FALSE(   b.contains(30)                  );
+}
+
 TEST(byteRange, overlaps){
     byteRange a(20, 10);
 

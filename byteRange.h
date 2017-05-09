@@ -5,6 +5,8 @@
 #include <list>
 #include <algorithm>
 
+#include "defensivecoding.h"
+
 /*
     specifies a range of bytes
 */
@@ -183,6 +185,8 @@ public:
     //this function assumes isNonDecreasingAndNonOverlapping(blocks) would return true
     static void fillEmptySpaces(const byteRange& fillThisRange, std::list<byteRange>& blocks, std::list<byteRange>& copiesOfAddedBlocks)
     {
+        ASSERT(isNonDecreasingAndNonOverlapping(blocks));
+
         unsigned int currentGapStart = fillThisRange.start;
 
         for (std::list<byteRange>::iterator it = blocks.begin(); it != blocks.end(); ++it) {
@@ -219,10 +223,12 @@ public:
         }
     }
 
-    //this function assumes isNonDecreasingAndNonOverlapping(blocks) would return true
+    //this function assumes isNonDecreasingAndNonOverlapping(aroundTheseBlocks) would return true
     template <typename T>
     static unsigned int findSizeOfLargestEmptySpace(const byteRange& inThisRange, const T& aroundTheseBlocks)
     {
+        ASSERT(isNonDecreasingAndNonOverlapping(aroundTheseBlocks));
+
         unsigned int largestGapSize = 0;
 
         unsigned int currentGapStart = inThisRange.start;
