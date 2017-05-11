@@ -42,6 +42,17 @@ MainWindow::MainWindow(QWidget *parent) :
     //set initial width for address column areas
     onHexFieldFontChange();
 
+    //load settings from ini file
+    m_userSettings.loadINIFile();
+
+    //resize window from ini file settings
+    if (m_userSettings.windowWidth && m_userSettings.windowHeight) {
+        ASSERT_LE_INT_MAX(m_userSettings.windowWidth);
+        ASSERT_LE_INT_MAX(m_userSettings.windowHeight);
+        this->resize(   static_cast<int>(m_userSettings.windowWidth),
+                        static_cast<int>(m_userSettings.windowHeight)   );
+    }
+
     LOG.Info("started");
 }
 
@@ -95,6 +106,14 @@ void MainWindow::resizeHexField2()
 
 void MainWindow::closeEvent(QCloseEvent* event)
 {
+    //record window size
+    ASSERT(0 < this->width());
+    ASSERT(0 < this->height());
+    m_userSettings.windowWidth  = static_cast<unsigned int>(this->width() );
+    m_userSettings.windowHeight = static_cast<unsigned int>(this->height());
+
+    //save settings to ini file
+    m_userSettings.saveINIFile();
     QMainWindow::closeEvent(event);
 }
 
