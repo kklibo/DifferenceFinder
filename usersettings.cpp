@@ -6,7 +6,8 @@ UserSettings::UserSettings()
       byteGridColumn_UpTo_N(8),
       byteGridScrollingMode(dataSetView::ByteGridScrollingMode::FixedRows),
       windowWidth(0),
-      windowHeight(0)
+      windowHeight(0),
+      logAreaHeight(0)
 {
 
 }
@@ -29,6 +30,8 @@ void UserSettings::loadINIFile() {
     windowWidth =                           settings.value("windowWidth").toUInt();
 
     windowHeight =                          settings.value("windowHeight").toUInt();
+
+    logAreaHeight =                         settings.value("logAreaHeight").toUInt();
 }
 
 void UserSettings::saveINIFile() {
@@ -43,6 +46,7 @@ void UserSettings::saveINIFile() {
     settings.setValue("byteGridScrollingMode",              static_cast<int>(byteGridScrollingMode) );
     settings.setValue("windowWidth",                        windowWidth                             );
     settings.setValue("windowHeight",                       windowHeight                            );
+    settings.setValue("logAreaHeight",                      logAreaHeight                           );
 
     settings.sync();
 

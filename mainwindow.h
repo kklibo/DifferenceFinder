@@ -72,7 +72,7 @@ private:
     void updateScrollBarRange();
     void resizeHexField1();
     void resizeHexField2();
-    void applyUserSettings();
+    void applyUserSettingsTo(QSharedPointer<dataSetView> ds);
     void refreshTitleBarText();
 
 

@@ -18,18 +18,22 @@ public:
     void loadINIFile();
     void saveINIFile();
 
-    //column count mode
-    dataSetView::ByteGridColumnMode byteGridColumnMode;
-    //values for specific modes
-    unsigned int byteGridColumn_LargestMultipleOf_N;
-    unsigned int byteGridColumn_UpTo_N;
+    //dataSetView
+        //column count mode
+        dataSetView::ByteGridColumnMode byteGridColumnMode;
+        //values for specific modes
+        unsigned int byteGridColumn_LargestMultipleOf_N;
+        unsigned int byteGridColumn_UpTo_N;
 
-    //scrolling mode
-    dataSetView::ByteGridScrollingMode byteGridScrollingMode;
+        //scrolling mode
+        dataSetView::ByteGridScrollingMode byteGridScrollingMode;
 
     //saved window size
     unsigned int windowWidth;
     unsigned int windowHeight;
+
+    //saved log area height
+    unsigned int logAreaHeight;
 
 };
 

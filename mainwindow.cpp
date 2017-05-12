@@ -32,18 +32,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&m_comparisonThread, &comparisonThread::sendMessage, this, &MainWindow::displayLogMessage);
     connect(&m_comparisonThread, &comparisonThread::finished, this, &MainWindow::onComparisonThreadEnded);
 
-    //set initial log area size (first entry should just be nonzero, 2nd one is initial log area size)
-    ui->logAreaSplitter->setSizes(QList<int>() << 50 << 240);//120 );
-
-    //make log area collapsible
-    ui->logAreaSplitter->setCollapsible(1,true);
-
-
-    //apply user settings (from defaults in m_userSettings)
-    applyUserSettings();
-
-    //set initial width for address column areas
-    onHexFieldFontChange();
 
     //load settings from ini file
     m_userSettings.loadINIFile();
@@ -55,6 +43,16 @@ MainWindow::MainWindow(QWidget *parent) :
         this->resize(   static_cast<int>(m_userSettings.windowWidth),
                         static_cast<int>(m_userSettings.windowHeight)   );
     }
+
+    //make log area collapsible
+    ui->logAreaSplitter->setCollapsible(1,true);
+
+    //set initial log area size (first entry should just be nonzero, 2nd one is initial log area size)
+    ASSERT_LE_INT_MAX(m_userSettings.logAreaHeight);
+    ui->logAreaSplitter->setSizes(QList<int>() << 50 << static_cast<int>(m_userSettings.logAreaHeight));
+
+    //set initial width for address column areas
+    onHexFieldFontChange();
 
     LOG.Info("started");
 }
@@ -115,6 +113,10 @@ void MainWindow::closeEvent(QCloseEvent* event)
     m_userSettings.windowWidth  = static_cast<unsigned int>(this->width() );
     m_userSettings.windowHeight = static_cast<unsigned int>(this->height());
 
+    //record log area height
+    ASSERT_NOT_NEGATIVE(ui->textEdit_log->height());
+    m_userSettings.logAreaHeight = static_cast<unsigned int>(ui->textEdit_log->height());
+
     //save settings to ini file
     m_userSettings.saveINIFile();
     QMainWindow::closeEvent(event);
@@ -141,7 +143,7 @@ void MainWindow::doLoadFile1(const QString filename)
 
     m_dataSetView1 = QSharedPointer<dataSetView>::create(m_dataSet1);
 
-    applyUserSettings(); //reapply user settings to new dataSetView
+    applyUserSettingsTo(m_dataSetView1); //reapply user settings to new dataSetView
 
     if (m_dataSet1->isLoaded() && m_dataSetView1) {
 
@@ -181,7 +183,7 @@ void MainWindow::doLoadFile2(const QString filename)
 
     m_dataSetView2 = QSharedPointer<dataSetView>::create(m_dataSet2);
 
-    applyUserSettings(); //reapply user settings to new dataSetView
+    applyUserSettingsTo(m_dataSetView2); //reapply user settings to new dataSetView
 
     if (m_dataSet2->isLoaded() && m_dataSetView2) {
 
@@ -215,11 +217,11 @@ void MainWindow::doSimpleCompare()
     hSet.setBackgroundColor(QColor::fromRgb(128,128,0));
 
     m_dataSetView1 = QSharedPointer<dataSetView>::create(m_dataSet1);
-    applyUserSettings(); //reapply user settings to new dataSetView
+    applyUserSettingsTo(m_dataSetView1); //reapply user settings to new dataSetView
     m_dataSetView1->addHighlightSet(hSet);
 
     m_dataSetView2 = QSharedPointer<dataSetView>::create(m_dataSet2);
-    applyUserSettings(); //reapply user settings to new dataSetView
+    applyUserSettingsTo(m_dataSetView2); //reapply user settings to new dataSetView
     m_dataSetView2->addHighlightSet(hSet);
 
 
@@ -244,20 +246,15 @@ void MainWindow::doCompare()
     m_comparisonThread.doCompare();
 }
 
-void MainWindow::applyUserSettings()
+void MainWindow::applyUserSettingsTo(QSharedPointer<dataSetView> ds)
 {
     //applies user settings to a dataSetView
-    auto apply = [this](QSharedPointer<dataSetView> ds){
-        if (ds) {
-            ds->byteGridColumnMode                  = m_userSettings.byteGridColumnMode;
-            ds->byteGridColumn_LargestMultipleOf_N  = m_userSettings.byteGridColumn_LargestMultipleOf_N;
-            ds->byteGridColumn_UpTo_N               = m_userSettings.byteGridColumn_UpTo_N;
-            ds->byteGridScrollingMode               = m_userSettings.byteGridScrollingMode;
-        }
-    };
-
-    apply(m_dataSetView1);
-    apply(m_dataSetView2);
+    if (ds) {
+        ds->byteGridColumnMode                  = m_userSettings.byteGridColumnMode;
+        ds->byteGridColumn_LargestMultipleOf_N  = m_userSettings.byteGridColumn_LargestMultipleOf_N;
+        ds->byteGridColumn_UpTo_N               = m_userSettings.byteGridColumn_UpTo_N;
+        ds->byteGridScrollingMode               = m_userSettings.byteGridScrollingMode;
+    }
 }
 
 void MainWindow::refreshTitleBarText()
@@ -443,15 +440,15 @@ void MainWindow::on_actionSettings_triggered()
         //if OK was clicked, update current settings
         m_userSettings = sd.getUserSettings();
 
-        applyUserSettings();
-
         //refresh data view settings and redraw
         if (m_dataSetView1) {
+            applyUserSettingsTo(m_dataSetView1);
             m_dataSetView1->updateByteGridDimensions(ui->textEdit_dataSet1);
             m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
         }
 
         if (m_dataSetView2) {
+            applyUserSettingsTo(m_dataSetView2);
             m_dataSetView2->updateByteGridDimensions(ui->textEdit_dataSet2);
             m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
         }
