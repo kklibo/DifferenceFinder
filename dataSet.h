@@ -86,6 +86,7 @@ public:
     const DataReadLock getReadLock() const;
     unsigned int getSize() const;
     bool isLoaded() const;
+    const QString getFileName() const;
 
 private:
     mutable QMutex m_mutex;

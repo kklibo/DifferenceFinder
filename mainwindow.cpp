@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 
+/*static*/ const QString MainWindow::APPLICATION_TITLE = "Difference Finder v0.2";
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -8,6 +9,8 @@ MainWindow::MainWindow(QWidget *parent) :
     m_comparisonThread()
 {
     ui->setupUi(this);
+
+    refreshTitleBarText();
 
     //create dataSets
     m_dataSet1 = QSharedPointer<dataSet>::create();
@@ -150,7 +153,11 @@ void MainWindow::doLoadFile1(const QString filename)
         m_dataSetView1->updateByteGridDimensions(ui->textEdit_dataSet1);
         m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
         updateScrollBarRange();
+
+        ui->label_File1Path->setText(m_dataSet1->getFileName());
     }
+
+    refreshTitleBarText();
 }
 
 void MainWindow::doLoadFile2(const QString filename)
@@ -186,7 +193,11 @@ void MainWindow::doLoadFile2(const QString filename)
         m_dataSetView2->updateByteGridDimensions(ui->textEdit_dataSet2);
         m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
         updateScrollBarRange();
+
+        ui->label_File2Path->setText(m_dataSet2->getFileName());
     }
+
+    refreshTitleBarText();
 }
 
 void MainWindow::doSimpleCompare()
@@ -247,6 +258,24 @@ void MainWindow::applyUserSettings()
 
     apply(m_dataSetView1);
     apply(m_dataSetView2);
+}
+
+void MainWindow::refreshTitleBarText()
+{
+    if (    m_dataSet1 && m_dataSet1->isLoaded()
+         && m_dataSet2 && m_dataSet2->isLoaded()) {
+
+        QFileInfo fi1(m_dataSet1->getFileName());
+        QFileInfo fi2(m_dataSet2->getFileName());
+
+        //this uses QFileInfo objects to get filenames from the loaded file paths
+        QString titleBarText = QString("%1 <-> %2 - %3").arg(fi1.fileName()).arg(fi2.fileName()).arg(APPLICATION_TITLE);
+        setWindowTitle(titleBarText);
+
+    } else {
+
+        setWindowTitle(APPLICATION_TITLE);
+    }
 }
 
 void MainWindow::updateScrollBarRange()

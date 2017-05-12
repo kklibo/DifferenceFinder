@@ -73,9 +73,13 @@ private:
     void resizeHexField1();
     void resizeHexField2();
     void applyUserSettings();
+    void refreshTitleBarText();
 
 
     void closeEvent(QCloseEvent* event) Q_DECL_OVERRIDE;
+
+    //application title string
+    static const QString APPLICATION_TITLE;
 
     //the 2 dataSets we will compare
     QSharedPointer<dataSet> m_dataSet1;

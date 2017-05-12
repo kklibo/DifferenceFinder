@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Difference Finder v0.2</string>
+   <string/>
   </property>
   <widget class="QWidget" name="centralWidget">
    <property name="sizePolicy">
@@ -68,56 +68,83 @@
          <number>0</number>
         </property>
         <item row="0" column="0">
-         <layout class="QHBoxLayout" name="horizontalLayout">
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
           <property name="spacing">
            <number>2</number>
           </property>
-          <property name="sizeConstraint">
-           <enum>QLayout::SetDefaultConstraint</enum>
-          </property>
           <item>
-           <widget class="QTextEdit" name="textEdit_address1">
-            <property name="font">
-             <font>
-              <family>DejaVu Sans Mono</family>
-              <pointsize>10</pointsize>
-             </font>
+           <layout class="QVBoxLayout" name="verticalLayout_4">
+            <property name="spacing">
+             <number>2</number>
             </property>
-            <property name="verticalScrollBarPolicy">
-             <enum>Qt::ScrollBarAlwaysOff</enum>
+            <property name="topMargin">
+             <number>2</number>
             </property>
-            <property name="horizontalScrollBarPolicy">
-             <enum>Qt::ScrollBarAlwaysOff</enum>
-            </property>
-            <property name="lineWrapMode">
-             <enum>QTextEdit::NoWrap</enum>
-            </property>
-            <property name="readOnly">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="hexField" name="textEdit_dataSet1">
-            <property name="font">
-             <font>
-              <family>DejaVu Sans Mono</family>
-              <pointsize>10</pointsize>
-             </font>
-            </property>
-            <property name="verticalScrollBarPolicy">
-             <enum>Qt::ScrollBarAlwaysOff</enum>
-            </property>
-            <property name="horizontalScrollBarPolicy">
-             <enum>Qt::ScrollBarAlwaysOff</enum>
-            </property>
-            <property name="lineWrapMode">
-             <enum>QTextEdit::NoWrap</enum>
-            </property>
-            <property name="readOnly">
-             <bool>true</bool>
-            </property>
-           </widget>
+            <item>
+             <widget class="QLabel" name="label_File1Path">
+              <property name="text">
+               <string/>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+              </property>
+              <property name="indent">
+               <number>2</number>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout">
+              <property name="spacing">
+               <number>2</number>
+              </property>
+              <item>
+               <widget class="QTextEdit" name="textEdit_address1">
+                <property name="font">
+                 <font>
+                  <family>DejaVu Sans Mono</family>
+                  <pointsize>10</pointsize>
+                 </font>
+                </property>
+                <property name="verticalScrollBarPolicy">
+                 <enum>Qt::ScrollBarAlwaysOff</enum>
+                </property>
+                <property name="horizontalScrollBarPolicy">
+                 <enum>Qt::ScrollBarAlwaysOff</enum>
+                </property>
+                <property name="lineWrapMode">
+                 <enum>QTextEdit::NoWrap</enum>
+                </property>
+                <property name="readOnly">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="hexField" name="textEdit_dataSet1">
+                <property name="font">
+                 <font>
+                  <family>DejaVu Sans Mono</family>
+                  <pointsize>10</pointsize>
+                 </font>
+                </property>
+                <property name="verticalScrollBarPolicy">
+                 <enum>Qt::ScrollBarAlwaysOff</enum>
+                </property>
+                <property name="horizontalScrollBarPolicy">
+                 <enum>Qt::ScrollBarAlwaysOff</enum>
+                </property>
+                <property name="lineWrapMode">
+                 <enum>QTextEdit::NoWrap</enum>
+                </property>
+                <property name="readOnly">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
           </item>
           <item>
            <layout class="QVBoxLayout" name="verticalLayout">
@@ -150,48 +177,78 @@
            </layout>
           </item>
           <item>
-           <widget class="QTextEdit" name="textEdit_address2">
-            <property name="font">
-             <font>
-              <family>DejaVu Sans Mono</family>
-              <pointsize>10</pointsize>
-             </font>
+           <layout class="QVBoxLayout" name="verticalLayout_5">
+            <property name="spacing">
+             <number>2</number>
             </property>
-            <property name="verticalScrollBarPolicy">
-             <enum>Qt::ScrollBarAlwaysOff</enum>
+            <property name="topMargin">
+             <number>2</number>
             </property>
-            <property name="horizontalScrollBarPolicy">
-             <enum>Qt::ScrollBarAlwaysOff</enum>
-            </property>
-            <property name="lineWrapMode">
-             <enum>QTextEdit::NoWrap</enum>
-            </property>
-            <property name="readOnly">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="hexField" name="textEdit_dataSet2">
-            <property name="font">
-             <font>
-              <family>DejaVu Sans Mono</family>
-              <pointsize>10</pointsize>
-             </font>
-            </property>
-            <property name="verticalScrollBarPolicy">
-             <enum>Qt::ScrollBarAlwaysOff</enum>
-            </property>
-            <property name="horizontalScrollBarPolicy">
-             <enum>Qt::ScrollBarAlwaysOff</enum>
-            </property>
-            <property name="lineWrapMode">
-             <enum>QTextEdit::NoWrap</enum>
-            </property>
-            <property name="readOnly">
-             <bool>true</bool>
-            </property>
-           </widget>
+            <item>
+             <widget class="QLabel" name="label_File2Path">
+              <property name="text">
+               <string/>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+              </property>
+              <property name="indent">
+               <number>2</number>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_2">
+              <property name="spacing">
+               <number>2</number>
+              </property>
+              <item>
+               <widget class="QTextEdit" name="textEdit_address2">
+                <property name="font">
+                 <font>
+                  <family>DejaVu Sans Mono</family>
+                  <pointsize>10</pointsize>
+                 </font>
+                </property>
+                <property name="verticalScrollBarPolicy">
+                 <enum>Qt::ScrollBarAlwaysOff</enum>
+                </property>
+                <property name="horizontalScrollBarPolicy">
+                 <enum>Qt::ScrollBarAlwaysOff</enum>
+                </property>
+                <property name="lineWrapMode">
+                 <enum>QTextEdit::NoWrap</enum>
+                </property>
+                <property name="readOnly">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="hexField" name="textEdit_dataSet2">
+                <property name="font">
+                 <font>
+                  <family>DejaVu Sans Mono</family>
+                  <pointsize>10</pointsize>
+                 </font>
+                </property>
+                <property name="verticalScrollBarPolicy">
+                 <enum>Qt::ScrollBarAlwaysOff</enum>
+                </property>
+                <property name="horizontalScrollBarPolicy">
+                 <enum>Qt::ScrollBarAlwaysOff</enum>
+                </property>
+                <property name="lineWrapMode">
+                 <enum>QTextEdit::NoWrap</enum>
+                </property>
+                <property name="readOnly">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
           </item>
          </layout>
         </item>

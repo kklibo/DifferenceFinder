@@ -34,6 +34,14 @@ bool dataSet::isLoaded() const
     return m_loaded;
 }
 
+const QString dataSet::getFileName() const
+{
+    if (m_loaded) {
+        return QString(*m_fileName.data());
+    }
+    return QString();
+}
+
 dataSet::loadFileResult dataSet::loadFile(const QString fileName)
 {
     QMutexLocker lock(&m_mutex);
