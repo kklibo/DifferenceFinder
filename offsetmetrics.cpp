@@ -91,24 +91,6 @@
     return nullptr;
 }
 
-
-/*static*/ std::unique_ptr<rangeMatch>
-            offsetMetrics::getNextAlignmentRange(   const std::vector<unsigned char>& source,
-                                                    const std::vector<unsigned char>& target,
-                                                    const unsigned int sourceSearchStartIndex,
-                                                    const unsigned int targetSearchStartIndex
-                                                    )
-{
-    ASSERT_LE_UINT_MAX(target.size());
-    ASSERT_LE_UINT_MAX(source.size());
-
-    return getNextAlignmentRange(source,
-                                 target,
-                                 byteRange(sourceSearchStartIndex, static_cast<unsigned int>(source.size()) - sourceSearchStartIndex),
-                                 byteRange(targetSearchStartIndex, static_cast<unsigned int>(target.size()) - targetSearchStartIndex));
-}
-
-
 /*static*/ std::unique_ptr<rangeMatch>
             offsetMetrics::getNextAlignmentRange(   const std::vector<unsigned char>& source,
                                                     const std::vector<unsigned char>& target,
@@ -229,12 +211,9 @@ offsetMetrics::doCompare(   const std::vector<unsigned char>& data1,
 
 
     unsigned int sourceStartIndex = 0;
-    unsigned int targetStartIndex = 0;
-
     std::list<rangeMatch> alignmentRanges;
 
     while(1) {
-        //auto rangeResult = offsetMetrics::getNextAlignmentRange(dS1, dS2, sourceStartIndex, targetStartIndex);
 
         if (m_abort) {
             Results->aborted = true;
@@ -250,27 +229,18 @@ offsetMetrics::doCompare(   const std::vector<unsigned char>& data1,
                 alignmentRangesInTarget.emplace_back(alignmentRange.startIndexInFile2, alignmentRange.byteCount);
             }
 
+            //fillEmptySpaces requires a nondecreasing and nonoverlapping block list
             alignmentRangesInTarget.sort();
 
-            //fillEmptySpaces requires nondecreasing and nonoverlapping
-            ASSERT(byteRange::                isNonOverlapping(alignmentRangesInTarget));
-            ASSERT(byteRange::isNonDecreasingAndNonOverlapping(alignmentRangesInTarget));
-
-            byteRange::fillEmptySpaces(byteRange(0, data2.size()), alignmentRangesInTarget, targetSearchRanges);
+            ASSERT_LE_UINT_MAX(data2.size());
+            byteRange::fillEmptySpaces(byteRange(0, static_cast<unsigned int>(data2.size())), alignmentRangesInTarget, targetSearchRanges);
         }
 
-        std::unique_ptr<rangeMatch> rangeResult;
-        /*if (DEBUGFLAG1)
-        {
-            rangeResult = offsetMetrics::getNextAlignmentRange(dS1, dS2,
-                                                                    byteRange(sourceStartIndex, dS1.size() - sourceStartIndex),
-                                                                    byteRange(targetStartIndex, dS2.size() - targetStartIndex));
-        } else
-        {*/
-            rangeResult = offsetMetrics::getNextAlignmentRange(data1, data2,
-                                                                    byteRange(sourceStartIndex, data1.size() - sourceStartIndex),
-                                                                    targetSearchRanges);
-        /*}*/
+        ASSERT_LE_UINT_MAX(data1.size());
+        byteRange sourceSearchRange(sourceStartIndex, static_cast<unsigned int>(data1.size()) - sourceStartIndex);
+
+        std::unique_ptr<rangeMatch> rangeResult
+            = offsetMetrics::getNextAlignmentRange(data1, data2, sourceSearchRange, targetSearchRanges);
 
         if (rangeResult){
             rangeMatch range = *rangeResult.release();
@@ -280,7 +250,6 @@ offsetMetrics::doCompare(   const std::vector<unsigned char>& data1,
                             .arg(range.byteCount));
 
             sourceStartIndex = range.getEndInFile1();
-            targetStartIndex = range.getEndInFile2();
 
             alignmentRanges.push_back(range);
         }

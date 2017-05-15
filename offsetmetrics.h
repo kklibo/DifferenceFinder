@@ -45,12 +45,6 @@ public:
                                                                 const byteRange targetSearchRange
                                                                 );
 
-    static std::unique_ptr<rangeMatch> getNextAlignmentRange(   const std::vector<unsigned char>& source,
-                                                                const std::vector<unsigned char>& target,
-                                                                const unsigned int sourceSearchStartIndex,
-                                                                const unsigned int targetSearchStartIndex
-                                                                );
-
     static std::unique_ptr<rangeMatch> getNextAlignmentRange( const std::vector<unsigned char>& source,
                                                               const std::vector<unsigned char>& target,
                                                               const byteRange sourceSearchRange,
