@@ -23,6 +23,22 @@ public:
 
     offsetMetrics() = delete;   //static functions only
 
+    class results {
+    public:
+        std::list<byteRange> file1_matches;
+        std::list<byteRange> file1_differences;
+        std::list<byteRange> file2_matches;
+        std::list<byteRange> file2_differences;
+
+        bool aborted;
+        bool internalError;
+
+        results() : aborted(false), internalError(false) {}
+    };
+
+
+
+
     static std::unique_ptr<rangeMatch> getNextAlignmentRange(   const std::vector<unsigned char>& source,
                                                                 const std::vector<unsigned char>& target,
                                                                 const byteRange sourceSearchRange,
@@ -50,6 +66,16 @@ public:
                                         std::list<byteRange>& file2_matches,
                                         std::list<byteRange>& file2_differences
                                         );
+
+    static
+    std::unique_ptr<offsetMetrics::results>
+    doCompare(  const std::vector<unsigned char>& data1,
+                const std::vector<unsigned char>& data2 );
+
+    static void abort();
+
+private:
+    static std::atomic_bool m_abort;  //abort flag
 
 };
 

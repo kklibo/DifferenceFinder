@@ -64,6 +64,8 @@ private slots:
 
     void on_actionDebugFlag_triggered();
 
+    void on_actionThreaded_sequential_compare_triggered();
+
 private:
     Ui::MainWindow *ui;
     void doScrollBar(int value);

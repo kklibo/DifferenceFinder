@@ -1,5 +1,7 @@
 #include "offsetmetrics.h"
 
+/*static*/ std::atomic_bool offsetMetrics::m_abort{false};
+
 /*static*/ std::unique_ptr<rangeMatch>
             offsetMetrics::getNextAlignmentRange(   const std::vector<unsigned char>& source,
                                                     const std::vector<unsigned char>& target,
@@ -116,6 +118,8 @@
                                                     )
 {
 
+    ASSERT(byteRange::isNonDecreasingAndNonOverlapping(targetSearchRanges));
+
     //note: this checks all indices in sourceSearchRange against the current targetSearchRange
     //  before proceeding to the next targetSearchRange:
     //  this is not the same order as a full target search that skips (target) ranges
@@ -205,4 +209,106 @@
     closeRangeIfActive(file1DifferenceRange,    file1_differences);
     closeRangeIfActive(file2MatchRange,         file2_matches);
     closeRangeIfActive(file2DifferenceRange,    file2_differences);
+}
+
+/*static*/
+std::unique_ptr<offsetMetrics::results>
+offsetMetrics::doCompare(   const std::vector<unsigned char>& data1,
+                            const std::vector<unsigned char>& data2 )
+{
+    m_abort = false; //clear abort flag
+
+    auto Results = std::unique_ptr<offsetMetrics::results>( new offsetMetrics::results );
+
+    if (!data1.size() || !data2.size()) {
+        Results->internalError = true;
+        return Results;
+    }
+
+
+
+
+    unsigned int sourceStartIndex = 0;
+    unsigned int targetStartIndex = 0;
+
+    std::list<rangeMatch> alignmentRanges;
+
+    while(1) {
+        //auto rangeResult = offsetMetrics::getNextAlignmentRange(dS1, dS2, sourceStartIndex, targetStartIndex);
+
+        if (m_abort) {
+            Results->aborted = true;
+            return Results;
+        }
+
+        std::list<byteRange> targetSearchRanges;
+        {
+            //find valid target search ranges (temp code, avoid copying list?)
+            std::list<byteRange> alignmentRangesInTarget;
+
+            for (rangeMatch& alignmentRange : alignmentRanges) {
+                alignmentRangesInTarget.emplace_back(alignmentRange.startIndexInFile2, alignmentRange.byteCount);
+            }
+
+            alignmentRangesInTarget.sort();
+
+            //fillEmptySpaces requires nondecreasing and nonoverlapping
+            ASSERT(byteRange::                isNonOverlapping(alignmentRangesInTarget));
+            ASSERT(byteRange::isNonDecreasingAndNonOverlapping(alignmentRangesInTarget));
+
+            byteRange::fillEmptySpaces(byteRange(0, data2.size()), alignmentRangesInTarget, targetSearchRanges);
+        }
+
+        std::unique_ptr<rangeMatch> rangeResult;
+        /*if (DEBUGFLAG1)
+        {
+            rangeResult = offsetMetrics::getNextAlignmentRange(dS1, dS2,
+                                                                    byteRange(sourceStartIndex, dS1.size() - sourceStartIndex),
+                                                                    byteRange(targetStartIndex, dS2.size() - targetStartIndex));
+        } else
+        {*/
+            rangeResult = offsetMetrics::getNextAlignmentRange(data1, data2,
+                                                                    byteRange(sourceStartIndex, data1.size() - sourceStartIndex),
+                                                                    targetSearchRanges);
+        /*}*/
+
+        if (rangeResult){
+            rangeMatch range = *rangeResult.release();
+            LOG.Info(QString("getNextAlignmentRange: %1, %2; %3")
+                            .arg(range.startIndexInFile1)
+                            .arg(range.startIndexInFile2)
+                            .arg(range.byteCount));
+
+            sourceStartIndex = range.getEndInFile1();
+            targetStartIndex = range.getEndInFile2();
+
+            alignmentRanges.push_back(range);
+        }
+        else
+        {
+            LOG.Info(QString("getNextAlignmentRange returned nullptr"));
+            break;
+        }
+    }
+
+    for (const rangeMatch& alignmentRange : alignmentRanges) {
+
+        if (m_abort) {
+            Results->aborted = true;
+            return Results;
+        }
+
+        offsetMetrics::getAlignmentRangeDiff(data1, data2, alignmentRange,
+                                                        Results->file1_matches,
+                                                        Results->file1_differences,
+                                                        Results->file2_matches,
+                                                        Results->file2_differences   );
+    }
+
+    return Results;
+}
+
+/*static*/ void offsetMetrics::abort()
+{
+    m_abort = true;
 }

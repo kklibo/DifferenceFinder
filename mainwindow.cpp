@@ -350,6 +350,7 @@ void MainWindow::on_B_Compare_clicked()
 {
 STOPWATCH1.clear();
 STOPWATCH1.recordTime("Compare operation Total:");
+    m_comparisonThread.setComparisonAlgorithm(comparisonThread::comparisonAlgorithm::largestBlock);
     doCompare();
 }
 
@@ -476,34 +477,68 @@ void MainWindow::onComparisonThreadEnded()
 {
     LOG.Debug("onComparisonThreadEnded");
 
-    auto results = m_comparisonThread.getResults();
 
-    if (!results) {
+    auto results_largestBlock = m_comparisonThread.getResults_largestBlock();
+    auto results_sequential   = m_comparisonThread.getResults_sequential();
+
+    if (results_largestBlock) {
+
+        if (results_largestBlock->aborted) {
+            LOG.Info("comparison was aborted");
+            return;
+        }
+
+        if (results_largestBlock->internalError) {
+            LOG.Error("comparison failed due to an internal error");
+            return;
+        }
+
+        if ( !m_dataSetView1 || !m_dataSetView2 ) {
+            return;
+        }
+        m_dataSetView1->clearHighlighting();
+        m_dataSetView2->clearHighlighting();
+
+        auto& results = results_largestBlock;
+        m_dataSetView1->addHighlighting(results->matches, true);
+        m_dataSetView2->addHighlighting(results->matches, false);
+        m_dataSetView1->addDiffHighlighting(results->data1_unmatchedBlocks);
+        m_dataSetView2->addDiffHighlighting(results->data2_unmatchedBlocks);
+
+    }
+    else if (results_sequential) {
+
+        if (results_sequential->aborted) {
+            LOG.Info("comparison was aborted");
+            return;
+        }
+
+        if (results_sequential->internalError) {
+            LOG.Error("comparison failed due to an internal error");
+            return;
+        }
+
+        if ( !m_dataSetView1 || !m_dataSetView2 ) {
+            return;
+        }
+        m_dataSetView1->clearHighlighting();
+        m_dataSetView2->clearHighlighting();
+
+        auto& results = results_sequential;
+        m_dataSetView1->addHighlighting(results->file1_matches);
+        m_dataSetView2->addHighlighting(results->file2_matches);
+        m_dataSetView1->addDiffHighlighting(results->file1_differences);
+        m_dataSetView2->addDiffHighlighting(results->file2_differences);
+
+    }
+    else {
         LOG.Error("comparison results should be ready, but aren't");
         return;
     }
 
-    if (results->aborted) {
-        LOG.Info("comparison was aborted");
-        return;
-    }
 
-    if (results->internalError) {
-        LOG.Error("comparison failed due to an internal error");
-        return;
-    }
 
-    if ( !m_dataSetView1 || !m_dataSetView2 ) {
-        return;
-    }
 
-    m_dataSetView1->clearHighlighting();
-    m_dataSetView2->clearHighlighting();
-
-    m_dataSetView1->addHighlighting(results->matches, true);
-    m_dataSetView2->addHighlighting(results->matches, false);
-    m_dataSetView1->addDiffHighlighting(results->data1_unmatchedBlocks);
-    m_dataSetView2->addDiffHighlighting(results->data2_unmatchedBlocks);
 
     //m_dataSetView1->addHighlighting(data1SkipRanges);
     //m_dataSetView2->addHighlighting(data2SkipRanges);
@@ -536,6 +571,11 @@ void MainWindow::on_actionTest_triggered()
     const dataSet::DataReadLock& DRL2 = m_dataSet2->getReadLock();
     const std::vector<unsigned char> &dS2 = DRL2.getData();
 
+
+
+
+
+/*
     std::list<byteRange> file1_matches;
     std::list<byteRange> file1_differences;
     std::list<byteRange> file2_matches;
@@ -608,6 +648,22 @@ void MainWindow::on_actionTest_triggered()
                                                         file2_matches,
                                                         file2_differences   );
     }
+*/
+
+    auto Result = offsetMetrics::doCompare(dS1, dS2);
+
+    if (Result->aborted || Result->internalError) {
+        return;
+    }
+
+    std::list<byteRange>& file1_matches         = Result->file1_matches;
+    std::list<byteRange>& file1_differences     = Result->file1_differences;
+    std::list<byteRange>& file2_matches         = Result->file2_matches;
+    std::list<byteRange>& file2_differences     = Result->file2_differences;
+
+
+
+
 
 
     if ( !m_dataSetView1 || !m_dataSetView2 ) {
@@ -637,4 +693,12 @@ void MainWindow::on_actionDebugFlag_triggered()
 {
     DEBUGFLAG1 = !DEBUGFLAG1;
     LOG.Debug(QString("DEBUGFLAG1: %1").arg(DEBUGFLAG1));
+}
+
+void MainWindow::on_actionThreaded_sequential_compare_triggered()
+{
+STOPWATCH1.clear();
+STOPWATCH1.recordTime("Sequential Compare operation Total:");
+    m_comparisonThread.setComparisonAlgorithm(comparisonThread::comparisonAlgorithm::sequential);
+    doCompare();
 }
