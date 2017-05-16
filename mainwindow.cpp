@@ -346,14 +346,6 @@ void MainWindow::displayLogMessage(QString str, QColor color)
     ui->textEdit_log->setTextColor(orig);
 }
 
-void MainWindow::on_B_Compare_clicked()
-{
-STOPWATCH1.clear();
-STOPWATCH1.recordTime("Compare operation Total:");
-    m_comparisonThread.setComparisonAlgorithm(comparisonThread::comparisonAlgorithm::largestBlock);
-    doCompare();
-}
-
 void MainWindow::on_actionQuit_triggered()
 {
     QApplication::quit();
@@ -565,10 +557,18 @@ void MainWindow::on_actionDebugFlag_triggered()
     LOG.Debug(QString("DEBUGFLAG1: %1").arg(DEBUGFLAG1));
 }
 
-void MainWindow::on_actionThreaded_sequential_compare_triggered()
+void MainWindow::on_actionSequential_compare_triggered()
 {
 STOPWATCH1.clear();
 STOPWATCH1.recordTime("Sequential Compare operation Total:");
     m_comparisonThread.setComparisonAlgorithm(comparisonThread::comparisonAlgorithm::sequential);
+    doCompare();
+}
+
+void MainWindow::on_actionLargestBlock_compare_triggered()
+{
+STOPWATCH1.clear();
+STOPWATCH1.recordTime("Compare operation Total:");
+    m_comparisonThread.setComparisonAlgorithm(comparisonThread::comparisonAlgorithm::largestBlock);
     doCompare();
 }

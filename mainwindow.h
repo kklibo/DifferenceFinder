@@ -39,7 +39,9 @@ public:
     ~MainWindow();
 
 private slots:
-    void on_B_Compare_clicked();
+
+    void onComparisonThreadEnded();
+
 
     void on_actionQuit_triggered();
 
@@ -57,14 +59,13 @@ private slots:
 
     void on_actionStop_thread_triggered();
 
-
-    void onComparisonThreadEnded();
-
     void on_actionTest_triggered();
 
     void on_actionDebugFlag_triggered();
 
-    void on_actionThreaded_sequential_compare_triggered();
+    void on_actionSequential_compare_triggered();
+
+    void on_actionLargestBlock_compare_triggered();
 
 private:
     Ui::MainWindow *ui;
