@@ -92,7 +92,6 @@ private:
     QSharedPointer<dataSetView> m_dataSetView1;
     QSharedPointer<dataSetView> m_dataSetView2;
 
-    void doCompare();
     void doSimpleCompare();
     void displayLogMessage(QString str, QColor color);
 

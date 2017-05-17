@@ -31,13 +31,11 @@ public:
     comparisonThread(   QObject* parent = nullptr   );
     ~comparisonThread();
 
-    void doCompare();
+    bool startThread(comparisonAlgorithm algorithm);
     void abort();
 
     std::unique_ptr<   comparison::results> getResults_largestBlock();
     std::unique_ptr<offsetMetrics::results> getResults_sequential();
-
-    void setComparisonAlgorithm(comparisonAlgorithm algorithm);
 
     void setDataSet1(QSharedPointer<dataSet> dataSet1);
     void setDataSet2(QSharedPointer<dataSet> dataSet2);
@@ -54,7 +52,7 @@ protected:
 private:
     QMutex m_mutex;
 
-    //special lock so abort() can be called during doCompare's m_mutex lock
+    //special lock so abort() can be called while the thread holds m_mutex
     QMutex m_comparisonAlgorithmWriteLock;
 
     //comparison algorithm to use

@@ -3,6 +3,7 @@
 comparisonThread::comparisonThread(QObject* parent/*= nullptr*/)
   : QThread (parent),
     m_mutex(),
+    m_comparisonAlgorithmWriteLock(),
     m_comparisonAlgorithm(comparisonAlgorithm::largestBlock),
     m_dataSet1(nullptr),
     m_dataSet2(nullptr),
@@ -18,9 +19,15 @@ comparisonThread::~comparisonThread()
     wait(); //returns when run() is not running
 }
 
-void comparisonThread::doCompare()
+bool comparisonThread::startThread(comparisonAlgorithm algorithm)
 {
+    QMutexLocker lock(&m_mutex);
+    QMutexLocker lock2(&m_comparisonAlgorithmWriteLock);
+    m_comparisonAlgorithm = algorithm;
+
     start();
+
+    return true;
 }
 
 void comparisonThread::abort()
@@ -58,13 +65,6 @@ std::unique_ptr<offsetMetrics::results> comparisonThread::getResults_sequential(
     return isFinished() ?
                 std::unique_ptr<offsetMetrics::results>(std::move(m_results_sequential)) :
                 std::unique_ptr<offsetMetrics::results>(nullptr);
-}
-
-void comparisonThread::setComparisonAlgorithm(comparisonAlgorithm algorithm)
-{
-    QMutexLocker lock(&m_mutex);
-    QMutexLocker lock2(&m_comparisonAlgorithmWriteLock);
-    m_comparisonAlgorithm = algorithm;
 }
 
 void comparisonThread::setDataSet1(QSharedPointer<dataSet> dataSet1)

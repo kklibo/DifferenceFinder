@@ -238,14 +238,6 @@ void MainWindow::doSimpleCompare()
     updateScrollBarRange();
 }
 
-void MainWindow::doCompare()
-{
-    LOG.Debug("MainWindow::doCompare");
-    m_comparisonThread.setDataSet1(m_dataSet1);
-    m_comparisonThread.setDataSet2(m_dataSet2);
-    m_comparisonThread.doCompare();
-}
-
 void MainWindow::applyUserSettingsTo(QSharedPointer<dataSetView> ds)
 {
     //applies user settings to a dataSetView
@@ -460,9 +452,7 @@ void MainWindow::on_actionTest_Compare3_triggered()
     doLoadFile1("TestFiles/test1_1");
     doLoadFile2("TestFiles/test1_2");
 
-    m_comparisonThread.setDataSet1(m_dataSet1);
-    m_comparisonThread.setDataSet2(m_dataSet2);
-    m_comparisonThread.doCompare();
+    on_actionSequential_compare_triggered();
 }
 
 void MainWindow::onComparisonThreadEnded()
@@ -561,14 +551,32 @@ void MainWindow::on_actionSequential_compare_triggered()
 {
 STOPWATCH1.clear();
 STOPWATCH1.recordTime("Sequential Compare operation Total:");
-    m_comparisonThread.setComparisonAlgorithm(comparisonThread::comparisonAlgorithm::sequential);
-    doCompare();
+
+    if (m_comparisonThread.isRunning()) {
+        LOG.Debug("sequential: m_comparisonThread already running");
+        return;
+    }
+
+    m_comparisonThread.setDataSet1(m_dataSet1);
+    m_comparisonThread.setDataSet2(m_dataSet2);
+    m_comparisonThread.startThread(comparisonThread::comparisonAlgorithm::sequential)
+        ?   LOG.Debug("starting Sequential Comparison")
+        :   LOG.Debug("failed to start Sequential Comparison: worker thread already running");
 }
 
 void MainWindow::on_actionLargestBlock_compare_triggered()
 {
 STOPWATCH1.clear();
-STOPWATCH1.recordTime("Compare operation Total:");
-    m_comparisonThread.setComparisonAlgorithm(comparisonThread::comparisonAlgorithm::largestBlock);
-    doCompare();
+STOPWATCH1.recordTime("Largest Block Compare operation Total:");
+
+    if (m_comparisonThread.isRunning()) {
+        LOG.Debug("largest block: m_comparisonThread already running");
+        return;
+    }
+
+    m_comparisonThread.setDataSet1(m_dataSet1);
+    m_comparisonThread.setDataSet2(m_dataSet2);
+    m_comparisonThread.startThread(comparisonThread::comparisonAlgorithm::largestBlock)
+        ?   LOG.Debug("starting Largest Block Comparison")
+        :   LOG.Debug("failed to start Largest Block Comparison: worker thread already running");
 }
