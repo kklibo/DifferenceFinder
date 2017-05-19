@@ -1,5 +1,29 @@
 #include "mainwindow.h"
 
+scrollWheelRedirector::scrollWheelRedirector(QObject *redirectTo)
+{
+    m_redirectTo = redirectTo;
+}
+
+bool scrollWheelRedirector::eventFilter(QObject *obj, QEvent *event)
+{
+    if (event->type() == QEvent::Wheel) {
+        //redirect QWheelEvents to the designated QObject
+        QWheelEvent *wheelEvent = static_cast<QWheelEvent *>(event);
+
+        ASSERT(m_redirectTo);
+        if (m_redirectTo) {
+            QCoreApplication::sendEvent(m_redirectTo, wheelEvent);
+        }
+        return true;
+
+    } else {
+        // standard event processing
+        return QObject::eventFilter(obj, event);
+    }
+}
+
+
 /*static*/ const QString MainWindow::APPLICATION_TITLE = "Difference Finder v0.2";
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -32,6 +56,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&m_comparisonThread, &comparisonThread::sendMessage, this, &MainWindow::displayLogMessage);
     connect(&m_comparisonThread, &comparisonThread::finished, this, &MainWindow::onComparisonThreadEnded);
 
+    //redirect scroll wheel events from the hex views to the main scrollbar
+    m_scrollWheelRedirector = QSharedPointer<scrollWheelRedirector>::create(ui->verticalScrollBar);
+    ui->textEdit_dataSet1->installEventFilter(m_scrollWheelRedirector.data());
+    ui->textEdit_dataSet2->installEventFilter(m_scrollWheelRedirector.data());
 
     //load settings from ini file
     m_userSettings.loadINIFile();

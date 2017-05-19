@@ -32,6 +32,7 @@ public:
     void dragLeaveEvent(QDragLeaveEvent *e) Q_DECL_OVERRIDE;
     void changeEvent(QEvent *e) Q_DECL_OVERRIDE;
     void resizeEvent(QResizeEvent *e) Q_DECL_OVERRIDE;
+    void wheelEvent(QWheelEvent *e) Q_DECL_OVERRIDE;
 
 signals:
     void filenameDropped(QString filename);

@@ -53,3 +53,10 @@ void hexField::resizeEvent(QResizeEvent *e)
     QTextEdit::resizeEvent(e);
     emit resized();
 }
+
+void hexField::wheelEvent(QWheelEvent *e)
+{
+    //for some reason, hexfields are still scrolling despite QWheelEvents being filtered
+    //this ignore call prevents the unwanted scrolling
+    e->ignore();
+}

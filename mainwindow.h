@@ -30,6 +30,22 @@ namespace Ui {
 class MainWindow;
 }
 
+
+class scrollWheelRedirector : public QObject
+{
+//used to redirect QWheelEvents to the main scrollbar
+    Q_OBJECT
+
+public:
+    scrollWheelRedirector(QObject* redirectTo);
+
+protected:
+    bool eventFilter(QObject *obj, QEvent *event) Q_DECL_OVERRIDE;
+
+private:
+    QObject* m_redirectTo;
+};
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -68,6 +84,9 @@ private slots:
     void on_actionLargestBlock_compare_triggered();
 
 private:
+
+    QSharedPointer<scrollWheelRedirector> m_scrollWheelRedirector;
+
     Ui::MainWindow *ui;
     void doScrollBar(int value);
     void doLoadFile1(const QString filename);
