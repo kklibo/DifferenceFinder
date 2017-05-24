@@ -366,6 +366,105 @@ void MainWindow::displayLogMessage(QString str, QColor color)
     ui->textEdit_log->setTextColor(orig);
 }
 
+QString MainWindow::summarizeResults(const comparison::results& results)
+{
+    if (results.aborted) {
+        return "aborted";
+    }
+    if (results.internalError) {
+        return "internal error";
+    }
+
+    unsigned int matchedBlocksInData1 = 0;
+    unsigned int matchedBlocksInData2 = 0;
+    unsigned int matchedBytesInData1 = 0;
+    unsigned int matchedBytesInData2 = 0;
+
+
+    for (const blockMatchSet& bms : results.matches) {
+
+        matchedBlocksInData1 += bms.data1_BlockStartIndices.size();
+        matchedBlocksInData2 += bms.data2_BlockStartIndices.size();
+
+        matchedBytesInData1 += bms.data1_BlockStartIndices.size() * bms.blockSize;
+        matchedBytesInData2 += bms.data2_BlockStartIndices.size() * bms.blockSize;
+    }
+
+    auto getRangeTotal = [](const std::list<byteRange>& byteRanges) -> unsigned int {
+
+        unsigned int totalBytes = 0;
+        for (const byteRange& b : byteRanges) {
+            totalBytes += b.count;
+        }
+        return totalBytes;
+    };
+
+    QString ret = QString(  "Largest Block Comparison Results:\n"
+                            "matches.size(): %1\n"
+                            "matched Blocks in Data1: %2\n"
+                            "matched Blocks in Data2: %3\n"
+                            "matched Bytes in Data1: %4\n"
+                            "matched Bytes in Data2: %5\n"
+                            "data1_unmatchedBlocks.size(): %6\n"
+                            "data2_unmatchedBlocks.size(): %7\n"
+                            "unmatched Bytes in Data1: %8\n"
+                            "unmatched Bytes in Data2: %9\n"
+                         )
+                            .arg(results.matches.size())
+                            .arg(matchedBlocksInData1)
+                            .arg(matchedBlocksInData2)
+                            .arg(matchedBytesInData1)
+                            .arg(matchedBytesInData2)
+                            .arg(results.data1_unmatchedBlocks.size())
+                            .arg(results.data2_unmatchedBlocks.size())
+                            .arg(getRangeTotal(results.data1_unmatchedBlocks))
+                            .arg(getRangeTotal(results.data2_unmatchedBlocks))
+                         ;
+
+    return ret;
+}
+
+QString MainWindow::summarizeResults(const offsetMetrics::results& results)
+{
+    if (results.aborted) {
+        return "aborted";
+    }
+    if (results.internalError) {
+        return "internal error";
+    }
+
+    auto getRangeTotal = [](const std::list<byteRange>& byteRanges) -> unsigned int {
+
+        unsigned int totalBytes = 0;
+        for (const byteRange& b : byteRanges) {
+            totalBytes += b.count;
+        }
+        return totalBytes;
+    };
+
+
+    QString ret = QString(  "Sequential Comparison Results:\n"
+                            "file1_matches.size(): %1\n"
+                            "file2_matches.size(): %2\n"
+                            "file1_differences.size(): %3\n"
+                            "file2_differences.size(): %4\n"
+                            "total file1 matched bytes:   %5\n"
+                            "total file2 matched bytes:   %6\n"
+                            "total file1 different bytes: %7\n"
+                            "total file2 different bytes: %8\n"
+                         )
+                            .arg(results.file1_matches.size())
+                            .arg(results.file2_matches.size())
+                            .arg(results.file1_differences.size())
+                            .arg(results.file2_differences.size())
+                            .arg(getRangeTotal(results.file1_matches))
+                            .arg(getRangeTotal(results.file2_matches))
+                            .arg(getRangeTotal(results.file1_differences))
+                            .arg(getRangeTotal(results.file2_differences))
+                         ;
+    return ret;
+}
+
 void MainWindow::on_actionQuit_triggered()
 {
     QApplication::quit();
@@ -509,12 +608,21 @@ void MainWindow::onComparisonThreadEnded()
         m_dataSetView1->clearHighlighting();
         m_dataSetView2->clearHighlighting();
 
-        auto& results = results_largestBlock;
-        m_dataSetView1->addHighlighting(results->matches, true);
-        m_dataSetView2->addHighlighting(results->matches, false);
-        m_dataSetView1->addDiffHighlighting(results->data1_unmatchedBlocks);
-        m_dataSetView2->addDiffHighlighting(results->data2_unmatchedBlocks);
+        auto& results = *results_largestBlock.get();
+        m_dataSetView1->addHighlighting(results.matches, true);
+        m_dataSetView2->addHighlighting(results.matches, false);
+        m_dataSetView1->addDiffHighlighting(results.data1_unmatchedBlocks);
+        m_dataSetView2->addDiffHighlighting(results.data2_unmatchedBlocks);
 
+        LOG.Info(summarizeResults(results));
+
+        if (m_dataSet1) {
+            LOG.Info(QString("File 1 Size: %1 bytes").arg(m_dataSet1->getSize()));
+        }
+
+        if (m_dataSet2) {
+            LOG.Info(QString("File 2 Size: %1 bytes").arg(m_dataSet2->getSize()));
+        }
     }
     else if (results_sequential) {
 
@@ -534,12 +642,21 @@ void MainWindow::onComparisonThreadEnded()
         m_dataSetView1->clearHighlighting();
         m_dataSetView2->clearHighlighting();
 
-        auto& results = results_sequential;
-        m_dataSetView1->addHighlighting(results->file1_matches);
-        m_dataSetView2->addHighlighting(results->file2_matches);
-        m_dataSetView1->addDiffHighlighting(results->file1_differences);
-        m_dataSetView2->addDiffHighlighting(results->file2_differences);
+        auto& results = *results_sequential.get();
+        m_dataSetView1->addHighlighting(results.file1_matches);
+        m_dataSetView2->addHighlighting(results.file2_matches);
+        m_dataSetView1->addDiffHighlighting(results.file1_differences);
+        m_dataSetView2->addDiffHighlighting(results.file2_differences);
 
+        LOG.Info(summarizeResults(results));
+
+        if (m_dataSet1) {
+            LOG.Info(QString("File 1 Size: %1 bytes").arg(m_dataSet1->getSize()));
+        }
+
+        if (m_dataSet2) {
+            LOG.Info(QString("File 2 Size: %1 bytes").arg(m_dataSet2->getSize()));
+        }
     }
     else {
         LOG.Error("comparison results should be ready, but aren't");

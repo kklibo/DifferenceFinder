@@ -114,6 +114,9 @@ private:
     void doSimpleCompare();
     void displayLogMessage(QString str, QColor color);
 
+    static QString summarizeResults(const    comparison::results& results);
+    static QString summarizeResults(const offsetMetrics::results& results);
+
     UserSettings m_userSettings;
 
     comparisonThread m_comparisonThread;
