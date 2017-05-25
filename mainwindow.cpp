@@ -7,20 +7,84 @@ scrollWheelRedirector::scrollWheelRedirector(QObject *redirectTo)
 
 bool scrollWheelRedirector::eventFilter(QObject *obj, QEvent *event)
 {
+    if (!m_redirectTo) {
+        FAIL();
+        return false;
+    }
+
     if (event->type() == QEvent::Wheel) {
         //redirect QWheelEvents to the designated QObject
         QWheelEvent *wheelEvent = static_cast<QWheelEvent *>(event);
 
-        ASSERT(m_redirectTo);
-        if (m_redirectTo) {
-            QCoreApplication::sendEvent(m_redirectTo, wheelEvent);
-        }
+        QCoreApplication::sendEvent(m_redirectTo, wheelEvent);
         return true;
-
-    } else {
-        // standard event processing
-        return QObject::eventFilter(obj, event);
     }
+
+    // standard event processing
+    return QObject::eventFilter(obj, event);
+}
+
+
+scrollBarKeyFilter::scrollBarKeyFilter(QScrollBar *scrollBar)
+{
+    m_QScrollBar = scrollBar;
+}
+
+bool scrollBarKeyFilter::eventFilter(QObject *obj, QEvent *event)
+{
+    if (!m_QScrollBar) {
+        FAIL();
+        return false;
+    }
+
+    if (event->type() == QEvent::KeyPress) {
+        //use these keypresses to control the scrollbar
+        QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
+
+        //down/up key multiplier
+        int count = 1;
+
+        if (keyEvent->modifiers() & Qt::ShiftModifier) {
+            count = 4;
+        }
+        else if (keyEvent->modifiers() & Qt::ControlModifier) {
+            count = 8;
+        }
+
+        switch (keyEvent->key()) {
+
+        case Qt::Key_PageDown:
+            m_QScrollBar->triggerAction(QAbstractSlider::SliderPageStepAdd);
+            return true;
+
+        case Qt::Key_PageUp:
+            m_QScrollBar->triggerAction(QAbstractSlider::SliderPageStepSub);
+            return true;
+
+        case Qt::Key_Down:
+            for (int i = 0; i < count; ++i) {
+                m_QScrollBar->triggerAction(QAbstractSlider::SliderSingleStepAdd);
+            }
+            return true;
+
+        case Qt::Key_Up:
+            for (int i = 0; i < count; ++i) {
+                m_QScrollBar->triggerAction(QAbstractSlider::SliderSingleStepSub);
+            }
+            return true;
+
+        case Qt::Key_End:
+            m_QScrollBar->triggerAction(QAbstractSlider::SliderToMaximum);
+            return true;
+
+        case Qt::Key_Home:
+            m_QScrollBar->triggerAction(QAbstractSlider::SliderToMinimum);
+            return true;
+        }
+    }
+
+    // standard event processing
+    return QObject::eventFilter(obj, event);
 }
 
 
@@ -60,6 +124,10 @@ MainWindow::MainWindow(QWidget *parent) :
     m_scrollWheelRedirector = QSharedPointer<scrollWheelRedirector>::create(ui->verticalScrollBar);
     ui->textEdit_dataSet1->installEventFilter(m_scrollWheelRedirector.data());
     ui->textEdit_dataSet2->installEventFilter(m_scrollWheelRedirector.data());
+
+    //use application-wide key event filter for scrollbar key controls
+    m_scrollBarKeyFilter = QSharedPointer<scrollBarKeyFilter>::create(ui->verticalScrollBar);
+    QApplication::instance()->installEventFilter(m_scrollBarKeyFilter.data());
 
     //load settings from ini file
     m_userSettings.loadINIFile();
@@ -354,6 +422,18 @@ void MainWindow::updateScrollBarRange()
     ASSERT_LE_INT_MAX(scrollStep);
     ui->verticalScrollBar->setSingleStep(static_cast<int>(scrollStep));
 
+
+    //set the scrollbar pageStep value to an entire visible page (rows x columns)
+    unsigned int scrollPage;
+    if( m_dataSetView1 && m_dataSetView2 )
+    {
+        //if the byte grids have different page sizes, pick the smaller one so page stepping won't skip data
+        scrollPage = qMin(  m_dataSetView1->getSubset().count,
+                            m_dataSetView2->getSubset().count);
+
+        ASSERT_LE_INT_MAX(scrollPage);
+        ui->verticalScrollBar->setPageStep(static_cast<int>(scrollPage));
+    }
 }
 
 void MainWindow::displayLogMessage(QString str, QColor color)

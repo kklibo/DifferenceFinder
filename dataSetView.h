@@ -70,9 +70,8 @@ public:
     void updateByteGridDimensions(QTextEdit* textEdit);
     bool printByteGrid(QTextEdit* textEdit, QTextEdit* addressColumn);
 
-    //gets/sets the subset of the dataSet being displayed
+    //gets the subset of the dataSet being displayed
     byteRange getSubset() const;
-    void setSubset(byteRange subset);
 
     //gets/sets the start index of the dataSet being displayed
     unsigned int getSubsetStart() const;

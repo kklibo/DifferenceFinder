@@ -47,12 +47,6 @@ byteRange dataSetView::getSubset() const
     return m_subset;
 }
 
-void dataSetView::setSubset(byteRange subset)
-{
-    m_subset = subset;
-    emit subsetChanged(m_subset);
-}
-
 unsigned int dataSetView::getSubsetStart() const
 {
     return m_subset.start;

@@ -46,6 +46,24 @@ private:
     QObject* m_redirectTo;
 };
 
+
+class scrollBarKeyFilter : public QObject
+{
+//makes certain keypresses (from anywhere in the application)
+//  control the scrollbar
+    Q_OBJECT
+
+public:
+    scrollBarKeyFilter(QScrollBar* scrollBar);
+
+protected:
+    bool eventFilter(QObject *obj, QEvent *event) Q_DECL_OVERRIDE;
+
+private:
+    QScrollBar* m_QScrollBar;
+};
+
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -86,6 +104,7 @@ private slots:
 private:
 
     QSharedPointer<scrollWheelRedirector> m_scrollWheelRedirector;
+    QSharedPointer<scrollBarKeyFilter> m_scrollBarKeyFilter;
 
     Ui::MainWindow *ui;
     void doScrollBar(int value);
