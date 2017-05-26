@@ -252,7 +252,11 @@ void MainWindow::doLoadFile1(const QString filename)
         m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
         updateScrollBarRange();
 
-        ui->label_File1Path->setText(m_dataSet1->getFileName());
+        QString filePathText = QString("[ %1 bytes ]     %2")
+                                .arg(m_dataSet1->getSize())
+                                .arg(m_dataSet1->getFileName());
+
+        ui->label_File1Path->setText(filePathText);
     }
 
     refreshTitleBarText();
@@ -292,7 +296,11 @@ void MainWindow::doLoadFile2(const QString filename)
         m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
         updateScrollBarRange();
 
-        ui->label_File2Path->setText(m_dataSet2->getFileName());
+        QString filePathText = QString("[ %1 bytes ]     %2")
+                                .arg(m_dataSet2->getSize())
+                                .arg(m_dataSet2->getFileName());
+
+        ui->label_File2Path->setText(filePathText);
     }
 
     refreshTitleBarText();

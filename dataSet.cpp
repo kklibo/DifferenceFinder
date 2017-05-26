@@ -36,6 +36,7 @@ bool dataSet::isLoaded() const
 
 const QString dataSet::getFileName() const
 {
+    QMutexLocker lock(&m_mutex);
     if (m_loaded) {
         return QString(*m_fileName.data());
     }
