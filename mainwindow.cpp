@@ -813,3 +813,16 @@ STOPWATCH1.recordTime("Largest Block Compare operation Total:");
         ?   LOG.Debug("starting Largest Block Comparison")
         :   LOG.Debug("failed to start Largest Block Comparison: worker thread already running");
 }
+
+void MainWindow::on_actionSwitch_files_triggered()
+{
+    if (    m_dataSet1 && m_dataSet1->isLoaded()
+         && m_dataSet2 && m_dataSet2->isLoaded())
+    {
+        QString file1 = m_dataSet1->getFileName();
+        QString file2 = m_dataSet2->getFileName();
+
+        doLoadFile1(file2);
+        doLoadFile2(file1);
+    }
+}

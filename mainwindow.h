@@ -101,6 +101,8 @@ private slots:
 
     void on_actionLargestBlock_compare_triggered();
 
+    void on_actionSwitch_files_triggered();
+
 private:
 
     QSharedPointer<scrollWheelRedirector> m_scrollWheelRedirector;
