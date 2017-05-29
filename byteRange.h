@@ -91,6 +91,18 @@ public:
         return start < b.start;
     }
 
+    byteRange getIntersection(const byteRange& b) const {
+
+        unsigned int start  = std::max(this->start, b.start);
+        unsigned int end    = std::min(this->end(), b.end());
+
+        if (end <= start) {
+            return byteRange(0,0);  //no intersection, return size zero byteRange
+        }
+
+        return byteRange(start, end - start);
+    }
+
     //note: a byterange repeating the start index of a prior byteRange w/count zero
     //  will not cause this to return false (this shouldn't come up in normal use)
     template <typename T>

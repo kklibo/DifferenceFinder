@@ -60,6 +60,53 @@ TEST(byteRange, overlaps){
     EXPECT_FALSE(   b.overlaps(byteRange(20,10))    );
 }
 
+TEST(byteRange, getIntersection){
+    {
+        //same count
+        byteRange a(20,10);
+        EXPECT_EQ(  byteRange( 0, 0), a.getIntersection(byteRange( 0,10))  );
+        EXPECT_EQ(  byteRange( 0, 0), a.getIntersection(byteRange(10,10))  );
+        EXPECT_EQ(  byteRange(20, 5), a.getIntersection(byteRange(15,10))  );
+        EXPECT_EQ(  byteRange(20,10), a.getIntersection(byteRange(20,10))  );
+        EXPECT_EQ(  byteRange(25, 5), a.getIntersection(byteRange(25,10))  );
+        EXPECT_EQ(  byteRange( 0, 0), a.getIntersection(byteRange(30,10))  );
+        EXPECT_EQ(  byteRange( 0, 0), a.getIntersection(byteRange(40,10))  );
+    }
+    {
+        //larger
+        byteRange a(30,10);
+        EXPECT_EQ(  byteRange( 0, 0), a.getIntersection(byteRange( 0,20))  );
+        EXPECT_EQ(  byteRange( 0, 0), a.getIntersection(byteRange(10,20))  );
+        EXPECT_EQ(  byteRange(30, 5), a.getIntersection(byteRange(15,20))  );
+        EXPECT_EQ(  byteRange(30,10), a.getIntersection(byteRange(20,20))  );
+        EXPECT_EQ(  byteRange(30,10), a.getIntersection(byteRange(25,20))  );
+        EXPECT_EQ(  byteRange(30,10), a.getIntersection(byteRange(30,20))  );
+        EXPECT_EQ(  byteRange(35, 5), a.getIntersection(byteRange(35,20))  );
+        EXPECT_EQ(  byteRange( 0, 0), a.getIntersection(byteRange(40,20))  );
+        EXPECT_EQ(  byteRange( 0, 0), a.getIntersection(byteRange(50,20))  );
+    }
+    {
+        //smaller
+        byteRange a(10,10);
+        EXPECT_EQ(  byteRange( 0, 0), a.getIntersection(byteRange( 0, 5))  );
+        EXPECT_EQ(  byteRange( 0, 0), a.getIntersection(byteRange( 5, 5))  );
+        EXPECT_EQ(  byteRange(10, 5), a.getIntersection(byteRange(10, 5))  );
+        EXPECT_EQ(  byteRange(15, 5), a.getIntersection(byteRange(15, 5))  );
+        EXPECT_EQ(  byteRange( 0, 0), a.getIntersection(byteRange(20, 5))  );
+        EXPECT_EQ(  byteRange( 0, 0), a.getIntersection(byteRange(25, 5))  );
+    }
+    {
+        //zero count
+        byteRange a(10, 0);
+        EXPECT_EQ(  byteRange( 0, 0), a.getIntersection(byteRange( 0, 5))  );
+        EXPECT_EQ(  byteRange( 0, 0), a.getIntersection(byteRange( 0,20))  );
+        EXPECT_EQ(  byteRange( 0, 0), a.getIntersection(byteRange( 5, 5))  );
+        EXPECT_EQ(  byteRange( 0, 0), a.getIntersection(byteRange( 5,10))  );
+        EXPECT_EQ(  byteRange( 0, 0), a.getIntersection(byteRange(10, 5))  );
+        EXPECT_EQ(  byteRange( 0, 0), a.getIntersection(byteRange(15, 5))  );
+    }
+}
+
 TEST(byteRange, isNonDecreasingAndNonOverlapping){
     {
         std::vector<byteRange> ranges = { byteRange(10,10), byteRange(20,10), byteRange(35,0), byteRange(35,10) };
