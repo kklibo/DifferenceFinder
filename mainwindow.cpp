@@ -771,7 +771,15 @@ void MainWindow::on_actionStop_thread_triggered()
 
 void MainWindow::on_actionTest_triggered()
 {
+    if (!m_dataSet1) {
+        return;
+    }
+    const dataSet::DataReadLock& DRL1 = m_dataSet1->getReadLock();
 
+    unsigned int temp =
+            utilities::findStrongestRepetitionPeriod(DRL1.getData(), byteRange(0,DRL1.getData().size()));
+
+    LOG.Debug(QString("dataSet 1 findStrongestRepetitionPeriod: %1").arg(temp));
 }
 
 void MainWindow::on_actionDebugFlag_triggered()

@@ -26,7 +26,8 @@ SOURCES += main.cpp\
     stopwatch.cpp \
     buzhash.cpp \
     offsetmetrics.cpp \
-    rangematch.cpp
+    rangematch.cpp \
+    utilities.cpp
 
 HEADERS  += mainwindow.h \
     dataSet.h \
@@ -43,7 +44,8 @@ HEADERS  += mainwindow.h \
     stopwatch.h \
     buzhash.h \
     offsetmetrics.h \
-    rangematch.h
+    rangematch.h \
+    utilities.h
 
 FORMS    += mainwindow.ui \
     settingsdialog.ui

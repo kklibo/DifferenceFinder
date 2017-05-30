@@ -23,6 +23,7 @@
 #include "comparison.h"
 #include "comparisonthread.h"
 #include "offsetmetrics.h"
+#include "utilities.h"
 
 #include <set>
 
