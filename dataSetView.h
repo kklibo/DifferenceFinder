@@ -83,6 +83,7 @@ public:
     void addHighlighting(const std::multiset<byteRange>& ranges);
     void addHighlighting(const std::list<byteRange>& ranges);
     void addDiffHighlighting(const std::list<byteRange>& ranges);
+    void addByteColorHighlighting();
     void clearHighlighting();
 
     unsigned int getBytesPerRow();

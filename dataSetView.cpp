@@ -464,6 +464,91 @@ void dataSetView::addDiffHighlighting(const std::list<byteRange>& ranges)
     }
 }
 
+void dataSetView::addByteColorHighlighting()
+{
+    if ( !m_dataSet ){
+        FAIL();
+        return;
+    }
+
+    QSharedPointer<dataSet> theDataSet = m_dataSet.lock();
+
+    //ensure that weak pointer lock succeeded
+    if ( !theDataSet ){
+        FAIL();
+        return;
+    }
+
+    //skip no-print situations
+    if (0 == m_bytesPerRow || 0 == m_subset.count) {
+        return;
+    }
+
+
+    QString displayText = "";   //text for the main data display area
+    QString addressText = "";   //text for the address column area
+
+    //get the data to be displayed
+    const dataSet::DataReadLock& DRL = theDataSet->getReadLock();
+    const std::vector<unsigned char>& theData = DRL.getData();
+
+
+    auto addHighlightSetFromByteRange = [this]( unsigned char value,
+                                                unsigned int  endIndex, //index after last index in range
+                                                unsigned int  count      ) {
+
+        //use bits from value to fill most significant bits of rgb channels
+        // 3 bits -> r, 3 bits -> g, 2 bits -> b
+        // remaining bits in rgb channels are set high
+        unsigned char r = static_cast<unsigned char>( 0x1F | ( (value & 0xE0) >> 0 ));
+        unsigned char g = static_cast<unsigned char>( 0x1F | ( (value & 0x1C) << 3 ));
+        unsigned char b = static_cast<unsigned char>( 0x3F | ( (value & 0x03) << 6 ));
+
+        //create range, add it to a highlight set, and add the highlight set to the dataSetView
+        byteRange range(endIndex - count, count);
+        auto byteRanges = QSharedPointer<QVector<byteRange>>::create();
+        byteRanges->push_back(range);
+
+        dataSetView::highlightSet hSet(byteRanges);
+        //guarantee contrast: flip the most significant bit of each color channel
+        hSet.setForegroundColor(QColor::fromRgb(0x80^r,0x80^g,0x80^b));
+        hSet.setBackgroundColor(QColor::fromRgb(r,g,b));
+        this->addHighlightSet(hSet);
+    };
+
+
+    //iterate through data, make single-range highlightSets and apply them
+    unsigned char value = 0;
+    unsigned int count = 0;
+
+    for (unsigned int i = 0; i < theData.size(); ++i) {
+
+        if (0 < count) {
+
+            if (theData[i] == value) {
+                //extend existing range
+                ++count;
+                continue;
+            }
+            else {
+                //range ended:
+                // add highlightSet
+                addHighlightSetFromByteRange(value, i, count);
+            }
+        }
+
+        //open new range
+        value = theData[i];
+        count = 1;
+    }
+
+    if (0 < count) {
+        //add the final range
+        ASSERT_LE_UINT_MAX(theData.size());
+        addHighlightSetFromByteRange(value, static_cast<unsigned int>(theData.size()), count);
+    }
+}
+
 void dataSetView::clearHighlighting()
 {
     m_highlightSets.clear();
