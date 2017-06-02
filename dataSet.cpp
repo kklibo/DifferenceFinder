@@ -93,6 +93,37 @@ dataSet::loadFileResult dataSet::loadFile(const QString fileName)
     return loadFileResult::SUCCESS;
 }
 
+dataSet::loadFromMemoryResult dataSet::loadFromMemory(std::unique_ptr<std::vector<unsigned char>> data)
+{
+    QMutexLocker lock(&m_mutex);
+    if (0 < m_dataReadLockCount) {
+        //there is an active DataReadLock:
+        // the dataSet may be in use
+        return loadFromMemoryResult::ERROR_ActiveDataReadLock;
+    }
+
+    //reset the dataSet
+    m_data->clear();
+    m_fileName->clear();
+    m_loaded = false;
+    m_dataReadLockCount = 0;
+
+    //move the input argument's data to m_data (destructing the previous contents of m_data)
+    m_data.reset(data.release());
+
+    //make sure m_data contains valid data
+    // (in case input argument holds nullptr)
+    if (nullptr == m_data.data()) {
+        m_data.reset(new std::vector<unsigned char>());
+    }
+
+    m_loaded = true;
+    Q_ASSERT(Q_NULLPTR != m_fileName.data());
+    *(m_fileName.data()) = "";
+
+    return loadFromMemoryResult::SUCCESS;
+}
+
 /*static*/ dataSet::compareResult dataSet::compare(const dataSet& dataSet1, const dataSet& dataSet2, QVector<byteRange>& diffs)
 {
     //lock the dataSets

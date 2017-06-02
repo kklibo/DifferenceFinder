@@ -8,6 +8,7 @@
 #include <QTextStream>
 #include <QMutex>
 #include <vector>
+#include <memory>
 
 
 #include "log.h"
@@ -33,6 +34,13 @@ public:
         ERROR_FileReadFailure
     };
     loadFileResult loadFile(const QString fileName);
+
+    //load a data set from memory
+    enum class loadFromMemoryResult {
+        SUCCESS,
+        ERROR_ActiveDataReadLock,
+    };
+    loadFromMemoryResult loadFromMemory(std::unique_ptr<std::vector<unsigned char>> data);
 
     //index-to-index comparison between two files, outputs differences in diffs
     enum class compareResult {
