@@ -20,7 +20,7 @@
 
     byteRange searchRange;
     {
-        ASSERT_NOT_NEGATIVE(data.size());
+        ASSERT_LE_UINT_MAX(data.size());
         byteRange dataRange(0, static_cast<unsigned int>(data.size()) );
         searchRange = inThisRange.getIntersection(dataRange);
     }
@@ -72,4 +72,56 @@
     //return the most common offset
     return highestValue.first;
 
+}
+
+
+//todo: add comments
+/*static*/  std::unique_ptr<std::vector<unsigned char>>
+            utilities::createOffsetByteMap (
+                const std::vector<unsigned char>& data,
+                const byteRange inThisRange )
+{
+
+    byteRange searchRange;
+    {
+        ASSERT_LE_UINT_MAX(data.size());
+        byteRange dataRange(0, static_cast<unsigned int>(data.size()) );
+        searchRange = inThisRange.getIntersection(dataRange);
+    }
+
+    if ( 0 == searchRange.count) {
+        return 0;   //inThisRange doesn't overlap the data
+    }
+
+           //
+          // for each possible byte value, record the previous (most recent) index at which it occurred
+         //  UINT_MAX indicates that the byte value hasn't been seen yet
+        //
+    ASSERT_LE_UINT_MAX(searchRange.end());  //ensure that UINT_MAX won't be a valid index
+      //
+    std::vector<unsigned int> previousIndex(256, UINT_MAX); //size 256, initialized to UINT_MAX
+    //
+
+
+    std::unique_ptr<std::vector<unsigned char>> offsetByteMap(new std::vector<unsigned char>(data.size()));
+
+    //traverse the search range, recording offsets between repetitions
+    for (unsigned int i = searchRange.start; i < searchRange.end(); ++i) {
+
+        if (UINT_MAX != previousIndex[data[i]]) {
+            //this value has a previous occurrence
+            unsigned int offset = i - previousIndex[data[i]];
+
+            offset = std::min(offset, 255u);
+            (*offsetByteMap)[i] = static_cast<unsigned char>(offset);
+
+        } else {
+            //no previous occurrence
+            (*offsetByteMap)[i] = 0;
+        }
+
+        previousIndex[data[i]] = i; //record this value's occurrence
+    }
+
+    return offsetByteMap;
 }
