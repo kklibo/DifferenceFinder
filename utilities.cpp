@@ -75,7 +75,6 @@
 }
 
 
-//todo: add comments
 /*static*/  std::unique_ptr<std::vector<unsigned char>>
             utilities::createOffsetByteMap (
                 const std::vector<unsigned char>& data,
@@ -121,6 +120,117 @@
         }
 
         previousIndex[data[i]] = i; //record this value's occurrence
+    }
+
+    return offsetByteMap;
+}
+
+
+/*static*/  std::unique_ptr<std::vector<unsigned char>>
+            utilities::createCrossFileOffsetByteMap (
+                const std::vector<unsigned char>& source,
+                const byteRange sourceRange,
+                const std::vector<unsigned char>& target,
+                const byteRange targetRange,
+                const bool runBackwards )
+{
+
+    byteRange sourceSearchRange;
+    {
+        ASSERT_LE_UINT_MAX(source.size());
+        byteRange dataRange(0, static_cast<unsigned int>(source.size()) );
+        sourceSearchRange = sourceRange.getIntersection(dataRange);
+    }
+
+    byteRange targetSearchRange;
+    {
+        ASSERT_LE_UINT_MAX(target.size());
+        byteRange dataRange(0, static_cast<unsigned int>(target.size()) );
+        targetSearchRange = targetRange.getIntersection(dataRange);
+    }
+
+           //
+          // for each possible byte value, record the previous (most recent) index at which it occurred
+         //  UINT_MAX indicates that the byte value hasn't been seen yet
+        //
+    ASSERT_LE_UINT_MAX(sourceSearchRange.end());  //ensure that UINT_MAX won't be a valid index
+      //
+    std::vector<unsigned int> previousIndex(256, UINT_MAX); //size 256, initialized to UINT_MAX
+    //
+
+
+    std::unique_ptr<std::vector<unsigned char>> offsetByteMap(new std::vector<unsigned char>(source.size(), 0xFEu));
+
+    unsigned int searchCount;
+    {
+        byteRange searchRange = sourceSearchRange.getIntersection(targetSearchRange);
+        searchCount = searchRange.count;
+
+        if (0 == searchCount) {
+            //nothing to search:
+            //either sourceSearchRange or targetSearchRange are size 0,
+            // or they don't overlap
+            return nullptr;
+        }
+    }
+
+    //to ensure that offsets are positive
+    bool sourceStartsBeforeOrWithTarget;
+    {
+        if (!runBackwards) {
+            sourceStartsBeforeOrWithTarget = sourceSearchRange.start < targetSearchRange.start;
+        } else {
+            sourceStartsBeforeOrWithTarget = sourceSearchRange.end() > targetSearchRange.end();
+        }
+    }
+
+    //traverse the search range, recording offsets between repetitions
+    for (unsigned int i = 0; i < searchCount; ++i) {
+
+        unsigned int sourceIndex;
+        unsigned int targetIndex;
+        unsigned int offset;
+
+        if (!runBackwards) {
+            //reading start to end
+
+            sourceIndex = sourceSearchRange.start + i;
+            targetIndex = targetSearchRange.start + i;
+
+            previousIndex[target[targetIndex]] = targetIndex; //record this value's occurrence
+
+            if (sourceStartsBeforeOrWithTarget) {
+                offset = previousIndex[source[sourceIndex]] - sourceIndex;
+            } else {
+                offset = sourceIndex - previousIndex[source[sourceIndex]];
+            }
+
+        } else {
+            //reading end to start
+
+            sourceIndex = sourceSearchRange.end() - 1 - i;
+            targetIndex = targetSearchRange.end() - 1 - i;
+
+            previousIndex[target[targetIndex]] = targetIndex; //record this value's occurrence
+
+            if (sourceStartsBeforeOrWithTarget) {
+                offset = sourceIndex - previousIndex[source[sourceIndex]];
+            } else {
+                offset = previousIndex[source[sourceIndex]] - sourceIndex;
+            }
+        }
+
+        if (UINT_MAX != previousIndex[source[sourceIndex]]) {
+            //this value has been found in the target
+
+            offset = std::min(offset, 0xFDu);//255u);
+            (*offsetByteMap)[sourceIndex] = static_cast<unsigned char>(offset);
+
+        } else {
+            //no previous occurrence
+            (*offsetByteMap)[sourceIndex] = 0xFFu;
+        }
+
     }
 
     return offsetByteMap;

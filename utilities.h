@@ -22,6 +22,14 @@ public:
             const std::vector<unsigned char>& data,
             const byteRange inThisRange );
 
+    static
+    std::unique_ptr<std::vector<unsigned char>>
+    createCrossFileOffsetByteMap (
+            const std::vector<unsigned char>& source,
+            const byteRange sourceRange,
+            const std::vector<unsigned char>& target,
+            const byteRange targetRange,
+            const bool runBackwards );
 };
 
 #endif // UTILITIES_H
