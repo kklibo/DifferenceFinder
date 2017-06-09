@@ -237,6 +237,27 @@ void MainWindow::doLoadFile1(const QString filename)
         FAIL();
     }
 
+    updateUIforFile1Load();
+}
+
+void MainWindow::doLoadFile1FromMemory(std::unique_ptr<std::vector<unsigned char>> data)
+{
+    dataSet::loadFromMemoryResult res = m_dataSet1->loadFromMemory(std::move(data));
+    if      (res == dataSet::loadFromMemoryResult::SUCCESS) {
+        //do nothing
+    }
+    else if (res == dataSet::loadFromMemoryResult::ERROR_ActiveDataReadLock) {
+        LOG.Error("File load canceled: Current file is still in use.");
+    }
+    else {
+        FAIL();
+    }
+
+    updateUIforFile1Load();
+}
+
+void MainWindow::updateUIforFile1Load()
+{
     m_dataSetView1 = QSharedPointer<dataSetView>::create(m_dataSet1);
 
     applyUserSettingsTo(m_dataSetView1); //reapply user settings to new dataSetView
@@ -252,9 +273,25 @@ void MainWindow::doLoadFile1(const QString filename)
         m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
         updateScrollBarRange();
 
+        QString name;
+        dataSet::sourceInfo sourceInfo = m_dataSet1->getSourceInfo();
+
+        if      (sourceInfo.type == dataSet::sourceType::file) {
+            name = sourceInfo.name;
+        }
+        else if (sourceInfo.type == dataSet::sourceType::memory) {
+            name = "[loaded from memory]";
+        }
+        else if (sourceInfo.type == dataSet::sourceType::none) {
+            name = "[not loaded]";
+        }
+        else {
+            FAIL();
+        }
+
         QString filePathText = QString("[ %1 bytes ]     %2")
                                 .arg(m_dataSet1->getSize())
-                                .arg(m_dataSet1->getFileName());
+                                .arg(name);
 
         ui->label_File1Path->setText(filePathText);
     }
@@ -281,6 +318,27 @@ void MainWindow::doLoadFile2(const QString filename)
         FAIL();
     }
 
+    updateUIforFile2Load();
+}
+
+void MainWindow::doLoadFile2FromMemory(std::unique_ptr<std::vector<unsigned char>> data)
+{
+    dataSet::loadFromMemoryResult res = m_dataSet2->loadFromMemory(std::move(data));
+    if      (res == dataSet::loadFromMemoryResult::SUCCESS) {
+        //do nothing
+    }
+    else if (res == dataSet::loadFromMemoryResult::ERROR_ActiveDataReadLock) {
+        LOG.Error("File load canceled: Current file is still in use.");
+    }
+    else {
+        FAIL();
+    }
+
+    updateUIforFile2Load();
+}
+
+void MainWindow::updateUIforFile2Load()
+{
     m_dataSetView2 = QSharedPointer<dataSetView>::create(m_dataSet2);
 
     applyUserSettingsTo(m_dataSetView2); //reapply user settings to new dataSetView
@@ -296,9 +354,25 @@ void MainWindow::doLoadFile2(const QString filename)
         m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
         updateScrollBarRange();
 
+        QString name;
+        dataSet::sourceInfo sourceInfo = m_dataSet2->getSourceInfo();
+
+        if      (sourceInfo.type == dataSet::sourceType::file) {
+            name = sourceInfo.name;
+        }
+        else if (sourceInfo.type == dataSet::sourceType::memory) {
+            name = "[loaded from memory]";
+        }
+        else if (sourceInfo.type == dataSet::sourceType::none) {
+            name = "[not loaded]";
+        }
+        else {
+            FAIL();
+        }
+
         QString filePathText = QString("[ %1 bytes ]     %2")
                                 .arg(m_dataSet2->getSize())
-                                .arg(m_dataSet2->getFileName());
+                                .arg(name);
 
         ui->label_File2Path->setText(filePathText);
     }
@@ -356,10 +430,12 @@ void MainWindow::applyUserSettingsTo(QSharedPointer<dataSetView> ds)
 void MainWindow::refreshTitleBarText()
 {
     if (    m_dataSet1 && m_dataSet1->isLoaded()
-         && m_dataSet2 && m_dataSet2->isLoaded()) {
+         && m_dataSet2 && m_dataSet2->isLoaded()
+         && m_dataSet1->getSourceInfo().type == dataSet::sourceType::file
+         && m_dataSet2->getSourceInfo().type == dataSet::sourceType::file ) {
 
-        QFileInfo fi1(m_dataSet1->getFileName());
-        QFileInfo fi2(m_dataSet2->getFileName());
+        QFileInfo fi1(m_dataSet1->getSourceInfo().name);
+        QFileInfo fi2(m_dataSet2->getSourceInfo().name);
 
         //this uses QFileInfo objects to get filenames from the loaded file paths
         QString titleBarText = QString("%1 <-> %2 - %3").arg(fi1.fileName()).arg(fi2.fileName()).arg(APPLICATION_TITLE);
@@ -774,12 +850,39 @@ void MainWindow::on_actionTest_triggered()
     if (!m_dataSet1) {
         return;
     }
-    const dataSet::DataReadLock& DRL1 = m_dataSet1->getReadLock();
 
-    unsigned int temp =
-            utilities::findStrongestRepetitionPeriod(DRL1.getData(), byteRange(0,DRL1.getData().size()));
+    std::unique_ptr<std::vector<unsigned char>> offsetMap;
 
-    LOG.Debug(QString("dataSet 1 findStrongestRepetitionPeriod: %1").arg(temp));
+    {
+        const dataSet::DataReadLock& DRL1 = m_dataSet1->getReadLock();
+        const dataSet::DataReadLock& DRL2 = m_dataSet2->getReadLock();
+    /*
+        unsigned int temp =
+                utilities::findStrongestRepetitionPeriod(DRL1.getData(), byteRange(0,DRL1.getData().size()));
+
+        LOG.Debug(QString("dataSet 1 findStrongestRepetitionPeriod: %1").arg(temp));*/
+
+        //offsetMap = utilities::createOffsetByteMap(DRL1.getData(), byteRange(0,DRL1.getData().size()));
+
+        offsetMap = utilities::createCrossFileOffsetByteMap(DRL1.getData(), byteRange(0,DRL1.getData().size()),
+                                                            DRL2.getData(), byteRange(0,DRL2.getData().size()),
+                                                            DEBUGFLAG1 );
+
+    }
+
+    doLoadFile1FromMemory(std::move(offsetMap));
+
+    m_dataSetView1->clearHighlighting();
+    m_dataSetView1->addByteColorHighlighting();
+    m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
+
+/*
+    doLoadFile2FromMemory(std::move(offsetMap));
+
+    m_dataSetView2->clearHighlighting();
+    m_dataSetView2->addByteColorHighlighting();
+    m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
+*/
 }
 
 void MainWindow::on_actionDebugFlag_triggered()
@@ -825,12 +928,22 @@ STOPWATCH1.recordTime("Largest Block Compare operation Total:");
 void MainWindow::on_actionSwitch_files_triggered()
 {
     if (    m_dataSet1 && m_dataSet1->isLoaded()
-         && m_dataSet2 && m_dataSet2->isLoaded())
-    {
-        QString file1 = m_dataSet1->getFileName();
-        QString file2 = m_dataSet2->getFileName();
+         && m_dataSet2 && m_dataSet2->isLoaded() ) {
 
-        doLoadFile1(file2);
-        doLoadFile2(file1);
+        dataSet::sourceInfo sourceInfo1 = m_dataSet1->getSourceInfo();
+        dataSet::sourceInfo sourceInfo2 = m_dataSet2->getSourceInfo();
+
+        if (    sourceInfo1.type == dataSet::sourceType::file
+             && sourceInfo2.type == dataSet::sourceType::file ) {
+
+            doLoadFile1(sourceInfo2.name);
+            doLoadFile2(sourceInfo1.name);
+        }
     }
+}
+
+void MainWindow::on_actionTest_load_triggered()
+{
+    doLoadFile1("TestFiles/random1k");
+    doLoadFile2("TestFiles/random1k_removeFirst8of2ndHalf");
 }

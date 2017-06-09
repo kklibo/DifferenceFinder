@@ -89,17 +89,27 @@ public:
             const std::vector<unsigned char>    & ref_data;                 //the dataSet's byte data
         };
 
+    enum class sourceType {
+        none,
+        file,
+        memory
+    };
 
+    struct sourceInfo {
+        sourceType type;
+        QString name;
+    };
 
     const DataReadLock getReadLock() const;
     unsigned int getSize() const;
     bool isLoaded() const;
-    const QString getFileName() const;
+    const sourceInfo getSourceInfo() const;
 
 private:
     mutable QMutex m_mutex;
     QScopedPointer<std::vector<unsigned char>> m_data;
     QScopedPointer<QString> m_fileName;
+    sourceType m_sourceType;
     bool m_loaded;
 
     //active DataReadLock instances count

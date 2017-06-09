@@ -315,6 +315,7 @@
     </property>
     <addaction name="actionTest_Compare3"/>
     <addaction name="actionDoSimpleCompare"/>
+    <addaction name="actionTest_load"/>
     <addaction name="actionTest"/>
     <addaction name="actionDebugFlag"/>
     <addaction name="actionSwitch_files"/>
@@ -422,6 +423,11 @@
   <action name="actionSwitch_files">
    <property name="text">
     <string>switch files</string>
+   </property>
+  </action>
+  <action name="actionTest_load">
+   <property name="text">
+    <string>test load</string>
    </property>
   </action>
  </widget>

@@ -4,6 +4,7 @@ dataSet::dataSet() :
     m_mutex(),
     m_data(new std::vector<unsigned char>()),
     m_fileName(new QString()),
+    m_sourceType(dataSet::sourceType::none),
     m_loaded(false),
     m_dataReadLockCount(0)
 {
@@ -34,13 +35,21 @@ bool dataSet::isLoaded() const
     return m_loaded;
 }
 
-const QString dataSet::getFileName() const
+const dataSet::sourceInfo dataSet::getSourceInfo() const
 {
     QMutexLocker lock(&m_mutex);
-    if (m_loaded) {
-        return QString(*m_fileName.data());
+    sourceInfo ret;
+    ret.type = m_sourceType;
+
+    if (dataSet::sourceType::file == m_sourceType) {
+        Q_ASSERT(Q_NULLPTR != m_fileName.data());
+        ret.name = *(m_fileName.data());
+
+    } else {
+        ret.name = "";
     }
-    return QString();
+
+    return ret;
 }
 
 dataSet::loadFileResult dataSet::loadFile(const QString fileName)
@@ -55,6 +64,7 @@ dataSet::loadFileResult dataSet::loadFile(const QString fileName)
     //reset the dataSet
     m_data->clear();
     m_fileName->clear();
+    m_sourceType = dataSet::sourceType::none;
     m_loaded = false;
     m_dataReadLockCount = 0;
 
@@ -86,6 +96,7 @@ dataSet::loadFileResult dataSet::loadFile(const QString fileName)
 
     std::copy(rawFile.data(), rawFile.data()+fileSize, m_data->begin());
 
+    m_sourceType = dataSet::sourceType::file;
     m_loaded = true;
     Q_ASSERT(Q_NULLPTR != m_fileName.data());
     *(m_fileName.data()) = fileName;
@@ -105,6 +116,7 @@ dataSet::loadFromMemoryResult dataSet::loadFromMemory(std::unique_ptr<std::vecto
     //reset the dataSet
     m_data->clear();
     m_fileName->clear();
+    m_sourceType = dataSet::sourceType::none;
     m_loaded = false;
     m_dataReadLockCount = 0;
 
@@ -117,6 +129,7 @@ dataSet::loadFromMemoryResult dataSet::loadFromMemory(std::unique_ptr<std::vecto
         m_data.reset(new std::vector<unsigned char>());
     }
 
+    m_sourceType = dataSet::sourceType::memory;
     m_loaded = true;
     Q_ASSERT(Q_NULLPTR != m_fileName.data());
     *(m_fileName.data()) = "";

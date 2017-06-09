@@ -104,6 +104,8 @@ private slots:
 
     void on_actionSwitch_files_triggered();
 
+    void on_actionTest_load_triggered();
+
 private:
 
     QSharedPointer<scrollWheelRedirector> m_scrollWheelRedirector;
@@ -111,8 +113,15 @@ private:
 
     Ui::MainWindow *ui;
     void doScrollBar(int value);
+
     void doLoadFile1(const QString filename);
+    void doLoadFile1FromMemory(std::unique_ptr<std::vector<unsigned char>> data);
+    void updateUIforFile1Load();
+
     void doLoadFile2(const QString filename);
+    void doLoadFile2FromMemory(std::unique_ptr<std::vector<unsigned char>> data);
+    void updateUIforFile2Load();
+
     void updateScrollBarRange();
     void resizeHexField1();
     void resizeHexField2();
