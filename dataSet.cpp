@@ -2,8 +2,8 @@
 
 dataSet::dataSet() :
     m_mutex(),
-    m_data(new std::vector<unsigned char>()),
-    m_fileName(new QString()),
+    m_data(),
+    m_fileName(),
     m_sourceType(dataSet::sourceType::none),
     m_loaded(false),
     m_dataReadLockCount(0)
@@ -13,8 +13,7 @@ dataSet::dataSet() :
 const dataSet::DataReadLock dataSet::getReadLock() const
 {
     QMutexLocker lock(&m_mutex);
-    Q_CHECK_PTR(m_data.data());
-    return dataSet::DataReadLock(m_dataReadLockCount, m_mutex, *m_data.data());
+    return dataSet::DataReadLock(m_dataReadLockCount, m_mutex, m_data);
 }
 
 unsigned int dataSet::getSize() const
@@ -24,7 +23,7 @@ unsigned int dataSet::getSize() const
         return 0;
     }
 
-    unsigned long s = m_data->size();
+    unsigned long s = m_data.size();
     ASSERT_LE_UINT_MAX(s);
     return static_cast<unsigned int>(s);
 }
@@ -42,8 +41,7 @@ const dataSet::sourceInfo dataSet::getSourceInfo() const
     ret.type = m_sourceType;
 
     if (dataSet::sourceType::file == m_sourceType) {
-        Q_ASSERT(Q_NULLPTR != m_fileName.data());
-        ret.name = *(m_fileName.data());
+        ret.name = m_fileName;
 
     } else {
         ret.name = "";
@@ -62,8 +60,8 @@ dataSet::loadFileResult dataSet::loadFile(const QString fileName)
     }
 
     //reset the dataSet
-    m_data->clear();
-    m_fileName->clear();
+    m_data.clear();
+    m_fileName.clear();
     m_sourceType = dataSet::sourceType::none;
     m_loaded = false;
     m_dataReadLockCount = 0;
@@ -92,14 +90,13 @@ dataSet::loadFileResult dataSet::loadFile(const QString fileName)
         return loadFileResult::ERROR_FileReadFailure;
     }
 
-    m_data->resize(static_cast<unsigned long>(fileSize));
+    m_data.resize(static_cast<unsigned long>(fileSize));
 
-    std::copy(rawFile.data(), rawFile.data()+fileSize, m_data->begin());
+    std::copy(rawFile.data(), rawFile.data()+fileSize, m_data.begin());
 
     m_sourceType = dataSet::sourceType::file;
     m_loaded = true;
-    Q_ASSERT(Q_NULLPTR != m_fileName.data());
-    *(m_fileName.data()) = fileName;
+    m_fileName = fileName;
 
     return loadFileResult::SUCCESS;
 }
@@ -114,25 +111,20 @@ dataSet::loadFromMemoryResult dataSet::loadFromMemory(std::unique_ptr<std::vecto
     }
 
     //reset the dataSet
-    m_data->clear();
-    m_fileName->clear();
+    m_data.clear();
+    m_fileName.clear();
     m_sourceType = dataSet::sourceType::none;
     m_loaded = false;
     m_dataReadLockCount = 0;
 
-    //move the input argument's data to m_data (destructing the previous contents of m_data)
-    m_data.reset(data.release());
-
-    //make sure m_data contains valid data
-    // (in case input argument holds nullptr)
-    if (nullptr == m_data.data()) {
-        m_data.reset(new std::vector<unsigned char>());
+    //swap the input vector's content into m_data
+    if (nullptr != data.get()) {
+        m_data.swap(*data.get());
     }
 
     m_sourceType = dataSet::sourceType::memory;
     m_loaded = true;
-    Q_ASSERT(Q_NULLPTR != m_fileName.data());
-    *(m_fileName.data()) = "";
+    m_fileName = "";
 
     return loadFromMemoryResult::SUCCESS;
 }
@@ -143,21 +135,21 @@ dataSet::loadFromMemoryResult dataSet::loadFromMemory(std::unique_ptr<std::vecto
     const dataSet::DataReadLock& DRL1 = dataSet1.getReadLock();
     const dataSet::DataReadLock& DRL2 = dataSet2.getReadLock();
 
-    if (dataSet1.m_data->size() != dataSet2.m_data->size()){
+    if (dataSet1.m_data.size() != dataSet2.m_data.size()){
         return compareResult::ERROR_SizeMismatch;
     }
 
-    std::vector<unsigned char>::iterator it_dataset1 = dataSet1.m_data->begin();
-    std::vector<unsigned char>::iterator it_dataset2 = dataSet2.m_data->begin();
+    std::vector<unsigned char>::const_iterator it_dataset1 = dataSet1.m_data.begin();
+    std::vector<unsigned char>::const_iterator it_dataset2 = dataSet2.m_data.begin();
     bool inDiffSection = false;   //true when byteindex is in a section of byte differences
     unsigned int byteindex;
 
-    while (it_dataset1 != dataSet1.m_data->end() && it_dataset2 != dataSet2.m_data->end()) {
+    while (it_dataset1 != dataSet1.m_data.end() && it_dataset2 != dataSet2.m_data.end()) {
         if (*it_dataset1 != *it_dataset2){
 
             {
                 //get the byte index (from iterator difference)
-                long val = it_dataset1 - dataSet1.m_data->begin();
+                long val = it_dataset1 - dataSet1.m_data.begin();
                 ASSERT_NOT_NEGATIVE(val);
                 ASSERT(val <= UINT_MAX);
                 byteindex = static_cast<unsigned int>(val);

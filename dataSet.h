@@ -107,8 +107,8 @@ public:
 
 private:
     mutable QMutex m_mutex;
-    QScopedPointer<std::vector<unsigned char>> m_data;
-    QScopedPointer<QString> m_fileName;
+    std::vector<unsigned char> m_data;
+    QString m_fileName;
     sourceType m_sourceType;
     bool m_loaded;
 
