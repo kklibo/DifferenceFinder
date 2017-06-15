@@ -27,7 +27,8 @@ SOURCES += main.cpp\
     buzhash.cpp \
     offsetmetrics.cpp \
     rangematch.cpp \
-    utilities.cpp
+    utilities.cpp \
+    indexrange.cpp
 
 HEADERS  += mainwindow.h \
     dataSet.h \
@@ -45,7 +46,8 @@ HEADERS  += mainwindow.h \
     buzhash.h \
     offsetmetrics.h \
     rangematch.h \
-    utilities.h
+    utilities.h \
+    indexrange.h
 
 FORMS    += mainwindow.ui \
     settingsdialog.ui
