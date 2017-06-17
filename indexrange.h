@@ -30,6 +30,8 @@ public:
     // intentionally not implemented to prevent unintended type conversion
     indexRange(unsigned int) = delete;
 
+    void move(unsigned int newStart);
+
     bool operator==(const indexRange& r) const;
     bool operator!=(const indexRange& r) const;
     bool operator< (const indexRange& r) const;
@@ -59,7 +61,7 @@ public:
     bool overlapsAnyIn(const T& startIndices, const unsigned int& count) const {
         for (const unsigned int& r : startIndices) {
 
-            ASSERT(r < r + count);  //check for overflow
+            ASSERT(noSumOverflow(r,count));
             //overflows could be truncated to unsigned int max
 
             if (overlaps( indexRange(r, r + count) )) {
@@ -101,7 +103,7 @@ public:
                 return false;   //the start of this range is before or inside a previous range
             }
 
-            ASSERT(i < i + count);  //check for overflow
+            ASSERT(noSumOverflow(i,count));
             minStart = i + count; //update minStart and continue stepping through the byteRanges
         }
 
@@ -154,7 +156,7 @@ public:
         std::vector<indexRange> sortCopy;
         for (const unsigned int& i : startIndices) {
 
-            ASSERT(i < i + count); //check for overflow
+            ASSERT(noSumOverflow(i,count));
             sortCopy.push_back(indexRange(i, i + count));
         }
         std::sort(sortCopy.begin(), sortCopy.end());

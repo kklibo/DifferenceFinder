@@ -12,6 +12,15 @@ indexRange::indexRange(unsigned int start, unsigned int end)
 {
 }
 
+void indexRange::move(unsigned int newStart)
+{
+    unsigned int c = count();
+    start = newStart;
+
+    ASSERT(noSumOverflow(start,c));
+    end = start+c;
+}
+
 unsigned int indexRange::count() const
 {
     if (end <= start) {
