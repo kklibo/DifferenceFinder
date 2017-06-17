@@ -373,7 +373,8 @@ void dataSetView::addHighlighting(const std::multiset<blockMatchSet>& matches, b
         auto indexRanges = QSharedPointer<QVector<indexRange>>::create();
 
         for (auto& index : indices) {
-            indexRanges.data()->append(indexRange(index,match.blockSize));
+            ASSERT(noSumOverflow(                        index,match.blockSize));
+            indexRanges.data()->append(indexRange(index, index+match.blockSize));
         }
 
         dataSetView::highlightSet hSet(indexRanges);
