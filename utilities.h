@@ -5,7 +5,7 @@
 #include <map>
 #include <memory>
 
-#include "byteRange.h"
+#include "indexrange.h"
 
 class utilities
 {
@@ -14,21 +14,21 @@ public:
 
     static unsigned int findStrongestRepetitionPeriod (
             const std::vector<unsigned char>& data,
-            const byteRange inThisRange );
+            const indexRange inThisRange );
 
     static
     std::unique_ptr<std::vector<unsigned char>>
     createOffsetByteMap (
             const std::vector<unsigned char>& data,
-            const byteRange inThisRange );
+            const indexRange inThisRange );
 
     static
     std::unique_ptr<std::vector<unsigned char>>
     createCrossFileOffsetByteMap (
             const std::vector<unsigned char>& source,
-            const byteRange sourceRange,
+            const indexRange sourceRange,
             const std::vector<unsigned char>& target,
-            const byteRange targetRange,
+            const indexRange targetRange,
             const bool runBackwards );
 };
 

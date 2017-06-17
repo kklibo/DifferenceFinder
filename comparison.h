@@ -8,7 +8,7 @@
 #include <utility>
 #include <atomic>
 #include "blockmatchset.h"
-#include "byteRange.h"
+#include "indexrange.h"
 #include "buzhash.h"
 
 #include "defensivecoding.h"
@@ -31,8 +31,8 @@ public:
     class results {
     public:
         std::multiset<blockMatchSet> matches;
-        std::list<byteRange> data1_unmatchedBlocks;
-        std::list<byteRange> data2_unmatchedBlocks;
+        std::list<indexRange> data1_unmatchedBlocks;
+        std::list<indexRange> data2_unmatchedBlocks;
 
         bool aborted;
         bool internalError;
@@ -45,15 +45,15 @@ public:
 
     static unsigned int findLargestMatchingBlocks(  const std::vector<unsigned char>&   data1,
                                                     const std::vector<unsigned char>&   data2,
-                                                    const std::multiset<byteRange>&     data1SkipRanges,
-                                                    const std::multiset<byteRange>&     data2SkipRanges,
+                                                    const std::multiset<indexRange>&    data1SkipRanges,
+                                                    const std::multiset<indexRange>&    data2SkipRanges,
                                                           std::multiset<blockMatchSet>& matches );
 
     static bool blockMatchSearch(   const unsigned int blockLength,
                                     const std::vector<unsigned char>& data1,
                                     const std::vector<unsigned char>& data2,
-                                    const std::multiset<byteRange>& data1SkipRanges,
-                                    const std::multiset<byteRange>& data2SkipRanges,
+                                    const std::multiset<indexRange>& data1SkipRanges,
+                                    const std::multiset<indexRange>& data2SkipRanges,
                                           std::multiset<blockMatchSet>* allMatches = nullptr );
 
     static void chooseValidMatchSet(       blockMatchSet& match,
@@ -63,10 +63,10 @@ public:
     static void chooseValidMatchSets( std::multiset<blockMatchSet>& matches );
 
     static void addMatchesToSkipRanges(   const std::multiset<blockMatchSet>& matches,
-                                                std::multiset<byteRange>&     data1SkipRanges,
-                                                std::multiset<byteRange>&     data2SkipRanges );
+                                                std::multiset<indexRange>&    data1SkipRanges,
+                                                std::multiset<indexRange>&    data2SkipRanges );
 
-    static std::unique_ptr<std::list<byteRange>> findUnmatchedBlocks(   const byteRange& fillThisRange,
+    static std::unique_ptr<std::list<indexRange>> findUnmatchedBlocks(  const indexRange& fillThisRange,
                                                                         const std::multiset<blockMatchSet>& matches,
                                                                         const whichDataSet which );
 

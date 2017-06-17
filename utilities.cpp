@@ -3,7 +3,7 @@
 
 /*static*/ unsigned int utilities::findStrongestRepetitionPeriod (
                 const std::vector<unsigned char> &data,
-                const byteRange inThisRange )
+                const indexRange inThisRange )
 {
     /*
         tries to find the period of a trend of repetition in this data
@@ -18,14 +18,14 @@
     */
 
 
-    byteRange searchRange;
+    indexRange searchRange;
     {
         ASSERT_LE_UINT_MAX(data.size());
-        byteRange dataRange(0, static_cast<unsigned int>(data.size()) );
+        indexRange dataRange(0, static_cast<unsigned int>(data.size()) );
         searchRange = inThisRange.getIntersection(dataRange);
     }
 
-    if ( 0 == searchRange.count) {
+    if ( 0 == searchRange.count()) {
         return 0;   //inThisRange doesn't overlap the data
     }
 
@@ -33,7 +33,7 @@
           // for each possible byte value, record the previous (most recent) index at which it occurred
          //  UINT_MAX indicates that the byte value hasn't been seen yet
         //
-    ASSERT_LE_UINT_MAX(searchRange.end());  //ensure that UINT_MAX won't be a valid index
+    ASSERT_LE_UINT_MAX(searchRange.end);  //ensure that UINT_MAX won't be a valid index
       //
     std::vector<unsigned int> previousIndex(256, UINT_MAX); //size 256, initialized to UINT_MAX
     //
@@ -47,7 +47,7 @@
 
 
     //traverse the search range, recording offsets between repetitions
-    for (unsigned int i = searchRange.start; i < searchRange.end(); ++i) {
+    for (unsigned int i = searchRange.start; i < searchRange.end; ++i) {
 
         if (UINT_MAX != previousIndex[data[i]]) {
             //this value has a previous occurrence
@@ -78,17 +78,17 @@
 /*static*/  std::unique_ptr<std::vector<unsigned char>>
             utilities::createOffsetByteMap (
                 const std::vector<unsigned char>& data,
-                const byteRange inThisRange )
+                const indexRange inThisRange )
 {
 
-    byteRange searchRange;
+    indexRange searchRange;
     {
         ASSERT_LE_UINT_MAX(data.size());
-        byteRange dataRange(0, static_cast<unsigned int>(data.size()) );
+        indexRange dataRange(0, static_cast<unsigned int>(data.size()) );
         searchRange = inThisRange.getIntersection(dataRange);
     }
 
-    if ( 0 == searchRange.count) {
+    if ( 0 == searchRange.count()) {
         return 0;   //inThisRange doesn't overlap the data
     }
 
@@ -96,7 +96,7 @@
           // for each possible byte value, record the previous (most recent) index at which it occurred
          //  UINT_MAX indicates that the byte value hasn't been seen yet
         //
-    ASSERT_LE_UINT_MAX(searchRange.end());  //ensure that UINT_MAX won't be a valid index
+    ASSERT_LE_UINT_MAX(searchRange.end);  //ensure that UINT_MAX won't be a valid index
       //
     std::vector<unsigned int> previousIndex(256, UINT_MAX); //size 256, initialized to UINT_MAX
     //
@@ -105,7 +105,7 @@
     std::unique_ptr<std::vector<unsigned char>> offsetByteMap(new std::vector<unsigned char>(data.size()));
 
     //traverse the search range, recording offsets between repetitions
-    for (unsigned int i = searchRange.start; i < searchRange.end(); ++i) {
+    for (unsigned int i = searchRange.start; i < searchRange.end; ++i) {
 
         if (UINT_MAX != previousIndex[data[i]]) {
             //this value has a previous occurrence
@@ -129,23 +129,23 @@
 /*static*/  std::unique_ptr<std::vector<unsigned char>>
             utilities::createCrossFileOffsetByteMap (
                 const std::vector<unsigned char>& source,
-                const byteRange sourceRange,
+                const indexRange sourceRange,
                 const std::vector<unsigned char>& target,
-                const byteRange targetRange,
+                const indexRange targetRange,
                 const bool runBackwards )
 {
 
-    byteRange sourceSearchRange;
+    indexRange sourceSearchRange;
     {
         ASSERT_LE_UINT_MAX(source.size());
-        byteRange dataRange(0, static_cast<unsigned int>(source.size()) );
+        indexRange dataRange(0, static_cast<unsigned int>(source.size()) );
         sourceSearchRange = sourceRange.getIntersection(dataRange);
     }
 
-    byteRange targetSearchRange;
+    indexRange targetSearchRange;
     {
         ASSERT_LE_UINT_MAX(target.size());
-        byteRange dataRange(0, static_cast<unsigned int>(target.size()) );
+        indexRange dataRange(0, static_cast<unsigned int>(target.size()) );
         targetSearchRange = targetRange.getIntersection(dataRange);
     }
 
@@ -153,7 +153,7 @@
           // for each possible byte value, record the previous (most recent) index at which it occurred
          //  UINT_MAX indicates that the byte value hasn't been seen yet
         //
-    ASSERT_LE_UINT_MAX(sourceSearchRange.end());  //ensure that UINT_MAX won't be a valid index
+    ASSERT_LE_UINT_MAX(sourceSearchRange.end);  //ensure that UINT_MAX won't be a valid index
       //
     std::vector<unsigned int> previousIndex(256, UINT_MAX); //size 256, initialized to UINT_MAX
     //
@@ -163,8 +163,8 @@
 
     unsigned int searchCount;
     {
-        byteRange searchRange = sourceSearchRange.getIntersection(targetSearchRange);
-        searchCount = searchRange.count;
+        indexRange searchRange = sourceSearchRange.getIntersection(targetSearchRange);
+        searchCount = searchRange.count();
 
         if (0 == searchCount) {
             //nothing to search:
@@ -180,7 +180,7 @@
         if (!runBackwards) {
             sourceStartsBeforeOrWithTarget = sourceSearchRange.start < targetSearchRange.start;
         } else {
-            sourceStartsBeforeOrWithTarget = sourceSearchRange.end() > targetSearchRange.end();
+            sourceStartsBeforeOrWithTarget = sourceSearchRange.end > targetSearchRange.end;
         }
     }
 
@@ -208,8 +208,8 @@
         } else {
             //reading end to start
 
-            sourceIndex = sourceSearchRange.end() - 1 - i;
-            targetIndex = targetSearchRange.end() - 1 - i;
+            sourceIndex = sourceSearchRange.end - 1 - i;
+            targetIndex = targetSearchRange.end - 1 - i;
 
             previousIndex[target[targetIndex]] = targetIndex; //record this value's occurrence
 

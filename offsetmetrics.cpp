@@ -5,15 +5,15 @@
 /*static*/ std::unique_ptr<rangeMatch>
             offsetMetrics::getNextAlignmentRange(   const std::vector<unsigned char>& source,
                                                     const std::vector<unsigned char>& target,
-                                                    const byteRange sourceSearchRange,
-                                                    const byteRange targetSearchRange
+                                                    const indexRange sourceSearchRange,
+                                                    const indexRange targetSearchRange
                                                     )
 {
 
     ASSERT(0 < target.size());                          //vectors should have contents
     ASSERT(0 < source.size());
-    ASSERT(sourceSearchRange.end() <= source.size());   //ranges shouldn't exceed vectors
-    ASSERT(targetSearchRange.end() <= target.size());
+    ASSERT(sourceSearchRange.end <= source.size());     //ranges shouldn't exceed vectors
+    ASSERT(targetSearchRange.end <= target.size());
 
     //returns the size of the alignment range starting at these indices in source and target:
     //an alignment range contains >50% index-to-index matching bytes between source and target,
@@ -31,8 +31,8 @@
         ASSERT(targetSearchRange.contains(targetRangeStart));
 
         //limit search to within source & target ranges
-        const unsigned int searchLimit = std::min(  sourceSearchRange.end() - sourceRangeStart,
-                                                    targetSearchRange.end() - targetRangeStart  );
+        const unsigned int searchLimit = std::min(  sourceSearchRange.end - sourceRangeStart,
+                                                    targetSearchRange.end - targetRangeStart  );
 
         for (unsigned int i = 0; i < searchLimit; ++i) {
 
@@ -62,10 +62,10 @@
 
     auto findAlignmentRange_fixedSourceIndex = [&source, &target, &getAlignmentRangeSizeAtIndices]
                                                (const unsigned int sourceRangeStart,
-                                                const byteRange& targetSearchRange)
+                                                const indexRange& targetSearchRange)
                                                 -> rangeMatch {
 
-        for (unsigned int i = targetSearchRange.start; i < targetSearchRange.end(); ++i) {
+        for (unsigned int i = targetSearchRange.start; i < targetSearchRange.end; ++i) {
 
             unsigned int alignmentRangeSize = getAlignmentRangeSizeAtIndices(sourceRangeStart, i);
             if (alignmentRangeSize > 1) {
@@ -79,7 +79,7 @@
 
 
     //loop through source, looking for alignment ranges starting at each index until one is found
-    for (unsigned int i = sourceSearchRange.start; i < sourceSearchRange.end(); ++i) {
+    for (unsigned int i = sourceSearchRange.start; i < sourceSearchRange.end; ++i) {
         rangeMatch alignmentRange = findAlignmentRange_fixedSourceIndex(i, targetSearchRange);
 
         if (alignmentRange.byteCount) {
@@ -94,20 +94,20 @@
 /*static*/ std::unique_ptr<rangeMatch>
             offsetMetrics::getNextAlignmentRange(   const std::vector<unsigned char>& source,
                                                     const std::vector<unsigned char>& target,
-                                                    const byteRange sourceSearchRange,
+                                                    const indexRange sourceSearchRange,
                                                     //this should be sorted by increasing start index
-                                                    const std::list<byteRange>& targetSearchRanges
+                                                    const std::list<indexRange>& targetSearchRanges
                                                     )
 {
 
-    ASSERT(byteRange::isNonDecreasingAndNonOverlapping(targetSearchRanges));
+    ASSERT(indexRange::isNonDecreasingAndNonOverlapping(targetSearchRanges));
 
     //note: this checks all indices in sourceSearchRange against the current targetSearchRange
     //  before proceeding to the next targetSearchRange:
     //  this is not the same order as a full target search that skips (target) ranges
 
 
-    for (const byteRange& targetSearchRange : targetSearchRanges) {
+    for (const indexRange& targetSearchRange : targetSearchRanges) {
 
         std::unique_ptr<rangeMatch> result = getNextAlignmentRange(source, target, sourceSearchRange, targetSearchRange);
 
@@ -122,10 +122,10 @@
 /*static*/ void offsetMetrics::getAlignmentRangeDiff(   const std::vector<unsigned char>& file1,
                                                         const std::vector<unsigned char>& file2,
                                                         const rangeMatch& alignmentRange,
-                                                        std::list<byteRange>& file1_matches,
-                                                        std::list<byteRange>& file1_differences,
-                                                        std::list<byteRange>& file2_matches,
-                                                        std::list<byteRange>& file2_differences
+                                                        std::list<indexRange>& file1_matches,
+                                                        std::list<indexRange>& file1_differences,
+                                                        std::list<indexRange>& file2_matches,
+                                                        std::list<indexRange>& file2_differences
                                                         )
 {
     if ( !alignmentRange.byteCount ) {
@@ -136,31 +136,32 @@
     ASSERT(file2.size() >= alignmentRange.getEndInFile2());
 
 
-    auto addToRange = [](const unsigned int index, byteRange& activeRange) {
+    auto addToRange = [](const unsigned int index, indexRange& activeRange) {
         //open a new active range (if not already active)
-        if (!activeRange.count) {
-            activeRange.start = index;
+        if (!activeRange.count()) {
+            activeRange.move(index);
         }
 
         //and increment the range size
-        ++activeRange.count;
+        ASSERT(noSumOverflow(activeRange.end,1));
+        ++(activeRange.end);
     };
 
-    auto closeRangeIfActive = [](byteRange& range, std::list<byteRange>& addClosedRangeHere) {
+    auto closeRangeIfActive = [](indexRange& range, std::list<indexRange>& addClosedRangeHere) {
         //output and close range (if active)
-        if (range.count) {
+        if (range.count()) {
             addClosedRangeHere.emplace_back(range);
-            range = byteRange(0,0);
+            range = indexRange(0,0);
         }
     };
 
 
     //these ranges are progressively expanded as the alignment range is traversed,
     // then added to output lists when their end is found
-    byteRange file1MatchRange(0,0);
-    byteRange file1DifferenceRange(0,0);
-    byteRange file2MatchRange(0,0);
-    byteRange file2DifferenceRange(0,0);
+    indexRange file1MatchRange(0,0);
+    indexRange file1DifferenceRange(0,0);
+    indexRange file2MatchRange(0,0);
+    indexRange file2DifferenceRange(0,0);
 
     for (unsigned int i = 0; i < alignmentRange.byteCount; ++i) {
 
@@ -220,24 +221,26 @@ offsetMetrics::doCompare(   const std::vector<unsigned char>& data1,
             return Results;
         }
 
-        std::list<byteRange> targetSearchRanges;
+        std::list<indexRange> targetSearchRanges;
         {
             //find valid target search ranges (temp code, avoid copying list?)
-            std::list<byteRange> alignmentRangesInTarget;
+            std::list<indexRange> alignmentRangesInTarget;
 
             for (rangeMatch& alignmentRange : alignmentRanges) {
-                alignmentRangesInTarget.emplace_back(alignmentRange.startIndexInFile2, alignmentRange.byteCount);
+                ASSERT(noSumOverflow(                alignmentRange.startIndexInFile2,alignmentRange.byteCount));
+                alignmentRangesInTarget.emplace_back(alignmentRange.startIndexInFile2,
+                                                     alignmentRange.startIndexInFile2+alignmentRange.byteCount);
             }
 
             //fillEmptySpaces requires a nondecreasing and nonoverlapping block list
             alignmentRangesInTarget.sort();
 
             ASSERT_LE_UINT_MAX(data2.size());
-            byteRange::fillEmptySpaces(byteRange(0, static_cast<unsigned int>(data2.size())), alignmentRangesInTarget, targetSearchRanges);
+            indexRange::fillEmptySpaces(indexRange(0, static_cast<unsigned int>(data2.size())), alignmentRangesInTarget, targetSearchRanges);
         }
 
         ASSERT_LE_UINT_MAX(data1.size());
-        byteRange sourceSearchRange(sourceStartIndex, static_cast<unsigned int>(data1.size()) - sourceStartIndex);
+        indexRange sourceSearchRange(sourceStartIndex, static_cast<unsigned int>(data1.size()));
 
         std::unique_ptr<rangeMatch> rangeResult
             = offsetMetrics::getNextAlignmentRange(data1, data2, sourceSearchRange, targetSearchRanges);

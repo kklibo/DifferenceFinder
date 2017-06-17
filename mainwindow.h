@@ -14,7 +14,7 @@
 #include "log.h"
 #include "ui_mainwindow.h"
 
-#include "byteRange.h"
+#include "indexrange.h"
 #include "dataSet.h"
 #include "dataSetView.h"
 #include "settingsdialog.h"

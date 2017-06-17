@@ -386,7 +386,7 @@ void MainWindow::doSimpleCompare()
         return;
     }
 
-    auto m_diffs = QSharedPointer<QVector<byteRange>>::create();
+    auto m_diffs = QSharedPointer<QVector<indexRange>>::create();
     dataSet::compare(*m_dataSet1.data(), *m_dataSet2.data(), *m_diffs.data());
 
     //create highlightSet to color byte differences between files
@@ -462,8 +462,8 @@ void MainWindow::updateScrollBarRange()
         const dataSet::DataReadLock& DRL = ds->getReadLock();
 
         ASSERT_LE_INT_MAX(DRL.getData().size());
-        ASSERT_LE_INT_MAX(dsv->getSubset().count);
-        int scrollRange = static_cast<int>(DRL.getData().size()) - static_cast<int>(dsv->getSubset().count);
+        ASSERT_LE_INT_MAX(dsv->getSubset().count());
+        int scrollRange = static_cast<int>(DRL.getData().size()) - static_cast<int>(dsv->getSubset().count());
 
         if (dataSetView::ByteGridScrollingMode::FixedRows == dsv->byteGridScrollingMode) {
             ASSERT_LE_INT_MAX(dsv->getBytesPerRow());
@@ -512,8 +512,8 @@ void MainWindow::updateScrollBarRange()
     if( m_dataSetView1 && m_dataSetView2 )
     {
         //if the byte grids have different page sizes, pick the smaller one so page stepping won't skip data
-        scrollPage = qMin(  m_dataSetView1->getSubset().count,
-                            m_dataSetView2->getSubset().count);
+        scrollPage = qMin(  m_dataSetView1->getSubset().count(),
+                            m_dataSetView2->getSubset().count());
 
         ASSERT_LE_INT_MAX(scrollPage);
         ui->verticalScrollBar->setPageStep(static_cast<int>(scrollPage));
@@ -554,11 +554,11 @@ QString MainWindow::summarizeResults(const comparison::results& results)
         matchedBytesInData2 += bms.data2_BlockStartIndices.size() * bms.blockSize;
     }
 
-    auto getRangeTotal = [](const std::list<byteRange>& byteRanges) -> unsigned int {
+    auto getRangeTotal = [](const std::list<indexRange>& indexRanges) -> unsigned int {
 
         unsigned int totalBytes = 0;
-        for (const byteRange& b : byteRanges) {
-            totalBytes += b.count;
+        for (const indexRange& b : indexRanges) {
+            totalBytes += b.count();
         }
         return totalBytes;
     };
@@ -597,11 +597,11 @@ QString MainWindow::summarizeResults(const offsetMetrics::results& results)
         return "internal error";
     }
 
-    auto getRangeTotal = [](const std::list<byteRange>& byteRanges) -> unsigned int {
+    auto getRangeTotal = [](const std::list<indexRange>& indexRanges) -> unsigned int {
 
         unsigned int totalBytes = 0;
-        for (const byteRange& b : byteRanges) {
-            totalBytes += b.count;
+        for (const indexRange& b : indexRanges) {
+            totalBytes += b.count();
         }
         return totalBytes;
     };
@@ -864,8 +864,8 @@ void MainWindow::on_actionTest_triggered()
 
         //offsetMap = utilities::createOffsetByteMap(DRL1.getData(), byteRange(0,DRL1.getData().size()));
 
-        offsetMap = utilities::createCrossFileOffsetByteMap(DRL1.getData(), byteRange(0,DRL1.getData().size()),
-                                                            DRL2.getData(), byteRange(0,DRL2.getData().size()),
+        offsetMap = utilities::createCrossFileOffsetByteMap(DRL1.getData(), indexRange(0,DRL1.getData().size()),
+                                                            DRL2.getData(), indexRange(0,DRL2.getData().size()),
                                                             DEBUGFLAG1 );
 
     }

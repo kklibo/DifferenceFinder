@@ -12,7 +12,7 @@
 
 
 #include "log.h"
-#include "byteRange.h"
+#include "indexrange.h"
 #include "defensivecoding.h"
 
 /*
@@ -47,7 +47,7 @@ public:
         SUCCESS,
         ERROR_SizeMismatch
     };
-    static compareResult compare(const dataSet& dataSet1, const dataSet& dataSet2, QVector<byteRange>& diffs);
+    static compareResult compare(const dataSet& dataSet1, const dataSet& dataSet2, QVector<indexRange>& diffs);
 
 
         //DataReadLock is used to control access to m_data: all access outside of this class is done by acquiring
