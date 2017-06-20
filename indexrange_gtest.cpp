@@ -4,6 +4,61 @@
 
 //based on byteRange_gtest.cpp
 
+TEST(indexRange, constructors){
+    {
+        indexRange a;
+        EXPECT_TRUE( 0 == a.start && 0 == a.end );
+    }
+    {
+        indexRange a(10,20);
+        EXPECT_TRUE( 10 == a.start && 20 == a.end );
+    }
+}
+
+TEST(indexRange, move){
+    {
+        indexRange a(0,10);
+        a.move(0);
+        EXPECT_EQ(indexRange(0,10), a);
+    }
+    {
+        indexRange a(0,10);
+        a.move(20);
+        EXPECT_EQ(indexRange(20,30), a);
+    }
+}
+
+TEST(indexRange, comparison_operators){
+    EXPECT_TRUE (indexRange( 0,10) == indexRange( 0,10));
+    EXPECT_TRUE (indexRange( 0, 0) == indexRange(10, 0));
+    EXPECT_FALSE(indexRange( 0, 0) == indexRange( 0,10));
+
+    EXPECT_FALSE(indexRange( 0,10) != indexRange( 0,10));
+    EXPECT_FALSE(indexRange( 0, 0) != indexRange(10, 0));
+    EXPECT_TRUE (indexRange( 0, 0) != indexRange( 0,10));
+
+    // < compares start index only
+    EXPECT_FALSE(indexRange( 0, 0) < indexRange( 0, 0));
+    EXPECT_FALSE(indexRange( 0, 0) < indexRange( 0,10));
+    EXPECT_TRUE (indexRange( 0, 0) < indexRange(10, 0));
+    EXPECT_TRUE (indexRange( 0, 0) < indexRange(10,10));
+    EXPECT_TRUE (indexRange(10,20) < indexRange(20, 0));
+    EXPECT_TRUE (indexRange(10,20) < indexRange(20,20));
+    EXPECT_TRUE (indexRange(10,20) < indexRange(20,40));
+}
+
+TEST(indexRange, count){
+    //size zero
+    EXPECT_EQ(0,    indexRange( 0, 0).count());
+    EXPECT_EQ(0,    indexRange(10,10).count());
+    EXPECT_EQ(0,    indexRange(10, 0).count());
+    EXPECT_EQ(0,    indexRange(UINT_MAX, UINT_MAX).count());
+
+    EXPECT_EQ(10,   indexRange( 0,10).count());
+    EXPECT_EQ(10,   indexRange(10,20).count());
+    EXPECT_EQ(10,   indexRange(UINT_MAX-10, UINT_MAX).count());
+}
+
 TEST(indexRange, contains){
     //size zero
     indexRange a(10,10);
@@ -109,6 +164,32 @@ TEST(indexRange, getIntersection){
     }
 }
 
+TEST(indexRange, overlapsAnyIn){
+    {
+        indexRange c(20,30);
+        {   //size 0 ranges can't overlap
+            std::vector<indexRange> ranges = { indexRange(10,20), indexRange(30,40), indexRange(25,25)};
+            EXPECT_FALSE(    c.overlapsAnyIn(ranges) );
+        }
+        {
+            std::vector<indexRange> ranges = { indexRange(10,20), indexRange(30,40), indexRange(25,30)};
+            EXPECT_TRUE (    c.overlapsAnyIn(ranges) );
+        }
+    }
+    {
+        indexRange range(20,30);
+        unsigned int blockSize = 10;
+        {
+            std::vector<unsigned int> uints = {5,10,30,35};
+            EXPECT_FALSE(    range.overlapsAnyIn(uints, blockSize) );
+        }
+        {
+            std::vector<unsigned int> uints = {15};
+            EXPECT_TRUE (    range.overlapsAnyIn(uints, blockSize) );
+        }
+    }
+}
+
 TEST(indexRange, isNonDecreasingAndNonOverlapping){
     {
         std::vector<indexRange> ranges = { indexRange(10,20), indexRange(20,30), indexRange(35,35), indexRange(35,45) };
@@ -144,6 +225,25 @@ TEST(indexRange, isNonDecreasingAndNonOverlapping){
     }
 }
 
+TEST(indexRange, isNonDecreasing){
+    {
+        std::vector<unsigned int> uints = {1,2,3};
+        EXPECT_TRUE (    indexRange::isNonDecreasing(uints) );
+    }
+    {
+        std::vector<unsigned int> uints = {10,20,30,45};
+        EXPECT_TRUE (    indexRange::isNonDecreasing(uints) );
+    }
+    {
+        std::list<unsigned int> uints = {10,20,45,30};
+        EXPECT_FALSE(    indexRange::isNonDecreasing(uints) );
+    }
+    {
+        std::list<unsigned int> uints = {10,20,30,35};
+        EXPECT_TRUE (    indexRange::isNonDecreasing(uints) );
+    }
+}
+
 TEST(indexRange, isNonOverlapping){
     {
         std::vector<unsigned int> uints = {1,2,3};
@@ -176,51 +276,6 @@ TEST(indexRange, isNonOverlapping){
     {
         std::vector<indexRange> ranges = { indexRange(40,50), indexRange(20,35), indexRange(30,31), indexRange(10,20) };
         EXPECT_FALSE(    indexRange::isNonOverlapping(ranges)   );
-    }
-}
-
-TEST(indexRange, isNonDecreasing){
-    {
-        std::vector<unsigned int> uints = {1,2,3};
-        EXPECT_TRUE (    indexRange::isNonDecreasing(uints) );
-    }
-    {
-        std::vector<unsigned int> uints = {10,20,30,45};
-        EXPECT_TRUE (    indexRange::isNonDecreasing(uints) );
-    }
-    {
-        std::list<unsigned int> uints = {10,20,45,30};
-        EXPECT_FALSE(    indexRange::isNonDecreasing(uints) );
-    }
-    {
-        std::list<unsigned int> uints = {10,20,30,35};
-        EXPECT_TRUE (    indexRange::isNonDecreasing(uints) );
-    }
-}
-
-TEST(indexRange, overlapsAnyIn){
-    {
-        indexRange c(20,30);
-        {   //size 0 ranges can't overlap
-            std::vector<indexRange> ranges = { indexRange(10,20), indexRange(30,40), indexRange(25,25)};
-            EXPECT_FALSE(    c.overlapsAnyIn(ranges) );
-        }
-        {
-            std::vector<indexRange> ranges = { indexRange(10,20), indexRange(30,40), indexRange(25,30)};
-            EXPECT_TRUE (    c.overlapsAnyIn(ranges) );
-        }
-    }
-    {
-        indexRange range(20,30);
-        unsigned int blockSize = 10;
-        {
-            std::vector<unsigned int> uints = {5,10,30,35};
-            EXPECT_FALSE(    range.overlapsAnyIn(uints, blockSize) );
-        }
-        {
-            std::vector<unsigned int> uints = {15};
-            EXPECT_TRUE (    range.overlapsAnyIn(uints, blockSize) );
-        }
     }
 }
 

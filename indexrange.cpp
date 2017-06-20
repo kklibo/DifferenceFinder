@@ -1,13 +1,15 @@
 #include "indexrange.h"
 
-indexRange::indexRange(){
-    start = 0;
-    end = 0;
+indexRange::indexRange()
+    : start(0),
+      end(0)
+{
 }
 
-indexRange::indexRange(unsigned int start, unsigned int end){
-    this->start = start;
-    this->end = end;
+indexRange::indexRange(unsigned int start, unsigned int end)
+    : start(start),
+      end(end)
+{
 }
 
 void indexRange::move(unsigned int newStart)
@@ -43,9 +45,9 @@ unsigned int indexRange::count() const {
     return end - start;
 }
 
-bool indexRange::contains(const unsigned int &index) const {
+bool indexRange::contains(unsigned int index) const {
     return (    ( start <= index )
-                && ( index <  end   )  );
+             && ( index <  end   )  );
 }
 
 bool indexRange::overlaps(const indexRange &r) const {

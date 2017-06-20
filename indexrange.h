@@ -33,7 +33,7 @@ public:
     bool operator< (const indexRange &r) const; //compares start index only
 
     unsigned int    count()                                 const; //the number of included indices
-    bool            contains(const unsigned int& index)     const; //true iff index is contained in this indexRange
+    bool            contains(unsigned int index)            const; //true iff index is contained in this indexRange
     bool            overlaps(const indexRange& r)           const; //true iff this has an index in common with r
     indexRange      getIntersection(const indexRange& r)    const; //all indices included in this and r
 
@@ -55,8 +55,6 @@ public:
         for (const unsigned int& r : startIndices) {
 
             ASSERT(noSumOverflow(r,count));
-            //overflows could be truncated to unsigned int max
-
             if (overlaps( indexRange(r, r + count) )) {
                 return true;
             }
