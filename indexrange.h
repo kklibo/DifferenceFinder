@@ -88,7 +88,7 @@ public:
     template <typename T>
     static bool isNonDecreasingAndNonOverlapping(const T& startIndices, const unsigned int& count) {
 
-        unsigned int minStart = 0;  //minimum start for subsequent acceptible byteRanges
+        unsigned int minStart = 0;  //minimum start for subsequent acceptible ranges
 
         for (const unsigned int& i : startIndices) {
 
@@ -97,7 +97,7 @@ public:
             }
 
             ASSERT(noSumOverflow(i,count));
-            minStart = i + count; //update minStart and continue stepping through the byteRanges
+            minStart = i + count; //update minStart and continue stepping through the ranges
 
         }
 
@@ -123,8 +123,8 @@ public:
     }
 
     //if possible, call isNonDecreasingAndNonOverlapping instead:
-    // this function copies and sorts the byteRanges
-    //note: this function throws out byteRanges with count 0 (they can't overlap anything)
+    // this function copies and sorts the indexRanges
+    //note: this function ignores indexRanges with count 0 (they can't overlap anything)
     template <typename T>
     static bool isNonOverlapping(const T& indexRanges) {
 

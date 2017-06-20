@@ -34,7 +34,6 @@ HEADERS  += mainwindow.h \
     dataSet.h \
     dataSetView.h \
     hexfield.h \
-    byteRange.h \
     log.h \
     settingsdialog.h \
     usersettings.h \

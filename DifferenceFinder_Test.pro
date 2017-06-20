@@ -31,14 +31,12 @@ SOURCES +=\
     utilities.cpp \
     indexrange.cpp \
     dataSet_gtest.cpp \
-    byteRange_gtest.cpp \
     indexrange_gtest.cpp
 
 HEADERS  += mainwindow.h \
     dataSet.h \
     dataSetView.h \
     hexfield.h \
-    byteRange.h \
     log.h \
     settingsdialog.h \
     usersettings.h \
