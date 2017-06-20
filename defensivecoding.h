@@ -16,6 +16,12 @@
 #define FAIL()                      do{                           LOG.Defensive(QString("FAIL (should be unreachable): %1:%2")  .arg(__FILE__).arg(__LINE__)); }while(false)
 
 
+inline bool noSumOverflow(unsigned int val1, unsigned int val2)
+{
+    return (UINT_MAX - val1 >= val2);
+}
+
+
 template <typename T>
 struct ScopeExit {
     ScopeExit(T callThis) : m_func(callThis) {}

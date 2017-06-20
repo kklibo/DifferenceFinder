@@ -1,7 +1,7 @@
 #include "dataSetView.h"
 
 
-dataSetView::highlightSet::highlightSet(QSharedPointer<QVector<byteRange>> ranges)
+dataSetView::highlightSet::highlightSet(QSharedPointer<QVector<indexRange>> ranges)
     :   m_ranges(ranges),
         m_applyForeground(false),
         m_applyBackground(false)
@@ -42,7 +42,7 @@ dataSetView::dataSetView(QSharedPointer<dataSet>& theDataSet)
 {
 }
 
-byteRange dataSetView::getSubset() const
+indexRange dataSetView::getSubset() const
 {
     return m_subset;
 }
@@ -54,7 +54,8 @@ unsigned int dataSetView::getSubsetStart() const
 
 void dataSetView::setSubsetStart(unsigned int start)
 {
-    m_subset.start = start;
+    //m_subset.start = start;
+    m_subset.move(start);
     emit subsetChanged(m_subset);
 }
 
@@ -74,7 +75,7 @@ void dataSetView::updateByteGridDimensions(QTextEdit* textEdit)
 
     //no-op values: only update at the end if everything goes well
     m_bytesPerRow = 0;
-    m_subset.count = 0;
+    m_subset.end = m_subset.start;  //set m_subset size to 0 without moving start
 
 
     //calculate the pixel size of the draw area in the QTextEdit that is available
@@ -215,7 +216,8 @@ void dataSetView::updateByteGridDimensions(QTextEdit* textEdit)
 
 
     m_bytesPerRow = rowBytes;
-    m_subset.count = byteCount;
+    ASSERT(noSumOverflow(m_subset.start,byteCount));
+    m_subset.end = m_subset.start + byteCount;
 
 }
 
@@ -234,7 +236,7 @@ bool dataSetView::printByteGrid(QTextEdit* textEdit, QTextEdit* addressColumn)
     }
 
     //skip no-print situations
-    if (0 == m_bytesPerRow || 0 == m_subset.count) {
+    if (0 == m_bytesPerRow || 0 == m_subset.count()) {
         return false;
     }
 
@@ -247,8 +249,8 @@ bool dataSetView::printByteGrid(QTextEdit* textEdit, QTextEdit* addressColumn)
     const std::vector<unsigned char>& theData = DRL.getData();
 
     unsigned int bytesPrinted = 0;
-    ASSERT_LE_INT_MAX(m_subset.end());  //ensure static_cast<int>(i) in loop is safe
-    for (unsigned int i = m_subset.start; i < m_subset.end(); i++) {
+    ASSERT_LE_INT_MAX(m_subset.end);  //ensure static_cast<int>(i) in loop is safe
+    for (unsigned int i = m_subset.start; i < m_subset.end; i++) {
 
         if (static_cast<unsigned long>(i) >= theData.size()) {
             //break if we've exhausted the data
@@ -316,10 +318,10 @@ bool dataSetView::highlightByteGrid(QTextEdit* textEdit, highlightSet& hSet)
     };
 
     //use QTextEdit::ExtraSelections to highlight ranges
-    for (byteRange& range : *hSet.m_ranges.data()) {
+    for (indexRange& range : *hSet.m_ranges.data()) {
 
-        if (range.end() <= m_subset.start
-         || m_subset.end() <= range.start)
+        if (range.end <= m_subset.start
+         || m_subset.end <= range.start)
         {
             continue;   //skip ranges in addresses that aren't being displayed
         }
@@ -329,7 +331,7 @@ bool dataSetView::highlightByteGrid(QTextEdit* textEdit, highlightSet& hSet)
         selection.cursor = textEdit->textCursor();
 
         selection.cursor.setPosition(getByteCursorIndex(qMax(range.start, m_subset.start)        ),  QTextCursor::MoveAnchor);
-        selection.cursor.setPosition(getByteCursorIndex(qMin(range.end(), m_subset.end()), true  ),  QTextCursor::KeepAnchor);
+        selection.cursor.setPosition(getByteCursorIndex(qMin(range.end,   m_subset.end),   true  ),  QTextCursor::KeepAnchor);
 
         if (hSet.m_applyForeground) {   //apply foreground color if specified
             selection.format.setForeground(hSet.m_foreground);
@@ -368,13 +370,14 @@ void dataSetView::addHighlighting(const std::multiset<blockMatchSet>& matches, b
             useFirstDataSet ? match.data1_BlockStartIndices
                             : match.data2_BlockStartIndices;
 
-        auto byteRanges = QSharedPointer<QVector<byteRange>>::create();
+        auto indexRanges = QSharedPointer<QVector<indexRange>>::create();
 
         for (auto& index : indices) {
-            byteRanges.data()->append(byteRange(index,match.blockSize));
+            ASSERT(noSumOverflow(                        index,match.blockSize));
+            indexRanges.data()->append(indexRange(index, index+match.blockSize));
         }
 
-        dataSetView::highlightSet hSet(byteRanges);
+        dataSetView::highlightSet hSet(indexRanges);
         hSet.setForegroundColor(QColor::fromRgb(128,128,128));
         hSet.setBackgroundColor(colorCycle[ currentColor++ % colorCycle.size() ]);
         addHighlightSet(hSet);
@@ -382,7 +385,7 @@ void dataSetView::addHighlighting(const std::multiset<blockMatchSet>& matches, b
     }
 }
 
-void dataSetView::addHighlighting(const std::multiset<byteRange>& ranges)
+void dataSetView::addHighlighting(const std::multiset<indexRange>& ranges)
 {
     const unsigned char a = 128;
     const unsigned char B = 0;
@@ -397,20 +400,20 @@ void dataSetView::addHighlighting(const std::multiset<byteRange>& ranges)
         QColor::fromRgb(a,a,B)
     };
 
-    auto byteRanges = QSharedPointer<QVector<byteRange>>::create();
+    auto indexRanges = QSharedPointer<QVector<indexRange>>::create();
 
-    for (const byteRange& range : ranges) {
-        byteRanges->push_back(range);
+    for (const indexRange& range : ranges) {
+        indexRanges->push_back(range);
     }
 
-    dataSetView::highlightSet hSet(byteRanges);
+    dataSetView::highlightSet hSet(indexRanges);
     hSet.setForegroundColor(QColor::fromRgb(255,255,255));
     hSet.setBackgroundColor(colorCycle[ currentColor++ % colorCycle.size() ]);
     addHighlightSet(hSet);
 
 }
 
-void dataSetView::addHighlighting(const std::list<byteRange>& ranges)
+void dataSetView::addHighlighting(const std::list<indexRange>& ranges)
 {
     const unsigned char a = 48;
     const unsigned char B = 0;
@@ -425,19 +428,19 @@ void dataSetView::addHighlighting(const std::list<byteRange>& ranges)
         QColor::fromRgb(a,a,B)
     };
 
-    for (const byteRange& range : ranges) {
+    for (const indexRange& range : ranges) {
 
-        auto byteRanges = QSharedPointer<QVector<byteRange>>::create();
-        byteRanges->push_back(range);
+        auto indexRanges = QSharedPointer<QVector<indexRange>>::create();
+        indexRanges->push_back(range);
 
-        dataSetView::highlightSet hSet(byteRanges);
+        dataSetView::highlightSet hSet(indexRanges);
         hSet.setForegroundColor(QColor::fromRgb(128,128,128));
         hSet.setBackgroundColor(colorCycle[ currentColor++ % colorCycle.size() ]);
         addHighlightSet(hSet);
     }
 }
 
-void dataSetView::addDiffHighlighting(const std::list<byteRange>& ranges)
+void dataSetView::addDiffHighlighting(const std::list<indexRange>& ranges)
 {
     const unsigned char a = 192;
     const unsigned char B = 255;
@@ -452,12 +455,12 @@ void dataSetView::addDiffHighlighting(const std::list<byteRange>& ranges)
         QColor::fromRgb(a,a,B)
     };
 
-    for (const byteRange& range : ranges) {
+    for (const indexRange& range : ranges) {
 
-        auto byteRanges = QSharedPointer<QVector<byteRange>>::create();
-        byteRanges->push_back(range);
+        auto indexRanges = QSharedPointer<QVector<indexRange>>::create();
+        indexRanges->push_back(range);
 
-        dataSetView::highlightSet hSet(byteRanges);
+        dataSetView::highlightSet hSet(indexRanges);
         hSet.setForegroundColor(QColor::fromRgb(0,0,0));
         hSet.setBackgroundColor(colorCycle[ currentColor++ % colorCycle.size() ]);
         addHighlightSet(hSet);
@@ -480,7 +483,7 @@ void dataSetView::addByteColorHighlighting()
     }
 
     //skip no-print situations
-    if (0 == m_bytesPerRow || 0 == m_subset.count) {
+    if (0 == m_bytesPerRow || 0 == m_subset.count()) {
         return;
     }
 
@@ -505,11 +508,11 @@ void dataSetView::addByteColorHighlighting()
         unsigned char b = static_cast<unsigned char>( 0x3F | ( (value & 0x03) << 6 ));
 
         //create range, add it to a highlight set, and add the highlight set to the dataSetView
-        byteRange range(endIndex - count, count);
-        auto byteRanges = QSharedPointer<QVector<byteRange>>::create();
-        byteRanges->push_back(range);
+        indexRange range(endIndex - count, endIndex);
+        auto indexRanges = QSharedPointer<QVector<indexRange>>::create();
+        indexRanges->push_back(range);
 
-        dataSetView::highlightSet hSet(byteRanges);
+        dataSetView::highlightSet hSet(indexRanges);
         //guarantee contrast: flip the most significant bit of each color channel
         hSet.setForegroundColor(QColor::fromRgb(0x80^r,0x80^g,0x80^b));
         hSet.setBackgroundColor(QColor::fromRgb(r,g,b));

@@ -28,14 +28,15 @@ SOURCES +=\
     buzhash.cpp \
     offsetmetrics.cpp \
     rangematch.cpp \
+    utilities.cpp \
+    indexrange.cpp \
     dataSet_gtest.cpp \
-    byteRange_gtest.cpp
+    indexrange_gtest.cpp
 
 HEADERS  += mainwindow.h \
     dataSet.h \
     dataSetView.h \
     hexfield.h \
-    byteRange.h \
     log.h \
     settingsdialog.h \
     usersettings.h \
@@ -47,6 +48,8 @@ HEADERS  += mainwindow.h \
     buzhash.h \
     offsetmetrics.h \
     rangematch.h \
+    utilities.h \
+    indexrange.h \
     gtestDefs.h
 
 FORMS    += mainwindow.ui \

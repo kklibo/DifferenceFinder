@@ -129,7 +129,7 @@ dataSet::loadFromMemoryResult dataSet::loadFromMemory(std::unique_ptr<std::vecto
     return loadFromMemoryResult::SUCCESS;
 }
 
-/*static*/ dataSet::compareResult dataSet::compare(const dataSet& dataSet1, const dataSet& dataSet2, QVector<byteRange>& diffs)
+/*static*/ dataSet::compareResult dataSet::compare(const dataSet& dataSet1, const dataSet& dataSet2, QVector<indexRange>& diffs)
 {
     //lock the dataSets
     const dataSet::DataReadLock& DRL1 = dataSet1.getReadLock();
@@ -157,9 +157,11 @@ dataSet::loadFromMemoryResult dataSet::loadFromMemory(std::unique_ptr<std::vecto
 
             if (inDiffSection){
                 Q_ASSERT(0 != diffs.size());
-                diffs.last().count++;   //add one to the count of the current diff byteRange
+                Q_ASSERT(diffs.last().end < UINT_MAX);
+                diffs.last().end++;   //add one to the size of the current diff indexRange
             } else {
-                diffs.push_back(byteRange(byteindex, 1));  //add a new diff byteRange of count 1 at this index
+                Q_ASSERT(byteindex < UINT_MAX);
+                diffs.push_back(indexRange(byteindex, byteindex + 1));  //add a new diff indexRange of size 1 at this index
                 inDiffSection = true;
             }
 

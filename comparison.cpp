@@ -4,8 +4,8 @@
 
 /*static*/ unsigned int comparison::findLargestMatchingBlocks(  const std::vector<unsigned char>&   data1,
                                                                 const std::vector<unsigned char>&   data2,
-                                                                const std::multiset<byteRange>&     data1SkipRanges,
-                                                                const std::multiset<byteRange>&     data2SkipRanges,
+                                                                const std::multiset<indexRange>&    data1SkipRanges,
+                                                                const std::multiset<indexRange>&    data2SkipRanges,
                                                                       std::multiset<blockMatchSet>& matches )
 {
 /*
@@ -40,8 +40,8 @@
         unsigned int data1Size = static_cast<unsigned int>(data1.size());
         unsigned int data2Size = static_cast<unsigned int>(data2.size());
 
-        unsigned int largestGap_data1 = byteRange::findSizeOfLargestEmptySpace( byteRange(0, data1Size), data1SkipRanges );
-        unsigned int largestGap_data2 = byteRange::findSizeOfLargestEmptySpace( byteRange(0, data2Size), data2SkipRanges );
+        unsigned int largestGap_data1 = indexRange::findSizeOfLargestEmptySpace( indexRange(0, data1Size), data1SkipRanges );
+        unsigned int largestGap_data2 = indexRange::findSizeOfLargestEmptySpace( indexRange(0, data2Size), data2SkipRanges );
         upperBound = std::min( largestGap_data1, largestGap_data2 );
     }
 
@@ -107,8 +107,8 @@ if resultMatches is nullptr, results won't being returned, so
 /*static*/ bool comparison::blockMatchSearch(   const unsigned int                  blockLength,
                                                 const std::vector<unsigned char>&   data1,
                                                 const std::vector<unsigned char>&   data2,
-                                                const std::multiset<byteRange>&     data1SkipRanges,
-                                                const std::multiset<byteRange>&     data2SkipRanges,
+                                                const std::multiset<indexRange>&    data1SkipRanges,
+                                                const std::multiset<indexRange>&    data2SkipRanges,
                                                       std::multiset<blockMatchSet>* resultMatches /*= nullptr*/ )
 {
     if (0 == blockLength) {
@@ -149,10 +149,11 @@ if resultMatches is nullptr, results won't being returned, so
     std::multiset<HashIndexPair> hashes2;
 
 
-    auto isBlockSkipped = [&blockLength](const unsigned int startIndex, const std::multiset<byteRange>& skipRanges) {
+    auto isBlockSkipped = [&blockLength](const unsigned int startIndex, const std::multiset<indexRange>& skipRanges) {
 
-        //if block overlaps a byteRange in skipRange, then this block is skipped
-        byteRange block(startIndex, blockLength);
+        //if block overlaps a indexRange in skipRange, then this block is skipped
+        ASSERT(        noSumOverflow(startIndex,blockLength));
+        indexRange block(startIndex, startIndex+blockLength);
 
         for (auto& skipRange : skipRanges) {
             if (block.overlaps(skipRange)) {
@@ -160,7 +161,7 @@ if resultMatches is nullptr, results won't being returned, so
             }
         }
 
-        //if this is reached, block doesn't overlap any byteRanges in skipRanges
+        //if this is reached, block doesn't overlap any indexRanges in skipRanges
         return false;
 
     };
@@ -174,7 +175,7 @@ if resultMatches is nullptr, results won't being returned, so
          hashes2.insert(HashIndexPair(hashValue, index));
     };
 
-    auto getAllHashes = [blockLength](const std::vector<unsigned char>& data, std::function<void(unsigned int, unsigned int)>storeHashValue)
+    auto getAllHashes = [blockLength](const std::vector<unsigned char>& data, std::function<void(unsigned int, unsigned int)> storeHashValue)
     {
         if (data.size() < blockLength) {return;}    //if there isn't enough for a full block, just return
 
@@ -367,8 +368,8 @@ if resultMatches is nullptr, results won't being returned, so
     //called with blockMatchSet cast to non-const: don't modify blockMatchSet::hash or multiset ordering will be disrupted
 
     //this function assumes that the blockMatchSet index lists are sorted in increasing order
-    ASSERT(byteRange::isNonDecreasing(match.data1_BlockStartIndices));
-    ASSERT(byteRange::isNonDecreasing(match.data2_BlockStartIndices));
+    ASSERT(indexRange::isNonDecreasing(match.data1_BlockStartIndices));
+    ASSERT(indexRange::isNonDecreasing(match.data2_BlockStartIndices));
 
     //step forward through the index lists, accepting the first block and then all future non-overlapping blocks (greedy algorithm)
     const unsigned int blockLength = match.blockSize;
@@ -379,7 +380,9 @@ if resultMatches is nullptr, results won't being returned, so
         for (unsigned int index : indices) {
 
             //if this block would overlap a block already validated in another blockMatchSet, skip it
-            if (byteRange(index, blockLength).overlapsAnyIn(alreadyChosen, blockLength)) {
+            ASSERT(    noSumOverflow( index,blockLength));
+            indexRange current(index, index+blockLength);
+            if (current.overlapsAnyIn(alreadyChosen, blockLength)) {
                 continue;
             }
 
@@ -388,8 +391,9 @@ if resultMatches is nullptr, results won't being returned, so
             }
             else {
                 //compare the current block to the last validated block
-                byteRange current   (index,                 blockLength);
-                byteRange lastValid (validIndices.back(),   blockLength);
+                unsigned int lastValidStart = validIndices.back();
+                ASSERT(               noSumOverflow( lastValidStart,blockLength));
+                indexRange lastValid(lastValidStart, lastValidStart+blockLength);
 
                 //add the current block only if it doesn't overlap the validated block
                 if ( !current.overlaps(lastValid) ) {
@@ -451,26 +455,28 @@ if resultMatches is nullptr, results won't being returned, so
 }
 
 /*static*/ void comparison::addMatchesToSkipRanges(  const std::multiset<blockMatchSet>& matches,
-                                                           std::multiset<byteRange>&     data1SkipRanges,
-                                                           std::multiset<byteRange>&     data2SkipRanges )
+                                                           std::multiset<indexRange>&     data1SkipRanges,
+                                                           std::multiset<indexRange>&     data2SkipRanges )
 {
     for (const blockMatchSet& match : matches) {
 
         for (auto& index : match.data1_BlockStartIndices) {
-            data1SkipRanges.emplace(index,match.blockSize);
+            ASSERT(noSumOverflow(          index,match.blockSize));
+            data1SkipRanges.emplace(index, index+match.blockSize);
         }
 
         for (auto& index : match.data2_BlockStartIndices) {
-            data2SkipRanges.emplace(index,match.blockSize);
+            ASSERT(noSumOverflow(          index,match.blockSize));
+            data2SkipRanges.emplace(index, index+match.blockSize);
         }
     }
 }
 
-/*static*/ std::unique_ptr<std::list<byteRange>> comparison::findUnmatchedBlocks(   const byteRange& fillThisRange,
+/*static*/ std::unique_ptr<std::list<indexRange>> comparison::findUnmatchedBlocks(  const indexRange& fillThisRange,
                                                                                     const std::multiset<blockMatchSet>& matches,
                                                                                     const whichDataSet which )
 {
-    std::list<byteRange> allBlocks;
+    std::list<indexRange> allBlocks;
 
     for (auto& match : matches) {
 
@@ -480,22 +486,23 @@ if resultMatches is nullptr, results won't being returned, so
                 : match.data2_BlockStartIndices;
 
         for (auto& start : startIndices) {
-            allBlocks.emplace_back(start, match.blockSize);
+            ASSERT(noSumOverflow(         start,match.blockSize));
+            allBlocks.emplace_back(start, start+match.blockSize);
         }
     }
 
     allBlocks.sort();
 
-    if(!byteRange::isNonDecreasingAndNonOverlapping(allBlocks)) {
+    if(!indexRange::isNonDecreasingAndNonOverlapping(allBlocks)) {
         LOG.Warning("findUnmatchedBlocks block corruption");
     }
 
     //find spaces between blocks
-    std::unique_ptr<std::list<byteRange>> copiesOfAddedBlocks ( new std::list<byteRange>() );
-    byteRange::fillEmptySpaces(fillThisRange, allBlocks, *copiesOfAddedBlocks);
+    std::unique_ptr<std::list<indexRange>> copiesOfAddedBlocks ( new std::list<indexRange>() );
+    indexRange::fillEmptySpaces(fillThisRange, allBlocks, *copiesOfAddedBlocks);
 
     //confirm partition
-    if( !byteRange::isExactAscendingPartition(fillThisRange, allBlocks)) {
+    if( !indexRange::isExactAscendingPartition(fillThisRange, allBlocks)) {
         LOG.Warning("findUnmatchedBlocks partition failure");
     }
 
@@ -514,8 +521,8 @@ if resultMatches is nullptr, results won't being returned, so
         return Results;
     }
 
-    std::multiset<byteRange> data1SkipRanges;
-    std::multiset<byteRange> data2SkipRanges;
+    std::multiset<indexRange> data1SkipRanges;
+    std::multiset<indexRange> data2SkipRanges;
 
 
     unsigned int largest = 1;
@@ -537,10 +544,10 @@ sw.recordTime();
 
         comparison::addMatchesToSkipRanges(matches, data1SkipRanges, data2SkipRanges);
 
-        if (!byteRange::isNonOverlapping(data1SkipRanges)) {
+        if (!indexRange::isNonOverlapping(data1SkipRanges)) {
             LOG.Warning("data1SkipRanges");
         }
-        if (!byteRange::isNonOverlapping(data2SkipRanges)) {
+        if (!indexRange::isNonOverlapping(data2SkipRanges)) {
             LOG.Warning("data2SkipRanges");
         }
 
@@ -552,13 +559,13 @@ sw.recordTime("finished largest " + std::to_string(largest));
     ASSERT_LE_UINT_MAX(data1.size());
     unsigned int data1Size = static_cast<unsigned int>(data1.size());
 
-    byteRange data1_FullRange (0, data1Size);
+    indexRange data1_FullRange (0, data1Size);
     Results->data1_unmatchedBlocks = *comparison::findUnmatchedBlocks(data1_FullRange, Results->matches, comparison::whichDataSet::first).release();
 
     ASSERT_LE_UINT_MAX(data2.size());
     unsigned int data2Size = static_cast<unsigned int>(data2.size());
 
-    byteRange data2_FullRange (0, data2Size);
+    indexRange data2_FullRange (0, data2Size);
     Results->data2_unmatchedBlocks = *comparison::findUnmatchedBlocks(data2_FullRange, Results->matches, comparison::whichDataSet::second).release();
 
 sw.recordTime("found unmatched blocks");

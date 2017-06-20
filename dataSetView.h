@@ -11,7 +11,7 @@
 #include <set>
 
 #include "dataSet.h"
-#include "byteRange.h"
+#include "indexrange.h"
 #include "defensivecoding.h"
 #include "blockmatchset.h"
 
@@ -29,13 +29,13 @@ public:
     class highlightSet {
         friend class dataSetView;
     public:
-        highlightSet(QSharedPointer<QVector<byteRange>> ranges);
+        highlightSet(QSharedPointer<QVector<indexRange>> ranges);
         highlightSet();
         void setForegroundColor(const QColor &foreground);
         void setBackgroundColor(const QColor &background);
 
     private:
-        QSharedPointer<QVector<byteRange>> m_ranges;
+        QSharedPointer<QVector<indexRange>> m_ranges;
         bool m_applyForeground;
         bool m_applyBackground;
         QColor m_foreground;
@@ -71,7 +71,7 @@ public:
     bool printByteGrid(QTextEdit* textEdit, QTextEdit* addressColumn);
 
     //gets the subset of the dataSet being displayed
-    byteRange getSubset() const;
+    indexRange getSubset() const;
 
     //gets/sets the start index of the dataSet being displayed
     unsigned int getSubsetStart() const;
@@ -80,23 +80,23 @@ public:
     void addHighlightSet(const highlightSet& hSet);
 
     void addHighlighting(const std::multiset<blockMatchSet>& matches, bool useFirstDataSet);
-    void addHighlighting(const std::multiset<byteRange>& ranges);
-    void addHighlighting(const std::list<byteRange>& ranges);
-    void addDiffHighlighting(const std::list<byteRange>& ranges);
+    void addHighlighting(const std::multiset<indexRange>& ranges);
+    void addHighlighting(const std::list<indexRange>& ranges);
+    void addDiffHighlighting(const std::list<indexRange>& ranges);
     void addByteColorHighlighting();
     void clearHighlighting();
 
     unsigned int getBytesPerRow();
 
 signals:
-    void subsetChanged(byteRange subset);   //was used for debugging dataSetView, should this be removed?
+    void subsetChanged(indexRange subset);   //was used for debugging dataSetView, should this be removed?
 
 private:
     bool highlightByteGrid(QTextEdit* textEdit, highlightSet& hSet);
 
     QWeakPointer<dataSet> m_dataSet;            //the dataSet that this dataSetView will display
     QVector<highlightSet> m_highlightSets;      //highlight regions which color the text
-    byteRange m_subset;                         //the subset of the dataSet that is displayed by this dataSetView
+    indexRange m_subset;                        //the subset of the dataSet that is displayed by this dataSetView
     unsigned int m_bytesPerRow;                 //bytes per row in byte display grid
 
 };

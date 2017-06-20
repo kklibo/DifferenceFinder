@@ -6,7 +6,7 @@
 #include <limits>
 #include <list>
 
-#include "byteRange.h"
+#include "indexrange.h"
 #include "rangematch.h"
 #include "defensivecoding.h"
 
@@ -25,10 +25,10 @@ public:
 
     class results {
     public:
-        std::list<byteRange> file1_matches;
-        std::list<byteRange> file1_differences;
-        std::list<byteRange> file2_matches;
-        std::list<byteRange> file2_differences;
+        std::list<indexRange> file1_matches;
+        std::list<indexRange> file1_differences;
+        std::list<indexRange> file2_matches;
+        std::list<indexRange> file2_differences;
 
         bool aborted;
         bool internalError;
@@ -41,24 +41,24 @@ public:
 
     static std::unique_ptr<rangeMatch> getNextAlignmentRange(   const std::vector<unsigned char>& source,
                                                                 const std::vector<unsigned char>& target,
-                                                                const byteRange sourceSearchRange,
-                                                                const byteRange targetSearchRange
+                                                                const indexRange sourceSearchRange,
+                                                                const indexRange targetSearchRange
                                                                 );
 
     static std::unique_ptr<rangeMatch> getNextAlignmentRange( const std::vector<unsigned char>& source,
                                                               const std::vector<unsigned char>& target,
-                                                              const byteRange sourceSearchRange,
+                                                              const indexRange sourceSearchRange,
                                                               //this should be sorted by increasing start index
-                                                              const std::list<byteRange>& targetSearchRanges
+                                                              const std::list<indexRange>& targetSearchRanges
                                                               );
 
     static void getAlignmentRangeDiff(  const std::vector<unsigned char>& file1,
                                         const std::vector<unsigned char>& file2,
                                         const rangeMatch& alignmentRange,
-                                        std::list<byteRange>& file1_matches,
-                                        std::list<byteRange>& file1_differences,
-                                        std::list<byteRange>& file2_matches,
-                                        std::list<byteRange>& file2_differences
+                                        std::list<indexRange>& file1_matches,
+                                        std::list<indexRange>& file1_differences,
+                                        std::list<indexRange>& file2_matches,
+                                        std::list<indexRange>& file2_differences
                                         );
 
     static

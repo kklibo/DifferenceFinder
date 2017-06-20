@@ -5,7 +5,7 @@
 #include <QStringBuilder>
 
 #include "dataSet.h"
-#include "byteRange.h"
+#include "indexrange.h"
 
 #include "gtestDefs.h"
 
@@ -34,7 +34,7 @@ TEST(dataSet, LoadAndCompareSameFile){
     EXPECT_EQ(dataSet::loadFileResult::SUCCESS, res1) << "dataSet1 load failed";
     EXPECT_EQ(dataSet::loadFileResult::SUCCESS, res2) << "dataSet2 load failed";
 
-    QVector<byteRange> diffs;
+    QVector<indexRange> diffs;
     dataSet::compare(dataSet1, dataSet2, diffs);
 
     EXPECT_EQ(0, diffs.length()) << "nonzero difference count when comparing a file to itself";
@@ -50,8 +50,8 @@ TEST(dataSet, LoadAndCompareSameSizeFiles){
     EXPECT_EQ(dataSet::loadFileResult::SUCCESS, res1) << "dataSet1 load failed";
     EXPECT_EQ(dataSet::loadFileResult::SUCCESS, res2) << "dataSet2 load failed";
 
-    QVector<byteRange> expected = {byteRange(5,1)};
-    QVector<byteRange> diffs = QVector<byteRange>();
+    QVector<indexRange> expected = {indexRange(5,6)};
+    QVector<indexRange> diffs = QVector<indexRange>();
     dataSet::compare(dataSet1, dataSet2, diffs);
 
     EXPECT_EQ(expected, diffs) << "wrong diffs detected";

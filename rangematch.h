@@ -1,9 +1,6 @@
 #ifndef RANGEMATCH_H
 #define RANGEMATCH_H
 
-#include "byteRange.h"
-#include "defensivecoding.h"
-
 /*
 represents a pair of matched byte ranges across 2 files
 */
