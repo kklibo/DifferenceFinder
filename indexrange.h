@@ -22,44 +22,20 @@ public:
     unsigned int start; //the inclusive lower bound of the range
     unsigned int end;   //the exclusive upper bound of the range
 
-    indexRange(){
-        start = 0;
-        end = 0;
-    }
+    indexRange();
+    indexRange(unsigned int) = delete;  // intentionally not implemented to prevent unintended type conversion
+    indexRange(unsigned int start, unsigned int end);
 
-    indexRange(unsigned int) = delete;
-    // intentionally not implemented to prevent unintended type conversion
-    /* removed to prevent unintended type conversion
+    void move(unsigned int newStart);
 
-    //creates a range of 1 byte at the start index
-    byteRange(unsigned int start){
-        this->start = start;
-        count = 1;
-    }*/
+    bool operator==(const indexRange &r) const;
+    bool operator!=(const indexRange &r) const;
+    bool operator< (const indexRange &r) const; //compares start index only
 
-    indexRange(unsigned int start, unsigned int end){
-        this->start = start;
-        this->end = end;
-    }
-
-    //returns the number of indices in this indexRange
-    unsigned int count() const {
-        if (end <= start) {
-            return 0;
-        }
-
-        return end - start;
-    }
-
-    bool contains(const unsigned int& index) const {
-        return (    ( start <= index )
-                 && ( index <  end   )  );
-    }
-
-    bool overlaps(const indexRange& r) const {
-        return 0 < getIntersection(r).count();
-    }
-
+    unsigned int    count()                                 const; //the number of included indices
+    bool            contains(const unsigned int& index)     const; //true iff index is contained in this indexRange
+    bool            overlaps(const indexRange& r)           const; //true iff this has an index in common with r
+    indexRange      getIntersection(const indexRange& r)    const; //all indices included in this and r
 
 
     //for containers of indexRanges
@@ -88,31 +64,6 @@ public:
         return false;
     }
 
-    bool operator==(const indexRange &r) const {
-        if ( (0 == count()) && (0 == r.count())) {
-            return true;
-        }
-
-        return (start == r.start) && (end == r.end);
-    }
-    bool operator!=(const indexRange &r) const {
-        return !( *this == r );
-    }
-    bool operator< (const indexRange &r) const {
-        return start < r.start;
-    }
-
-    indexRange getIntersection(const indexRange& r) const {
-
-        unsigned int start  = std::max(this->start, r.start);
-        unsigned int end    = std::min(this->end,   r.end);
-
-        if (end <= start) {
-            return indexRange(0,0);  //no intersection, return size zero indexRange
-        }
-
-        return indexRange(start, end);
-    }
 
     template <typename T>
     static bool isNonDecreasingAndNonOverlapping(const T& indexRanges) {
@@ -211,45 +162,7 @@ public:
     }
 
     //this function assumes isNonDecreasingAndNonOverlapping(blocks) would return true
-    static void fillEmptySpaces(const indexRange& fillThisRange, std::list<indexRange>& blocks, std::list<indexRange>& copiesOfAddedBlocks)
-    {
-        ASSERT(isNonDecreasingAndNonOverlapping(blocks));
-
-        unsigned int currentGapStart = fillThisRange.start;
-
-        for (std::list<indexRange>::iterator it = blocks.begin(); it != blocks.end(); ++it) {
-
-            if (0 == it->count()) {
-                //skip blocks w/ count 0 (don't break filler blocks on them)
-                continue;
-            }
-
-            const unsigned int gapEnd = std::min( it->start, fillThisRange.end );
-
-            if (currentGapStart < gapEnd) { //if there's a gap
-
-                //make a block to fill the current gap and record it
-                indexRange newFiller(currentGapStart, gapEnd);
-                blocks              .insert(it, newFiller);
-                copiesOfAddedBlocks .push_back(newFiller);
-            }
-
-            if (gapEnd == fillThisRange.end) {
-                //the end of the range has been reached
-                return;
-            }
-
-            //continue search at first index past this block
-            currentGapStart = it->end;
-        }
-
-        if (currentGapStart < fillThisRange.end) {
-            //make a block to fill the rest of the range and record it
-            indexRange lastBlock(currentGapStart, fillThisRange.end);
-            blocks              .push_back(lastBlock);
-            copiesOfAddedBlocks .push_back(lastBlock);
-        }
-    }
+    static void fillEmptySpaces(const indexRange& fillThisRange, std::list<indexRange>& blocks, std::list<indexRange>& copiesOfAddedBlocks);
 
     //this function assumes isNonDecreasingAndNonOverlapping(aroundTheseBlocks) would return true
     template <typename T>
@@ -305,44 +218,8 @@ public:
     //  note: returns false for size 0 partition range or an empty list of blocks,
     //      because these states are expected to be errors
     //
-    static bool isExactAscendingPartition(const indexRange& partitionRange, const std::list<indexRange>& blocks)
-    {
-        if (    0 == partitionRange.count() ||
-                0 == blocks.size()  )
-        {
-            return false;
-        }
+    static bool isExactAscendingPartition(const indexRange& partitionRange, const std::list<indexRange>& blocks);
 
-        unsigned int nextRequiredIndex
-
-            //for an exact ascending partition, the first block should have the same start index as partitionRange
-            = partitionRange.start;
-
-        for (auto it = blocks.begin(); it != blocks.end(); ++it)
-        {
-            //if this block doesn't start where it was required to, it isn't an exact ascending partition
-            if (nextRequiredIndex != it->start) {
-                return false;
-            }
-
-            //indexRange::end is 1 index past the last index in the range
-            //  if this is an exact ascending partition, the next block must start there
-            nextRequiredIndex = it->end;
-        }
-
-        //if this is reached: the blocks form an exact ascending partition of partitionRange
-        //  if and only if the last block ends exactly at the end of partitionRange
-        return (nextRequiredIndex == partitionRange.end);
-    }
-
-    void move(unsigned int newStart)
-    {
-        unsigned int c = count();
-        start = newStart;
-
-        ASSERT(noSumOverflow(start,c));
-        end = start+c;
-    }
 };
 
 #endif // INDEXRANGE_H
