@@ -28,7 +28,8 @@ SOURCES += main.cpp\
     offsetmetrics.cpp \
     rangematch.cpp \
     utilities.cpp \
-    indexrange.cpp
+    indexrange.cpp \
+    searchprocessing.cpp
 
 HEADERS  += mainwindow.h \
     dataSet.h \
@@ -46,7 +47,8 @@ HEADERS  += mainwindow.h \
     offsetmetrics.h \
     rangematch.h \
     utilities.h \
-    indexrange.h
+    indexrange.h \
+    searchprocessing.h
 
 FORMS    += mainwindow.ui \
     settingsdialog.ui

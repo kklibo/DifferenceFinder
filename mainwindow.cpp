@@ -850,24 +850,23 @@ void MainWindow::on_actionTest_triggered()
     if (!m_dataSet1) {
         return;
     }
-
+/*
     std::unique_ptr<std::vector<unsigned char>> offsetMap;
 
     {
         const dataSet::DataReadLock& DRL1 = m_dataSet1->getReadLock();
         const dataSet::DataReadLock& DRL2 = m_dataSet2->getReadLock();
-    /*
-        unsigned int temp =
-                utilities::findStrongestRepetitionPeriod(DRL1.getData(), byteRange(0,DRL1.getData().size()));
 
-        LOG.Debug(QString("dataSet 1 findStrongestRepetitionPeriod: %1").arg(temp));*/
+        //unsigned int temp =
+        //        utilities::findStrongestRepetitionPeriod(DRL1.getData(), byteRange(0,DRL1.getData().size()));
+
+        //LOG.Debug(QString("dataSet 1 findStrongestRepetitionPeriod: %1").arg(temp));
 
         //offsetMap = utilities::createOffsetByteMap(DRL1.getData(), byteRange(0,DRL1.getData().size()));
 
         offsetMap = utilities::createCrossFileOffsetByteMap(DRL1.getData(), indexRange(0,DRL1.getData().size()),
                                                             DRL2.getData(), indexRange(0,DRL2.getData().size()),
                                                             DEBUGFLAG1 );
-
     }
 
     doLoadFile1FromMemory(std::move(offsetMap));
@@ -875,7 +874,7 @@ void MainWindow::on_actionTest_triggered()
     m_dataSetView1->clearHighlighting();
     m_dataSetView1->addByteColorHighlighting();
     m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
-
+*/
 /*
     doLoadFile2FromMemory(std::move(offsetMap));
 
@@ -883,6 +882,24 @@ void MainWindow::on_actionTest_triggered()
     m_dataSetView2->addByteColorHighlighting();
     m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
 */
+    {
+        const dataSet::DataReadLock& DRL1 = m_dataSet1->getReadLock();
+        const dataSet::DataReadLock& DRL2 = m_dataSet2->getReadLock();
+
+        std::shared_ptr<searchProcessing::searchState> parentState = nullptr;
+        searchProcessing::searchAction action = searchProcessing::searchAction::advanceDataSet1PointerUntilAlignmentRange;
+        indexRange dataSet1Range(0, DRL1.getData().size());
+        indexRange dataSet2Range(0, DRL2.getData().size());
+
+        std::unique_ptr<searchProcessing::searchState> nextState
+         = searchProcessing::doSearch(DRL1.getData(), DRL2.getData(),
+                                      parentState,
+                                      action,
+                                      dataSet1Range, dataSet2Range
+                                      );
+        return;
+    }
+
 }
 
 void MainWindow::on_actionDebugFlag_triggered()

@@ -5,6 +5,7 @@
 /*static*/ std::unique_ptr<rangeMatch>
             offsetMetrics::getNextAlignmentRange(   const std::vector<unsigned char>& source,
                                                     const std::vector<unsigned char>& target,
+                                                    const unsigned int sourceRangeStart,
                                                     const indexRange sourceSearchRange,
                                                     const indexRange targetSearchRange
                                                     )
@@ -78,12 +79,35 @@
     };
 
 
+    //look for an alignment range starting at sourceRangeStart
+    rangeMatch alignmentRange = findAlignmentRange_fixedSourceIndex(sourceRangeStart, targetSearchRange);
+
+    if (alignmentRange.byteCount) {
+        return std::unique_ptr<rangeMatch>(new rangeMatch(alignmentRange));
+    }
+
+    //no match found
+    return nullptr;
+}
+
+/*static*/ std::unique_ptr<rangeMatch>
+            offsetMetrics::getNextAlignmentRange(   const std::vector<unsigned char>& source,
+                                                    const std::vector<unsigned char>& target,
+                                                    const indexRange sourceSearchRange,
+                                                    const indexRange targetSearchRange
+                                                    )
+{
     //loop through source, looking for alignment ranges starting at each index until one is found
     for (unsigned int i = sourceSearchRange.start; i < sourceSearchRange.end; ++i) {
-        rangeMatch alignmentRange = findAlignmentRange_fixedSourceIndex(i, targetSearchRange);
+       // rangeMatch alignmentRange = findAlignmentRange_fixedSourceIndex(i, targetSearchRange);
+        std::unique_ptr<rangeMatch> alignmentRange
+            = offsetMetrics::getNextAlignmentRange( source, target,
+                                                    i, sourceSearchRange, targetSearchRange);
 
-        if (alignmentRange.byteCount) {
-            return std::unique_ptr<rangeMatch>(new rangeMatch(alignmentRange));
+        if (    nullptr != alignmentRange
+             && alignmentRange->byteCount) {
+            //return std::unique_ptr<rangeMatch>(new rangeMatch(alignmentRange));
+            return alignmentRange;
         }
     }
 

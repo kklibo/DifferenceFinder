@@ -24,6 +24,7 @@
 #include "comparisonthread.h"
 #include "offsetmetrics.h"
 #include "utilities.h"
+#include "searchprocessing.h"
 
 #include <set>
 

@@ -41,6 +41,13 @@ public:
 
     static std::unique_ptr<rangeMatch> getNextAlignmentRange(   const std::vector<unsigned char>& source,
                                                                 const std::vector<unsigned char>& target,
+                                                                const unsigned int sourceRangeStart,
+                                                                const indexRange sourceSearchRange,
+                                                                const indexRange targetSearchRange
+                                                                );
+
+    static std::unique_ptr<rangeMatch> getNextAlignmentRange(   const std::vector<unsigned char>& source,
+                                                                const std::vector<unsigned char>& target,
                                                                 const indexRange sourceSearchRange,
                                                                 const indexRange targetSearchRange
                                                                 );
