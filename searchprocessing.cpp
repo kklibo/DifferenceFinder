@@ -147,7 +147,14 @@ std::unique_ptr<searchProcessing::searchState>
 
             } else {   // searchAction::advanceDataSet2PointerUntilAlignmentRange
 
+                //swap dataSet references to step through dataSet2 instead of dataSet1
                 alignmentRange = offsetMetrics::getNextAlignmentRange(dataSet2, dataSet1, dataSet2Range.start, dataSet2Range, dataSet1Range);
+
+                //swap result ranges (so file1 refers to dataSet1, rather than reverse)
+                rangeMatch* swapped = new rangeMatch(alignmentRange->startIndexInFile2,
+                                                     alignmentRange->startIndexInFile1,
+                                                     alignmentRange->byteCount);
+                alignmentRange.reset(swapped);
             }
         }
 

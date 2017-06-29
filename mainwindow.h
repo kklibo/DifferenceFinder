@@ -107,6 +107,18 @@ private slots:
 
     void on_actionTest_load_triggered();
 
+    void on_actionDebug1_triggered();
+
+    void on_actionDebug2_triggered();
+
+    void on_actionDebug3_triggered();
+
+    void on_actionDebug4_triggered();
+
+    void on_actionDebug5_triggered();
+
+    void on_actionReset_triggered();
+
 private:
 
     QSharedPointer<scrollWheelRedirector> m_scrollWheelRedirector;
@@ -128,6 +140,9 @@ private:
     void resizeHexField2();
     void applyUserSettingsTo(QSharedPointer<dataSetView> ds);
     void refreshTitleBarText();
+
+    //debug temp function
+    void doSearchProcessing(searchProcessing::searchAction action);
 
 
     void closeEvent(QCloseEvent* event) Q_DECL_OVERRIDE;

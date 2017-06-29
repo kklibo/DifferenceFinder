@@ -850,7 +850,7 @@ void MainWindow::on_actionTest_triggered()
     if (!m_dataSet1) {
         return;
     }
-/*
+
     std::unique_ptr<std::vector<unsigned char>> offsetMap;
 
     {
@@ -874,7 +874,7 @@ void MainWindow::on_actionTest_triggered()
     m_dataSetView1->clearHighlighting();
     m_dataSetView1->addByteColorHighlighting();
     m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
-*/
+
 /*
     doLoadFile2FromMemory(std::move(offsetMap));
 
@@ -882,23 +882,6 @@ void MainWindow::on_actionTest_triggered()
     m_dataSetView2->addByteColorHighlighting();
     m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
 */
-    {
-        const dataSet::DataReadLock& DRL1 = m_dataSet1->getReadLock();
-        const dataSet::DataReadLock& DRL2 = m_dataSet2->getReadLock();
-
-        std::shared_ptr<searchProcessing::searchState> parentState = nullptr;
-        searchProcessing::searchAction action = searchProcessing::searchAction::advanceDataSet1PointerUntilAlignmentRange;
-        indexRange dataSet1Range(0, DRL1.getData().size());
-        indexRange dataSet2Range(0, DRL2.getData().size());
-
-        std::unique_ptr<searchProcessing::searchState> nextState
-         = searchProcessing::doSearch(DRL1.getData(), DRL2.getData(),
-                                      parentState,
-                                      action,
-                                      dataSet1Range, dataSet2Range
-                                      );
-        return;
-    }
 
 }
 
@@ -963,4 +946,146 @@ void MainWindow::on_actionTest_load_triggered()
 {
     doLoadFile1("TestFiles/random1k");
     doLoadFile2("TestFiles/random1k_removeFirst8of2ndHalf");
+}
+
+
+void MainWindow::doSearchProcessing(searchProcessing::searchAction action)
+{
+    //todo: eventually move this to searchProcessing class?
+
+
+    //todo: fix parentState
+    static std::shared_ptr<searchProcessing::searchState> parentState = nullptr;
+   // static std::unique_ptr<searchProcessing::searchState> nextState   = nullptr;
+    static std::shared_ptr<searchProcessing::searchState> nextState   = nullptr;
+
+    static std::list<indexRange> file1_matches;
+    static std::list<indexRange> file1_differences;
+    static std::list<indexRange> file2_matches;
+    static std::list<indexRange> file2_differences;
+
+    if ( !m_dataSet1 || !m_dataSet2 ) {
+        return;
+    }
+
+    const dataSet::DataReadLock& DRL1 = m_dataSet1->getReadLock();
+    const dataSet::DataReadLock& DRL2 = m_dataSet2->getReadLock();
+
+    static indexRange dataSet1Range;
+    static indexRange dataSet2Range;
+
+    dataSet1Range.end = DRL1.getData().size();
+    dataSet2Range.end = DRL2.getData().size();
+
+
+    if (searchProcessing::searchAction::none == action) {
+        //reset
+        parentState = nullptr;
+        nextState   = nullptr;
+        file1_matches.clear();
+        file1_differences.clear();
+        file2_matches.clear();
+        file2_differences.clear();
+        dataSet1Range.start = 0;
+        dataSet2Range.start = 0;
+
+        //clear
+        if (m_dataSetView1 && m_dataSetView2) {
+
+            m_dataSetView1->clearHighlighting();
+            m_dataSetView2->clearHighlighting();
+
+            m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
+            m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
+        }
+        return;
+    }
+
+
+    if (nextState) {
+
+        dataSet1Range = nextState->dataSet1NextRange;
+        dataSet2Range = nextState->dataSet2NextRange;
+
+    }
+
+    nextState = searchProcessing::doSearch(DRL1.getData(), DRL2.getData(),
+                                            //parentState,
+                                            nextState,
+                                            action,
+                                            dataSet1Range, dataSet2Range
+                                            );
+
+    if (nextState && nextState->newAlignmentRange) {
+
+        ASSERT( nextState->newAlignmentRange->inDataSet1.count() == nextState->newAlignmentRange->inDataSet2.count() );
+        rangeMatch RM(nextState->newAlignmentRange->inDataSet1.start,
+                      nextState->newAlignmentRange->inDataSet2.start,
+                      nextState->newAlignmentRange->inDataSet1.count());
+
+        //add new match and diff ranges from new alignment range
+        offsetMetrics::getAlignmentRangeDiff(DRL1.getData(), DRL2.getData(),
+                                             RM,
+                                             file1_matches,
+                                             file1_differences,
+                                             file2_matches,
+                                             file2_differences);
+
+        //display
+        if (m_dataSetView1 && m_dataSetView2) {
+
+            m_dataSetView1->clearHighlighting();
+            m_dataSetView2->clearHighlighting();
+
+            m_dataSetView1->addHighlighting(file1_matches);
+            m_dataSetView2->addHighlighting(file2_matches);
+            m_dataSetView1->addDiffHighlighting(file1_differences);
+            m_dataSetView2->addDiffHighlighting(file2_differences);
+
+
+            m_dataSetView1->printByteGrid(ui->textEdit_dataSet1, ui->textEdit_address1);
+            m_dataSetView2->printByteGrid(ui->textEdit_dataSet2, ui->textEdit_address2);
+        }
+
+
+    } else {
+
+        if (!nextState) {
+            LOG.Debug("!nextState");
+        }
+        else if (!nextState->newAlignmentRange) {
+            LOG.Debug("!nextState->newAlignmentRange");
+        }
+
+    }
+}
+
+void MainWindow::on_actionDebug1_triggered()
+{
+    doSearchProcessing(searchProcessing::searchAction::advanceBothPointersBy1);
+}
+
+void MainWindow::on_actionDebug2_triggered()
+{
+    doSearchProcessing(searchProcessing::searchAction::advanceDataSet1PointerUntilMatchRange);
+}
+
+void MainWindow::on_actionDebug3_triggered()
+{
+    doSearchProcessing(searchProcessing::searchAction::advanceDataSet2PointerUntilMatchRange);
+}
+
+void MainWindow::on_actionDebug4_triggered()
+{
+    doSearchProcessing(searchProcessing::searchAction::advanceDataSet1PointerUntilAlignmentRange);
+}
+
+void MainWindow::on_actionDebug5_triggered()
+{
+    doSearchProcessing(searchProcessing::searchAction::advanceDataSet2PointerUntilAlignmentRange);
+}
+
+void MainWindow::on_actionReset_triggered()
+{
+    doSearchProcessing(searchProcessing::searchAction::none);
 }
