@@ -30,6 +30,18 @@ public:
             const std::vector<unsigned char>& target,
             const indexRange targetRange,
             const bool runBackwards );
+
+    static
+    unsigned int
+    subtractClampToZero (
+            const unsigned int& value,
+            const unsigned int& subtractThis);
+
+    static
+    unsigned int
+    addClampToMax(
+            const unsigned int& value,
+            const unsigned int& addThis);
 };
 
 #endif // UTILITIES_H

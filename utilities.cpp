@@ -235,3 +235,30 @@
 
     return offsetByteMap;
 }
+
+/*static*/
+unsigned int
+utilities::subtractClampToZero (
+        const unsigned int& value,
+        const unsigned int& subtractThis)
+{
+    if (value <= subtractThis) {
+        return 0;
+    } else {
+        return value - subtractThis;
+    }
+}
+
+
+/*static*/
+unsigned int
+utilities::addClampToMax (
+        const unsigned int& value,
+        const unsigned int& addThis)
+{
+    if (UINT_MAX - addThis <= value) {
+        return UINT_MAX;
+    } else {
+        return value + addThis;
+    }
+}

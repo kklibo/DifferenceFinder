@@ -31,7 +31,8 @@ SOURCES +=\
     utilities.cpp \
     indexrange.cpp \
     dataSet_gtest.cpp \
-    indexrange_gtest.cpp
+    indexrange_gtest.cpp \
+    utilities_gtest.cpp
 
 HEADERS  += mainwindow.h \
     dataSet.h \
