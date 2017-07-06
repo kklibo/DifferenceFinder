@@ -30,6 +30,7 @@ SOURCES +=\
     rangematch.cpp \
     utilities.cpp \
     indexrange.cpp \
+    searchprocessing.cpp \
     dataSet_gtest.cpp \
     indexrange_gtest.cpp \
     utilities_gtest.cpp
@@ -51,6 +52,7 @@ HEADERS  += mainwindow.h \
     rangematch.h \
     utilities.h \
     indexrange.h \
+    searchprocessing.h \
     gtestDefs.h
 
 FORMS    += mainwindow.ui \
