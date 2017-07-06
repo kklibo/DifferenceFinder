@@ -236,6 +236,7 @@
     return offsetByteMap;
 }
 
+
 /*static*/
 unsigned int
 utilities::subtractClampToZero (
@@ -261,4 +262,36 @@ utilities::addClampToMax (
     } else {
         return value + addThis;
     }
+}
+
+
+/*static*/
+unsigned int
+utilities::countMatchingIndices (
+        const std::vector<unsigned char>& data1,
+        const std::vector<unsigned char>& data2,
+        const indexRange& data1Subset,
+        const indexRange& data2Subset)
+{
+    ASSERT_LE_UINT_MAX(data1.size());
+    const indexRange data1Range(0, static_cast<unsigned int>(data1.size()));
+
+    ASSERT_LE_UINT_MAX(data2.size());
+    const indexRange data2Range(0, static_cast<unsigned int>(data2.size()));
+
+    const indexRange compare1 = data1Range.getIntersection(data1Subset);
+    const indexRange compare2 = data2Range.getIntersection(data2Subset);
+    const unsigned int compareCount = std::min(compare1.count(), compare2.count());
+
+    unsigned int matches = 0;
+    for (unsigned int i = 0; i < compareCount; ++i) {
+
+        if (    data1[data1Subset.start + i]
+             == data2[data2Subset.start + i] ) {
+
+            ++matches;
+        }
+    }
+
+    return matches;
 }

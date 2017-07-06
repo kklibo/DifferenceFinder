@@ -16,9 +16,9 @@ public:
     unsigned int getEndInFile1() const;
     unsigned int getEndInFile2() const;
 
-    const unsigned int startIndexInFile1;
-    const unsigned int startIndexInFile2;
-    const unsigned int byteCount;
+    /*const*/ unsigned int startIndexInFile1;
+    /*const*/ unsigned int startIndexInFile2;
+    /*const*/ unsigned int byteCount;
 
 };
 

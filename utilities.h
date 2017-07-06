@@ -42,6 +42,14 @@ public:
     addClampToMax(
             const unsigned int& value,
             const unsigned int& addThis);
+
+    static
+    unsigned int
+    countMatchingIndices(
+            const std::vector<unsigned char>& data1,
+            const std::vector<unsigned char>& data2,
+            const indexRange& data1Subset,
+            const indexRange& data2Subset);
 };
 
 #endif // UTILITIES_H

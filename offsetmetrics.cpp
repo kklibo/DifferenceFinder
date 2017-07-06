@@ -143,6 +143,180 @@
     return nullptr;
 }
 
+/*static*/ bool offsetMetrics::isNonMatchRangeExcludable(   const std::vector<unsigned char>& source,
+                                                            const std::vector<unsigned char>& target,
+                                                            const indexRange sourceNonMatchRange,
+                                                            const indexRange targetNonMatchRange
+                                                            )
+{
+    ASSERT(     sourceNonMatchRange.count()
+             == targetNonMatchRange.count() );
+
+    ASSERT_LE_UINT_MAX(source.size());
+    ASSERT_LE_UINT_MAX(target.size());
+    const indexRange sourceRange(0,static_cast<unsigned int>(source.size()));
+    const indexRange targetRange(0,static_cast<unsigned int>(target.size()));
+
+    //supplied non-matching ranges should actually be in the source and target
+    ASSERT(0 < sourceRange.getIntersection(sourceNonMatchRange).count());
+    ASSERT(0 < targetRange.getIntersection(targetNonMatchRange).count());
+
+
+    const unsigned int lowerTestRangeCount =
+
+    [&]() -> unsigned int {
+        //extend the lower test range size up to 2x the size of nonMatchRange
+        // constraints: start index shouldn't go negative
+        //              start index shouldn't go outside dataRange
+        auto get2XWithConstraints =
+        [](const indexRange& nonMatchRange, const indexRange& dataRange)-> unsigned int
+        {
+            const unsigned int lowerTestRangeStart
+                    = utilities::subtractClampToZero( nonMatchRange.start, 2*nonMatchRange.count() );
+
+            indexRange lowerRange( lowerTestRangeStart, nonMatchRange.start );
+
+            lowerRange = lowerRange.getIntersection(dataRange);
+
+            return lowerRange.count();
+        };
+
+        const unsigned int sourceLowerTestRangeCount
+            = get2XWithConstraints(sourceNonMatchRange, sourceRange);
+
+        const unsigned int targetLowerTestRangeCount
+            = get2XWithConstraints(targetNonMatchRange, targetRange);
+
+        //choose the lesser of the two range sizes:
+        // only equal-sized ranges can be compared index-to-index
+        return std::min(sourceLowerTestRangeCount,
+                        targetLowerTestRangeCount);
+    } ();
+
+    const unsigned int upperTestRangeCount =
+
+    [&]() -> unsigned int {
+        //extend the upper test range size up to 2x the size of nonMatchRange
+        // constraints: end index shouldn't overflow unsigned int
+        //              end index shouldn't go beyond the end of dataRange
+        auto get2XWithConstraints =
+        [](const indexRange& nonMatchRange, const indexRange& dataRange)-> unsigned int
+        {
+            const unsigned int upperTestRangeEnd
+                    = utilities::addClampToMax( nonMatchRange.end, 2*nonMatchRange.count() );
+
+            indexRange upperRange( nonMatchRange.end, upperTestRangeEnd );
+
+            upperRange = upperRange.getIntersection(dataRange);
+
+            return upperRange.count();
+        };
+
+        const unsigned int sourceUpperTestRangeCount
+            = get2XWithConstraints(sourceNonMatchRange, sourceRange);
+
+        const unsigned int targetUpperTestRangeCount
+            = get2XWithConstraints(targetNonMatchRange, targetRange);
+
+        //choose the lesser of the two range sizes:
+        // only equal-sized ranges can be compared index-to-index
+        return std::min(sourceUpperTestRangeCount,
+                        targetUpperTestRangeCount);
+    } ();
+
+
+    ASSERT(sourceNonMatchRange.start >= lowerTestRangeCount);
+    const indexRange sourceLowerTestRange(sourceNonMatchRange.start - lowerTestRangeCount,
+                                          sourceNonMatchRange.start);
+
+    ASSERT(targetNonMatchRange.start >= lowerTestRangeCount);
+    const indexRange targetLowerTestRange(targetNonMatchRange.start - lowerTestRangeCount,
+                                          targetNonMatchRange.start);
+
+
+    ASSERT(noSumOverflow(sourceNonMatchRange.end, upperTestRangeCount));
+    const indexRange sourceUpperTestRange(sourceNonMatchRange.end,
+                                          sourceNonMatchRange.end + upperTestRangeCount);
+
+    ASSERT(noSumOverflow(targetNonMatchRange.end, upperTestRangeCount));
+    const indexRange targetUpperTestRange(targetNonMatchRange.end,
+                                          targetNonMatchRange.end + upperTestRangeCount);
+
+    ASSERT(    sourceLowerTestRange.count()
+            == targetLowerTestRange.count());
+    const unsigned int
+    lowerMatchCount = utilities::countMatchingIndices(  source,
+                                                        target,
+                                                        sourceLowerTestRange,
+                                                        targetLowerTestRange);
+    ASSERT(    sourceUpperTestRange.count()
+            == targetUpperTestRange.count());
+    const unsigned int
+    upperMatchCount = utilities::countMatchingIndices(  source,
+                                                        target,
+                                                        sourceUpperTestRange,
+                                                        targetUpperTestRange);
+
+    if (lowerMatchCount < sourceNonMatchRange.count()) {
+    //if (sourceLowerTestRange.count() - lowerMatchCount >= sourceNonMatchRange.count()) {
+        return true;
+    }
+
+    if (upperMatchCount < sourceNonMatchRange.count()) {
+    //if (sourceUpperTestRange.count() - upperMatchCount >= sourceNonMatchRange.count()) {
+        return true;
+    }
+
+    return false;
+}
+
+/*static*/ bool offsetMetrics::truncateAlignmentRange(  const std::vector<unsigned char>& data1,
+                                                        const std::vector<unsigned char>& data2,
+                                                        rangeMatch& alignmentRange
+                                                        )
+{
+    LOG.Debug("truncate alignment range");
+
+    std::list<indexRange> file1_matches;
+    std::list<indexRange> file1_differences;
+    std::list<indexRange> file2_matches;
+    std::list<indexRange> file2_differences;
+
+    offsetMetrics::getAlignmentRangeDiff( data1, data2, alignmentRange,
+                                          file1_matches,
+                                          file1_differences,
+                                          file2_matches,
+                                          file2_differences);
+
+    ASSERT(    file1_matches.size()
+            == file2_matches.size());
+
+    ASSERT(    file1_differences.size()
+            == file2_differences.size());
+
+    std::list<indexRange>::const_iterator i1 = file1_differences.begin();
+    std::list<indexRange>::const_iterator i2 = file2_differences.begin();
+
+    while(i1 != file1_differences.end()) {
+
+        ASSERT(    i1->count()
+                == i2->count());
+
+        if (offsetMetrics::isNonMatchRangeExcludable(data1, data2, *i1, *i2)) {
+
+            ASSERT(    i1->start - alignmentRange.startIndexInFile1
+                    == i2->start - alignmentRange.startIndexInFile2);
+
+            alignmentRange.byteCount = i1->start - alignmentRange.startIndexInFile1;
+            return true;
+        }
+
+        ++i1;
+        ++i2;
+    }
+    return false;
+}
+
 /*static*/ void offsetMetrics::getAlignmentRangeDiff(   const std::vector<unsigned char>& file1,
                                                         const std::vector<unsigned char>& file2,
                                                         const rangeMatch& alignmentRange,
@@ -270,6 +444,9 @@ offsetMetrics::doCompare(   const std::vector<unsigned char>& data1,
             = offsetMetrics::getNextAlignmentRange(data1, data2, sourceSearchRange, targetSearchRanges);
 
         if (rangeResult){
+
+            truncateAlignmentRange(data1, data2, *rangeResult);
+
             rangeMatch range = *rangeResult.release();
             LOG.Info(QString("getNextAlignmentRange: %1, %2; %3")
                             .arg(range.startIndexInFile1)

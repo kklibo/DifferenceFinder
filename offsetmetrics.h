@@ -8,6 +8,7 @@
 
 #include "indexrange.h"
 #include "rangematch.h"
+#include "utilities.h"
 #include "defensivecoding.h"
 
 /*
@@ -58,6 +59,17 @@ public:
                                                               //this should be sorted by increasing start index
                                                               const std::list<indexRange>& targetSearchRanges
                                                               );
+
+    static bool isNonMatchRangeExcludable(  const std::vector<unsigned char>& source,
+                                            const std::vector<unsigned char>& target,
+                                            const indexRange sourceNonMatchRange,
+                                            const indexRange targetNonMatchRange
+                                            );
+
+    static bool truncateAlignmentRange( const std::vector<unsigned char>& data1,
+                                        const std::vector<unsigned char>& data2,
+                                              rangeMatch& alignmentRange
+                                        );
 
     static void getAlignmentRangeDiff(  const std::vector<unsigned char>& file1,
                                         const std::vector<unsigned char>& file2,
