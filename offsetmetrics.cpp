@@ -149,6 +149,20 @@
                                                             const indexRange targetNonMatchRange
                                                             )
 {
+    /*
+    decide if a non-matching range in an alignment range should be excluded:
+    i.e., the alignment range can be truncated at the start of this non-match range,
+     and the match search can continue from that point
+
+    1. extend non-match range out to 2x its size in both directions (to the extent possible by file/range limits)
+    2. if either range match count is < block size, then (return true) exclude this non-matching range
+    3. otherwise, (return false) don't exclude
+
+    todo: this prevents valid match ranges near the end of some test files, why?
+    todo: why does this work in general?
+    */
+
+
     ASSERT(     sourceNonMatchRange.count()
              == targetNonMatchRange.count() );
 
@@ -258,12 +272,10 @@
                                                         targetUpperTestRange);
 
     if (lowerMatchCount < sourceNonMatchRange.count()) {
-    //if (sourceLowerTestRange.count() - lowerMatchCount >= sourceNonMatchRange.count()) {
         return true;
     }
 
     if (upperMatchCount < sourceNonMatchRange.count()) {
-    //if (sourceUpperTestRange.count() - upperMatchCount >= sourceNonMatchRange.count()) {
         return true;
     }
 
@@ -306,6 +318,8 @@
 
             ASSERT(    i1->start - alignmentRange.startIndexInFile1
                     == i2->start - alignmentRange.startIndexInFile2);
+
+            ASSERT(                    i1->start >=alignmentRange.startIndexInFile1);
 
             alignmentRange.byteCount = i1->start - alignmentRange.startIndexInFile1;
             return true;

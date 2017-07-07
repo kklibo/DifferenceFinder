@@ -356,6 +356,9 @@
    <addaction name="separator"/>
    <addaction name="actionStop_thread"/>
    <addaction name="separator"/>
+   <addaction name="actionTest_load"/>
+   <addaction name="actionSwitch_files"/>
+   <addaction name="separator"/>
    <addaction name="actionReset"/>
    <addaction name="actionDebug1"/>
    <addaction name="actionDebug2"/>
