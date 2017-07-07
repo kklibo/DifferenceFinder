@@ -560,13 +560,13 @@ sw.recordTime("finished largest " + std::to_string(largest));
     unsigned int data1Size = static_cast<unsigned int>(data1.size());
 
     indexRange data1_FullRange (0, data1Size);
-    Results->data1_unmatchedBlocks = *comparison::findUnmatchedBlocks(data1_FullRange, Results->matches, comparison::whichDataSet::first).release();
+    Results->data1_unmatchedBlocks.swap(*comparison::findUnmatchedBlocks(data1_FullRange, Results->matches, comparison::whichDataSet::first));
 
     ASSERT_LE_UINT_MAX(data2.size());
     unsigned int data2Size = static_cast<unsigned int>(data2.size());
 
     indexRange data2_FullRange (0, data2Size);
-    Results->data2_unmatchedBlocks = *comparison::findUnmatchedBlocks(data2_FullRange, Results->matches, comparison::whichDataSet::second).release();
+    Results->data2_unmatchedBlocks.swap(*comparison::findUnmatchedBlocks(data2_FullRange, Results->matches, comparison::whichDataSet::second));
 
 sw.recordTime("found unmatched blocks");
 sw.reportTimes(&Log::strMessageLvl1);

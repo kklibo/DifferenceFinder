@@ -461,15 +461,14 @@ offsetMetrics::doCompare(   const std::vector<unsigned char>& data1,
 
             truncateAlignmentRange(data1, data2, *rangeResult);
 
-            rangeMatch range = *rangeResult.release();
             LOG.Info(QString("getNextAlignmentRange: %1, %2; %3")
-                            .arg(range.startIndexInFile1)
-                            .arg(range.startIndexInFile2)
-                            .arg(range.byteCount));
+                            .arg(rangeResult->startIndexInFile1)
+                            .arg(rangeResult->startIndexInFile2)
+                            .arg(rangeResult->byteCount));
 
-            sourceStartIndex = range.getEndInFile1();
+            sourceStartIndex = rangeResult->getEndInFile1();
 
-            alignmentRanges.push_back(range);
+            alignmentRanges.push_back(*rangeResult);
         }
         else
         {
