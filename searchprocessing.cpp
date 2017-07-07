@@ -172,7 +172,7 @@ std::unique_ptr<searchProcessing::searchState>
         ASSERT(noSumOverflow(alignmentRange->startIndexInFile2, alignmentRange->byteCount));
         result->dataSet2NextRange.start = alignmentRange->startIndexInFile2 + alignmentRange->byteCount;
 
-        result->newAlignmentRange = alignmentRange::fromRangeMatch(*alignmentRange.get());
+        result->newAlignmentRange = alignmentRange::fromRangeMatch(*alignmentRange);
 
         return result;
     }

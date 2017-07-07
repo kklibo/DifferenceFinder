@@ -118,8 +118,8 @@ dataSet::loadFromMemoryResult dataSet::loadFromMemory(std::unique_ptr<std::vecto
     m_dataReadLockCount = 0;
 
     //swap the input vector's content into m_data
-    if (nullptr != data.get()) {
-        m_data.swap(*data.get());
+    if (nullptr != data) {
+        m_data.swap(*data);
     }
 
     m_sourceType = dataSet::sourceType::memory;

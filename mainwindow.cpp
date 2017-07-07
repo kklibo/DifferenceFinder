@@ -772,7 +772,7 @@ void MainWindow::onComparisonThreadEnded()
         m_dataSetView1->clearHighlighting();
         m_dataSetView2->clearHighlighting();
 
-        auto& results = *results_largestBlock.get();
+        auto& results = *results_largestBlock;
         m_dataSetView1->addHighlighting(results.matches, true);
         m_dataSetView2->addHighlighting(results.matches, false);
         m_dataSetView1->addDiffHighlighting(results.data1_unmatchedBlocks);
@@ -806,7 +806,7 @@ void MainWindow::onComparisonThreadEnded()
         m_dataSetView1->clearHighlighting();
         m_dataSetView2->clearHighlighting();
 
-        auto& results = *results_sequential.get();
+        auto& results = *results_sequential;
         m_dataSetView1->addHighlighting(results.file1_matches);
         m_dataSetView2->addHighlighting(results.file2_matches);
         m_dataSetView1->addDiffHighlighting(results.file1_differences);
