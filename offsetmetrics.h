@@ -5,6 +5,7 @@
 #include <memory>
 #include <limits>
 #include <list>
+#include <atomic>
 
 #include "indexrange.h"
 #include "rangematch.h"
